@@ -1,109 +1,214 @@
 # Social Card Generator
 
-Generate 1080 × 1350 technical social cards from Markdown or JSON using TypeScript, Shiki, and Playwright. Includes an original off-white editorial layout with dark code panels and Manjunath HK branding.
+[![CI](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node 22+](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](.nvmrc)
+
+Turn a Markdown file into a polished 1080 × 1350 technical social card, or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
+
+<p align="center">
+  <img src="sample/span-columns.png" alt="Side-by-side comparison card in the midnight theme" width="420">
+  <img src="sample/redis-caching.png" alt="Single-panel card in the editorial theme" width="420">
+</p>
+
+## Why
+
+Posting code on LinkedIn or X means screenshots, and screenshots from an editor are inconsistent, unbranded, and hard to reproduce. This tool treats a card as source: a small Markdown or JSON file you can diff, review, and regenerate whenever the brand or theme changes.
+
+## Features
+
+- **Three layouts.** `stack` (one or two panels), `columns` (side-by-side comparison), `grid` (up to four panels).
+- **Two themes**, `editorial` and `midnight`, with a documented CSS contract for adding more.
+- **Panel decorations.** Line highlights, token underlines, ✓ / ✕ verdict badges, and short bullet notes per panel.
+- **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
+- **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
+- **Deterministic and offline.** Fonts are embedded, external requests are blocked, and the same source always yields the same pixels.
+- **Brandable.** Author, series, monogram and website come from a `.env` file, never from code.
+
+## Gallery
+
+| `stack` · editorial                                                        | `stack` · editorial, verdicts                              | `stack` · midnight, notes                                                |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [![](sample/redis-caching.png)](examples/redis-caching.md)                 | [![](sample/before-after.png)](examples/before-after.json) | [![](sample/dependency-injection.png)](examples/dependency-injection.md) |
+| `stack` · two languages                                                    | `columns` · midnight, notes + verdicts                     | `grid` · midnight, underlines                                            |
+| [![](sample/typescript-javascript.png)](examples/typescript-javascript.md) | [![](sample/span-columns.png)](examples/span-columns.md)   | [![](sample/concurrency-grid.png)](examples/concurrency-grid.json)       |
+
+All six, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
 
 ## Quick start
 
 Requires Node.js 22 or newer.
 
 ```sh
+git clone https://github.com/manjunathhk/social-card-generator.git
+cd social-card-generator
 npm ci
-npm run browser:install
-npm run card -- examples/typescript-javascript.md
+npm run browser:install          # downloads Chromium for Playwright (once)
+npm run card -- examples/span-columns.md
 ```
 
-The command writes `dist/typescript-javascript.png` and a self-contained HTML preview. An optional second argument selects the output PNG path. Existing outputs are replaced only after input validation and layout checks pass.
+The card is written to `out/span-columns.png`. On Linux, add system libraries with `npx playwright install --with-deps chromium` if the launch complains. To use a Chromium you already have, set `CARD_BROWSER_PATH=/path/to/chromium` instead of downloading one.
 
-On Linux, install Chromium system dependencies with `npx playwright install --with-deps chromium` if needed. Dependency and browser installation require internet access. Rendering then runs locally with embedded fonts and blocked network requests.
+Once published to npm the same tool runs without cloning:
 
-## Branding with .env
-
-Copy `.env.sample` to `.env` in the project root and edit the values. In PowerShell:
-
-```powershell
-Copy-Item .env.sample .env
+```sh
+npx @manjunathhk/social-card-generator my-card.md
 ```
 
-On macOS/Linux: `cp .env.sample .env`. Run the generator from the project root; it loads `.env` from the current working directory using Node's built-in environment-file support. No extra dependencies are required.
+## Writing a card
 
-`CARD_AUTHOR`, `CARD_WEBSITE`, `CARD_SERIES`, `CARD_MONOGRAM`, `CARD_FOOTER_MARK`, and `CARD_ISSUE_LABEL` control the footer and header branding. The sample contains Manjunath HK's defaults. Missing or blank values fall back to those defaults; an absent `.env` is fine. Existing shell environment variables take precedence. Keep branding short enough to fit the fixed card layout. `.env` and local variants are ignored by Git; `.env.sample` is committed. Changes apply to newly generated cards, not existing PNG/HTML files.
+A card is YAML front matter followed by one fenced code block per panel. Headings label panels, a ✅ or ❌ prefix sets the verdict, `{2,4-6}` after the language highlights lines, and bullets after a fence become notes.
 
-Branding defaults use `MK` for `CARD_MONOGRAM`. `CARD_FOOTER_MARK` is optional: omitted, empty, or whitespace-only values omit the entire footer mark and its arrow. Set a nonblank value to display it. Existing `.env` values override defaults; update your local file if it still sets `MHK` or `M`.
+````markdown
+---
+title: Slice, don't copy.
+highlight: Span<T> in hot paths
+subtitle: The same parsing logic, with and without a new string per call.
+tags: [.NET, Performance, Span]
+issue: '04'
+layout: columns
+theme: midnight
+insight: Substring allocates a new string every call. Slicing reuses memory the caller owns.
+---
 
-## Independent panels
+## ❌ Substring
 
-Markdown starts with YAML front matter, followed by one or two fenced code blocks. An optional `## Heading` before each fence supplies its panel label. Each fence supplies its own Shiki language ID, such as `typescript`, `javascript`, `csharp`, or `yaml`.
+```csharp
+var id = line.Substring(4, 6);
+```
 
-See [the TypeScript / JavaScript example](examples/typescript-javascript.md). Labels are arbitrary: use languages, implementation names, request/response, configuration/usage, or before/after. Neither panel is emphasized unless highlight lines are specified.
+- Allocates a new string per call
 
-JSON can supply a `panels` array:
+## ✅ Span
+
+```csharp {1}
+var id = line.Slice(4, 6);
+```
+
+- Works over the caller's memory
+````
+
+The same card as JSON gives you every option explicitly, including `underline`:
 
 ```json
 {
-  "title": "Same behaviour",
-  "subtitle": "Type annotations disappear at runtime.",
-  "tags": ["TypeScript", "JavaScript"],
+  "title": "Slice, don't copy.",
+  "subtitle": "The same parsing logic, with and without a new string per call.",
+  "layout": "columns",
+  "theme": "midnight",
   "panels": [
-    { "label": "TypeScript", "language": "typescript", "code": "const count: number = 1;" },
-    { "label": "JavaScript", "language": "javascript", "code": "const count = 1;", "highlightLines": [1] }
+    { "label": "Substring", "language": "csharp", "verdict": "bad", "code": "var id = line.Substring(4, 6);" },
+    {
+      "label": "Span",
+      "language": "csharp",
+      "verdict": "good",
+      "highlightLines": [1],
+      "underline": ["Slice"],
+      "code": "var id = line.Slice(4, 6);"
+    }
   ]
 }
 ```
 
-`highlightLines` is optional and uses one-based line numbers. For full control over line highlights, use JSON. Markdown derives panels from its headings and fences.
+### Card fields
 
-## Header fields
+| Field       | Required | Default     | Limit                                                 |
+| ----------- | -------- | ----------- | ----------------------------------------------------- |
+| `title`     | yes      |             | 70 characters                                         |
+| `subtitle`  | yes      |             | 150 characters                                        |
+| `highlight` | no       | empty       | 70 characters; second title line in the accent colour |
+| `tags`      | no       | `[]`        | up to 3, 22 characters each                           |
+| `insight`   | no       | empty       | 220 characters; the "design note" under the panels    |
+| `issue`     | no       | `01`        | 12 characters                                         |
+| `layout`    | no       | `stack`     | `stack`, `columns`, `grid`                            |
+| `theme`     | no       | `editorial` | `editorial`, `midnight`                               |
+| `panels`    | yes      |             | count depends on the layout                           |
 
-| Field | Required | Default / limit |
-| --- | --- | --- |
-| title | Yes | 70 characters |
-| subtitle | Yes | 150 characters |
-| tags | Yes | Up to 3 strings, 22 characters each; empty array allowed |
-| highlight | No | Empty; 70 characters |
-| insight | No | Empty; its space is reclaimed; 220 characters |
-| issue | No | String `01`; 12 characters |
-| filename | No | `Example`; fallback label for an unheaded fence |
+### Panel fields
 
-Missing required fields, unsupported languages, invalid fences, and oversized content fail with an error and nonzero exit code. Previous files remain on failure. YAML values must have the expected types; quote numeric-looking issue values. Text is escaped and rendered literally, without inline Markdown or HTML interpretation.
+| Field            | Required | Notes                                                                      |
+| ---------------- | -------- | -------------------------------------------------------------------------- |
+| `language`       | yes      | Any Shiki language id or alias (`csharp`, `cs`, `ts`, `yaml`, `sql`)       |
+| `code`           | yes      | Up to 4000 characters; line limit depends on the layout                    |
+| `label`          | no       | Header text; defaults to the language name                                 |
+| `highlightLines` | no       | One-based line numbers; Markdown uses `{1,3-5}` on the fence               |
+| `underline`      | no       | Exact substrings to underline; JSON only                                   |
+| `verdict`        | no       | `good` or `bad`; Markdown uses a ✅ / ❌ heading prefix                    |
+| `notes`          | no       | Up to 3 bullets of 70 characters; Markdown uses `- ` lines after the fence |
 
-## Compatibility
+### Layouts
 
-The original `language`, `code`, and `filename` JSON fields still produce one panel. The legacy `after` object still adds a second panel in the same language. Do not mix `after` and `panels`. The Redis and before/after examples demonstrate these older formats.
+| Layout    | Panels | Max lines per panel | Code font range | Best for                              |
+| --------- | ------ | ------------------- | --------------- | ------------------------------------- |
+| `stack`   | 1–2    | 22 (one) / 14 (two) | 20 → 16 px      | A single snippet, or before / after   |
+| `columns` | 2      | 18                  | 18 → 13 px      | Side-by-side comparison with verdicts |
+| `grid`    | 3–4    | 12                  | 16 → 12 px      | Four short variants of the same idea  |
 
-```sh
-npm run card -- examples/redis-caching.json
-npm run card -- examples/before-after.json
+Character limits are ceilings, not guarantees. The renderer measures the real layout and refuses to emit a card whose code or footer would be clipped; the error names the panel and what to shorten.
+
+## Command line
+
+```
+social-card <input.md|input.json|directory>... [options]
+
+  --out-dir <dir>   Directory for PNG output (default: out)
+  --out <file.png>  Explicit PNG path; allowed with exactly one input
+  --pdf <file.pdf>  Also write every card, in order, as one multi-page PDF
+  --pdf-only        Write the PDF but skip the PNGs
+  --scale <1|2|3>   Device scale factor for PNGs (2 gives crisper text after platform compression)
+  --html            Also write the rendered HTML next to each PNG for debugging
+  --env <file>      Branding env file (default: .env in the current directory)
 ```
 
-## Layout and customization
-
-One panel supports up to 22 code lines; two panels support up to 14 lines each, subject to actual available space. Code starts at 20px and fits down to 16px. Both panels use the same final font size. The renderer fails instead of silently clipping oversized content. Character limits are ceilings, not guarantees that content fits.
-
-- `src/styles.css`: palette, typography, spacing, and panel layout.
-- `src/template.ts`: author, website, monogram, and HTML.
-- `src/content.ts`: input formats and validation.
-- `src/cli.ts`: rendering, font readiness, and overflow detection.
-
-Inter and JetBrains Mono fonts are embedded from the installed packages. Their OFL licenses are included in those packages. Generated sample HTML contains embedded font assets; see `THIRD_PARTY_NOTICES.md`.
-
-## Validation
+During development run it as `npm run card -- <args>`. A directory input renders every `.md` and `.json` inside it in name order, which is how a carousel is assembled:
 
 ```sh
-npm run check
-npm test
+npm run card -- posts/2026-09-caching --pdf out/caching-carousel.pdf --scale 2
 ```
 
-Tests cover JSON/Markdown compatibility, BOM handling, escaping, field limits, independent panel languages, optional insight, and highlight validation. All three supplied card examples were rendered and visually checked. Browser binaries and `node_modules` are not committed.
+## Branding
 
-## Sample scope
+Copy `.env.sample` to `.env` and fill in your details. Defaults are neutral placeholders, so nothing personal lives in the code.
 
-The Redis snippets illustrate cache policies, not a standalone .NET app. They assume a Redis-backed `IDistributedCache`, application-provided data access, cancellation token, and relevant imports. TTL does not replace write invalidation or coordination of concurrent misses. Configure failure handling and serialization policy in the host application.
+| Variable            | Default            | Purpose                                          |
+| ------------------- | ------------------ | ------------------------------------------------ |
+| `CARD_AUTHOR`       | `Your Name`        | Footer author                                    |
+| `CARD_WEBSITE`      | `example.com`      | Footer website                                   |
+| `CARD_SERIES`       | `Field Notes`      | Masthead series name and footer prefix           |
+| `CARD_MONOGRAM`     | author's initials  | Small boxed mark in the masthead                 |
+| `CARD_FOOTER_MARK`  | empty              | Optional large mark bottom-right; blank hides it |
+| `CARD_ISSUE_LABEL`  | `Note`             | Prefix before the issue number                   |
+| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                  |
+
+Shell variables override the file. The committed samples use `examples/branding.env`.
+
+## How it works
+
+Source → parse and validate → Shiki highlights each panel → an HTML document with embedded fonts and the theme's CSS → Chromium lays it out → an in-page script shrinks code to fit or reports overflow → screenshot (PNG) or print (PDF).
+
+The techniques behind each stage, including the fit loop, the theme contract, Shiki decorations, the PDF pagination trick, and how to add a layout or theme, are written up in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
+
+## Development
+
+| Command               | What it does                                                 |
+| --------------------- | ------------------------------------------------------------ |
+| `npm run check`       | Type-check with `tsc`                                        |
+| `npm test`            | Unit tests (parser, validation, template); no browser needed |
+| `npm run test:render` | Browser tests: PNG size, fit loop, PDF page count            |
+| `npm run lint`        | Prettier check                                               |
+| `npm run format`      | Prettier write                                               |
+| `npm run build`       | Compile to `dist/` (what the `social-card` binary runs)      |
+| `npm run samples`     | Regenerate `sample/` from `examples/`                        |
+
+CI runs all of the above on every push and uploads the rendered gallery as an artifact. See [CONTRIBUTING.md](CONTRIBUTING.md) for the conventions.
+
+## Roadmap
+
+- Size presets: 1080 × 1080 square and 1200 × 630 Open Graph.
+- A `terminal` panel style for showing program output under code.
+- A text-only `list` layout for numbered rules and checklists.
+- Publish to npm.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Branding is editable; replace the author and website when generating cards for yourself.
-
-## References
-
-- [Shiki](https://shiki.style/guide/install)
-- [Playwright screenshots](https://playwright.dev/docs/screenshots)
+MIT. See [LICENSE](LICENSE). Inter and JetBrains Mono are embedded under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
