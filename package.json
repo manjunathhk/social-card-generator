@@ -1,16 +1,46 @@
 {
-  "name": "social-card-generator",
-  "version": "1.0.0",
-  "private": true,
+  "name": "@manjunathhk/social-card-generator",
+  "version": "2.0.0",
+  "description": "Render technical social cards (1080 × 1350 PNG or multi-page PDF carousels) from Markdown or JSON with Shiki syntax highlighting and Playwright.",
+  "keywords": [
+    "social-card",
+    "linkedin",
+    "carousel",
+    "code-snippet",
+    "shiki",
+    "playwright",
+    "og-image"
+  ],
+  "license": "MIT",
+  "author": "Manjunath HK",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manjunathhk/social-card-generator.git"
+  },
   "type": "module",
+  "bin": {
+    "social-card": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "card": "tsx src/cli.ts",
+    "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit",
-    "test": "tsx --test src/content.test.ts",
-    "browser:install": "playwright install chromium"
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "test": "tsx --test src/*.test.ts",
+    "test:render": "tsx --test src/render/*.test.ts",
+    "samples": "tsx scripts/samples.ts",
+    "browser:install": "playwright install chromium",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",
@@ -20,9 +50,9 @@
     "yaml": "2.9.0"
   },
   "devDependencies": {
-    "@types/node": "26.5.0",
+    "@types/node": "22.19.1",
+    "prettier": "^3.6.2",
     "tsx": "4.23.13",
     "typescript": "7.0.2"
-  },
-  "license": "MIT"
+  }
 }

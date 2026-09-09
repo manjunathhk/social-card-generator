@@ -7,6 +7,7 @@ issue: '03'
 ---
 
 ## TypeScript
+
 ```typescript
 function greet(name: string): string {
   return `Hello, ${name}`;
@@ -16,7 +17,8 @@ console.log(greet('Manjunath'));
 ```
 
 ## JavaScript
-```javascript
+
+```javascript {1}
 function greet(name) {
   return `Hello, ${name}`;
 }
