@@ -1,0 +1,11 @@
+{
+  "title": "Redis caching in .NET",
+  "highlight": "Bound the staleness.",
+  "subtitle": "A cache-aside read with an explicit expiration policy.",
+  "language": "csharp",
+  "filename": "ProductCache.cs / read path",
+  "issue": "01",
+  "code": "// cache: IDistributedCache; db: your data source\nvar key = $\"product:{id}\";\nvar json = await cache.GetStringAsync(key, ct);\n\nif (json is null)\n{\n    var product = await db.FindAsync(id, ct);\n    if (product is null) return Results.NotFound();\n\n    json = JsonSerializer.Serialize(product);\n    await cache.SetStringAsync(key, json, new()\n    {\n        AbsoluteExpirationRelativeToNow =\n            TimeSpan.FromMinutes(5)\n    }, ct);\n}\n\nreturn Results.Content(json, \"application/json\");",
+  "insight": "A TTL limits staleness; it does not prevent it. Invalidate on writes when freshness matters, and coalesce concurrent misses to protect the database.",
+  "tags": [".NET", "Redis", "Cache-aside"]
+}
