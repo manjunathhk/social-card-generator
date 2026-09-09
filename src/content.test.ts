@@ -2,7 +2,36 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parseContent, escapeHtml } from './content.js';
+import { brandingFromEnv, loadBranding } from './branding.js';
+import { mkdtemp, writeFile, unlink, rmdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 const sample = await readFile(new URL('../examples/redis-caching.json', import.meta.url), 'utf8');
+test('branding defaults and blank values', () => {
+  assert.equal(brandingFromEnv({}).author, 'Manjunath HK');
+  assert.equal(brandingFromEnv({ CARD_WEBSITE: ' ' }).website, 'manjunathhk.in');
+  assert.equal(brandingFromEnv({ CARD_AUTHOR: 'Custom Author' }).author, 'Custom Author');
+});
+test('env file loads and shell values take precedence', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'card-branding-'));
+  const file = join(dir, '.env');
+  const previousAuthor = process.env.CARD_AUTHOR;
+  const previousWebsite = process.env.CARD_WEBSITE;
+  try {
+    await writeFile(file, 'CARD_AUTHOR="File Author"\nCARD_WEBSITE="example.test"\n');
+    process.env.CARD_AUTHOR = 'Shell Author';
+    delete process.env.CARD_WEBSITE;
+    const branding = loadBranding(file);
+    assert.equal(branding.author, 'Shell Author');
+    assert.equal(branding.website, 'example.test');
+    assert.doesNotThrow(() => loadBranding(join(dir, 'missing.env')));
+  } finally {
+    if (previousAuthor === undefined) delete process.env.CARD_AUTHOR; else process.env.CARD_AUTHOR = previousAuthor;
+    if (previousWebsite === undefined) delete process.env.CARD_WEBSITE; else process.env.CARD_WEBSITE = previousWebsite;
+    await unlink(file);
+    await rmdir(dir);
+  }
+});
 test('JSON supports a BOM and normalizes code', () => {
   assert.equal(parseContent(sample).language, 'csharp');
   assert.equal(parseContent('\uFEFF' + sample.replace(/^\uFEFF/, '')).title, 'Redis caching in .NET');

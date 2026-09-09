@@ -16,6 +16,18 @@ The command writes `dist/typescript-javascript.png` and a self-contained HTML pr
 
 On Linux, install Chromium system dependencies with `npx playwright install --with-deps chromium` if needed. Dependency and browser installation require internet access. Rendering then runs locally with embedded fonts and blocked network requests.
 
+## Branding with .env
+
+Copy `.env.sample` to `.env` in the project root and edit the values. In PowerShell:
+
+```powershell
+Copy-Item .env.sample .env
+```
+
+On macOS/Linux: `cp .env.sample .env`. Run the generator from the project root; it loads `.env` from the current working directory using Node's built-in environment-file support. No extra dependencies are required.
+
+`CARD_AUTHOR`, `CARD_WEBSITE`, `CARD_SERIES`, `CARD_MONOGRAM`, `CARD_FOOTER_MARK`, and `CARD_ISSUE_LABEL` control the footer and header branding. The sample contains Manjunath HK's defaults. Missing or blank values fall back to those defaults; an absent `.env` is fine. Existing shell environment variables take precedence. Keep branding short enough to fit the fixed card layout. `.env` and local variants are ignored by Git; `.env.sample` is committed. Changes apply to newly generated cards, not existing PNG/HTML files.
+
 ## Independent panels
 
 Markdown starts with YAML front matter, followed by one or two fenced code blocks. An optional `## Heading` before each fence supplies its panel label. Each fence supplies its own Shiki language ID, such as `typescript`, `javascript`, `csharp`, or `yaml`.

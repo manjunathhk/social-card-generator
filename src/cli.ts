@@ -3,6 +3,7 @@ import { resolve, dirname, extname, basename } from 'node:path';
 import { chromium } from 'playwright';
 import { parseContent } from './content.js';
 import { renderHtml } from './template.js';
+import { loadBranding } from './branding.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -16,7 +17,7 @@ async function main() {
   const output = resolve(args[1] ?? `dist/${basename(input, extname(input))}.png`);
   if (extname(output).toLowerCase() !== '.png') throw new Error('Output must end in .png');
   const card = parseContent(await readFile(input, 'utf8'), extname(input).toLowerCase() === '.md');
-  const html = await renderHtml(card);
+  const html = await renderHtml(card, loadBranding());
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage({ viewport: { width:1080, height:1350 }, deviceScaleFactor:1 });

@@ -2,8 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { codeToHtml } from 'shiki';
 import { type Card, escapeHtml as e } from './content.js';
+import { brandingFromEnv } from './branding.js';
 const require = createRequire(import.meta.url);
-export async function renderHtml(card: Card): Promise<string> {
+export async function renderHtml(card: Card, branding = brandingFromEnv(process.env)): Promise<string> {
   const font = async (path: string) => (await readFile(require.resolve(path))).toString('base64');
   const [regular, bold, mono, css] = await Promise.all([
     font('@fontsource/inter/files/inter-latin-400-normal.woff2'),
@@ -25,10 +26,10 @@ export async function renderHtml(card: Card): Promise<string> {
   @font-face{font-family:Inter;src:url(data:font/woff2;base64,${bold});font-weight:700}
   @font-face{font-family:Mono;src:url(data:font/woff2;base64,${mono})}
   ${css}</style></head><body><main class="card ${card.panels.length > 1 ? 'comparison' : ''}">
-  <header><div class="series"><span class="mark">MHK<span></span></span><span>ARCHITECTURE<br>NOTES</span></div><span class="issue">FIELD NOTE / ${e(card.issue)}</span></header>
+  <header><div class="series"><span class="mark">${e(branding.monogram)}<span></span></span><span>${e(branding.series.toUpperCase()).replace(/ /g, '<br>')}</span></div><span class="issue">${e(branding.issueLabel.toUpperCase())} / ${e(card.issue)}</span></header>
   <section class="intro"><div class="eyebrow">${card.tags.map(e).join(' <span>/</span> ')}</div><h1>${e(card.title)}${card.highlight ? `<span>${e(card.highlight)}</span>` : ''}</h1><p class="subtitle">${e(card.subtitle)}</p></section>
   <div class="panels">${panels.join('')}</div>
   ${card.insight ? `<section class="insight"><div class="insight-label"><span>↳</span> DESIGN NOTE</div><p>${e(card.insight)}</p></section>` : '<div style="height:24px"></div>'}
-  <footer><div><strong>Architecture Notes <span>•</span> Manjunath HK</strong><span class="website">manjunathhk.in</span></div><div class="footer-mark">M<span>↗</span></div></footer>
+  <footer><div><strong>${e(branding.series)} <span>•</span> ${e(branding.author)}</strong><span class="website">${e(branding.website)}</span></div><div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div></footer>
   </main></body></html>`;
 }
