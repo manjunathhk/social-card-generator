@@ -30,6 +30,6 @@ export async function renderHtml(card: Card, branding = brandingFromEnv(process.
   <section class="intro"><div class="eyebrow">${card.tags.map(e).join(' <span>/</span> ')}</div><h1>${e(card.title)}${card.highlight ? `<span>${e(card.highlight)}</span>` : ''}</h1><p class="subtitle">${e(card.subtitle)}</p></section>
   <div class="panels">${panels.join('')}</div>
   ${card.insight ? `<section class="insight"><div class="insight-label"><span>↳</span> DESIGN NOTE</div><p>${e(card.insight)}</p></section>` : '<div style="height:24px"></div>'}
-  <footer><div><strong>${e(branding.series)} <span>•</span> ${e(branding.author)}</strong><span class="website">${e(branding.website)}</span></div><div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div></footer>
+  <footer><div><strong>${e(branding.series)} <span>•</span> ${e(branding.author)}</strong><span class="website">${e(branding.website)}</span></div>${branding.footerMark ? `<div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div>` : ''}</footer>
   </main></body></html>`;
 }

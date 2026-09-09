@@ -3,14 +3,26 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parseContent, escapeHtml } from './content.js';
 import { brandingFromEnv, loadBranding } from './branding.js';
+import { renderHtml } from './template.js';
 import { mkdtemp, writeFile, unlink, rmdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const sample = await readFile(new URL('../examples/redis-caching.json', import.meta.url), 'utf8');
 test('branding defaults and blank values', () => {
   assert.equal(brandingFromEnv({}).author, 'Manjunath HK');
+  assert.equal(brandingFromEnv({}).monogram, 'MK');
+  assert.equal(brandingFromEnv({}).footerMark, '');
+  assert.equal(brandingFromEnv({ CARD_FOOTER_MARK: ' ' }).footerMark, '');
   assert.equal(brandingFromEnv({ CARD_WEBSITE: ' ' }).website, 'manjunathhk.in');
   assert.equal(brandingFromEnv({ CARD_AUTHOR: 'Custom Author' }).author, 'Custom Author');
+});
+test('footer mark HTML is optional and escaped when supplied', async () => {
+  const card = parseContent(sample);
+  const without = await renderHtml(card, brandingFromEnv({}));
+  assert.ok(!without.includes('<div class="footer-mark">'));
+  assert.ok(without.includes('class="mark">MK<span>'));
+  const withMark = await renderHtml(card, brandingFromEnv({ CARD_FOOTER_MARK: '<MK>' }));
+  assert.ok(withMark.includes('<div class="footer-mark">&lt;MK&gt;<span>↗</span></div>'));
 });
 test('env file loads and shell values take precedence', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'card-branding-'));

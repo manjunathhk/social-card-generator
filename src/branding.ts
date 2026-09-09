@@ -14,8 +14,8 @@ export function brandingFromEnv(env: NodeJS.ProcessEnv) {
     author: value('CARD_AUTHOR', 'Manjunath HK'),
     website: value('CARD_WEBSITE', 'manjunathhk.in'),
     series: value('CARD_SERIES', 'Architecture Notes'),
-    monogram: value('CARD_MONOGRAM', 'MHK'),
-    footerMark: value('CARD_FOOTER_MARK', 'M'),
+    monogram: value('CARD_MONOGRAM', 'MK'),
+    footerMark: value('CARD_FOOTER_MARK', ''),
     issueLabel: value('CARD_ISSUE_LABEL', 'Field Note'),
   };
 }

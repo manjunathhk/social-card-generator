@@ -28,6 +28,8 @@ On macOS/Linux: `cp .env.sample .env`. Run the generator from the project root; 
 
 `CARD_AUTHOR`, `CARD_WEBSITE`, `CARD_SERIES`, `CARD_MONOGRAM`, `CARD_FOOTER_MARK`, and `CARD_ISSUE_LABEL` control the footer and header branding. The sample contains Manjunath HK's defaults. Missing or blank values fall back to those defaults; an absent `.env` is fine. Existing shell environment variables take precedence. Keep branding short enough to fit the fixed card layout. `.env` and local variants are ignored by Git; `.env.sample` is committed. Changes apply to newly generated cards, not existing PNG/HTML files.
 
+Branding defaults use `MK` for `CARD_MONOGRAM`. `CARD_FOOTER_MARK` is optional: omitted, empty, or whitespace-only values omit the entire footer mark and its arrow. Set a nonblank value to display it. Existing `.env` values override defaults; update your local file if it still sets `MHK` or `M`.
+
 ## Independent panels
 
 Markdown starts with YAML front matter, followed by one or two fenced code blocks. An optional `## Heading` before each fence supplies its panel label. Each fence supplies its own Shiki language ID, such as `typescript`, `javascript`, `csharp`, or `yaml`.
