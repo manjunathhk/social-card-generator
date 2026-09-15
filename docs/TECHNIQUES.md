@@ -16,9 +16,10 @@ A developer reference for how the generator works and why it is built this way. 
 10. [Playwright details that matter](#playwright-details-that-matter)
 11. [Testing strategy](#testing-strategy)
 12. [Packaging: tsx in development, compiled JS in the binary](#packaging-tsx-in-development-compiled-js-in-the-binary)
-13. [Adding a theme](#adding-a-theme)
-14. [Adding a layout](#adding-a-layout)
-15. [Gotchas](#gotchas)
+13. [Running the core in the browser](#running-the-core-in-the-browser)
+14. [Adding a theme](#adding-a-theme)
+15. [Adding a layout](#adding-a-layout)
+16. [Gotchas](#gotchas)
 
 ## The one idea
 
@@ -184,6 +185,21 @@ Both tiers use Node's built-in `node:test` runner. No test framework dependency.
 - Themes are TypeScript modules exporting CSS strings rather than `.css` files, so the build is a plain `tsc` with no asset copy step, and the compiled package resolves them the same way the source does.
 - `files` in `package.json` limits the published tarball to `dist/`, the README, and the licence notices. `prepublishOnly` guarantees a fresh build.
 - Card output defaults to `out/` precisely because `dist/` is the compiled CLI.
+
+## Running the core in the browser
+
+`npm run sandbox` bundles the core into a single HTML page (`web/sandbox/`, built by `scripts/build-sandbox.ts`). It exists to prove that the pipeline is a rendering core with two hosts, and to give authors a fast preview. The build shows exactly where the core still leans on Node:
+
+| Node dependency                                              | In the browser build                                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `fonts.ts` reads WOFF2 files from disk                       | A virtual module carries the same `@font-face` CSS, generated at build time                                   |
+| `highlight.ts` uses Shiki's full bundle and WASM             | `browser-highlight.ts` uses `createHighlighterCore` with the JavaScript regex engine and a fixed grammar list |
+| `shiki`'s language and theme tables                          | Their dynamic imports are marked external so 200 grammars are not inlined                                     |
+| `node:path` in `content.ts`, `node:process` in `branding.ts` | Two-line shims; these imports should move out of the core in a later refactor                                 |
+
+In the page, the preview is the real card element, not a screenshot: `renderCard` produces the markup, the page installs the base and theme CSS, and the same `FIT_SCRIPT` string runs against the document. The card is scaled for display with a CSS transform, which is removed for the instant the fit loop measures so that `getBoundingClientRect` and `clientHeight` agree. Export uses `html-to-image` to rasterise the card element at 1x or 2x; it is handed the embedded font CSS directly so it does not scan cross-origin stylesheets. The page-level rules in `base.ts` (`body`, `@page`) are stripped before the card CSS joins a host page, which is a sign they belong in the document wrapper rather than the shared stylesheet.
+
+A theme built in the sandbox's palette editor is expanded into the full variable contract with `color-mix` and can be copied out as a `src/themes/<name>.ts` module, so the path from experiment to committed theme is paste, rename, register.
 
 ## Adding a theme
 

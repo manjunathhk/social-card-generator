@@ -1,0 +1,375 @@
+<title>Social Card Sandbox</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #f4f2ec; --surface: #ffffff; --surface-2: #ebe8e0; --ink: #16232b; --muted: #5e6e75; --faint: #8d9aa0;
+  --accent: #0a7c81; --accent-ink: #ffffff; --rule: #d8ddd8; --focus: #0a7c81;
+  --good: #1f9d6b; --bad: #c9463f; --warn: #b7791f;
+  --editor-bg: #1a2530; --editor-ink: #e6edf3;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0b1220; --surface: #121c2d; --surface-2: #182439; --ink: #edf2f7; --muted: #9aa9bb; --faint: #6b7a8c;
+    --accent: #38bdf8; --accent-ink: #06121f; --rule: #223049; --focus: #38bdf8;
+    --good: #22c55e; --bad: #ef4444; --warn: #f0b23a;
+    --editor-bg: #0a1424; --editor-ink: #e6edf3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0b1220; --surface: #121c2d; --surface-2: #182439; --ink: #edf2f7; --muted: #9aa9bb; --faint: #6b7a8c;
+  --accent: #38bdf8; --accent-ink: #06121f; --rule: #223049; --focus: #38bdf8;
+  --good: #22c55e; --bad: #ef4444; --warn: #f0b23a;
+  --editor-bg: #0a1424; --editor-ink: #e6edf3;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.app { min-height: 100%; display: flex; flex-direction: column; }
+.top { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--rule); background: var(--surface); flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
+.brand span { font: 12px var(--mono); color: var(--muted); }
+.top .links { margin-left: auto; display: flex; gap: 14px; font-size: 13px; }
+.top a { color: var(--accent); text-decoration: none; }
+.top a:hover { text-decoration: underline; }
+
+.work { flex: 1; display: grid; grid-template-columns: minmax(340px, 480px) minmax(0, 1fr); gap: 20px; padding: 20px; align-items: start; }
+@media (max-width: 900px) { .work { grid-template-columns: 1fr; } }
+
+.pane { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toolbar label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+select, input[type="text"] { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 7px 10px; min-width: 0; }
+select { padding-right: 28px; }
+.pill { font: 12px var(--mono); padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+
+.editor { position: relative; background: var(--editor-bg); border-radius: 8px; border: 1px solid var(--rule); overflow: hidden; }
+.editor textarea { display: block; width: 100%; height: 520px; resize: vertical; padding: 14px 16px; background: transparent; color: var(--editor-ink); border: 0; font: 13px/1.55 var(--mono); tab-size: 2; white-space: pre; overflow: auto; }
+.editor textarea:focus-visible { outline-offset: -2px; }
+.banner { border-radius: 6px; padding: 10px 12px; font-size: 13px; line-height: 1.45; border: 1px solid; }
+.banner[hidden] { display: none; }
+.banner.error { border-color: color-mix(in srgb, var(--bad) 45%, var(--rule)); color: var(--ink); background: color-mix(in srgb, var(--bad) 10%, var(--surface)); }
+.banner.warn { border-color: color-mix(in srgb, var(--warn) 55%, var(--rule)); background: color-mix(in srgb, var(--warn) 12%, var(--surface)); }
+.banner code { font: 12px var(--mono); }
+
+.palette { border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.palette[hidden] { display: none; }
+.palette-fields { padding: 0; grid-template-columns: repeat(3, 1fr); }
+.palette-fields input[type="color"] { width: 100%; height: 34px; padding: 2px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); cursor: pointer; }
+.palette-fields label.check { flex-direction: row; align-items: center; gap: 8px; align-self: end; padding-bottom: 8px; }
+.palette-fields label.check span { text-transform: none; letter-spacing: 0; color: var(--ink); }
+.palette-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+details.brandbox { border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+details.brandbox summary { cursor: pointer; padding: 10px 14px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.brandbox summary::after { content: '+'; color: var(--muted); font: 16px var(--mono); }
+details.brandbox[open] summary::after { content: '−'; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 4px 14px 14px; }
+.fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.fields label span { text-transform: uppercase; letter-spacing: .6px; }
+.fields input { width: 100%; }
+
+.stagewrap { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.stagebox { width: 100%; max-width: 720px; margin: 0 auto; aspect-ratio: 1080 / 1350; position: relative; overflow: hidden; border-radius: 4px; box-shadow: 0 12px 32px rgba(0,0,0,.18); background: var(--surface-2); }
+#stage { position: absolute; top: 0; left: 0; width: 1080px; height: 1350px; transform-origin: top left; }
+.status { display: flex; gap: 8px 18px; flex-wrap: wrap; align-items: center; font: 12px var(--mono); color: var(--muted); }
+.status b { color: var(--ink); font-weight: 500; }
+.status .fit-ok { color: var(--good); }
+.status .fit-bad { color: var(--bad); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { border: 1px solid var(--rule); background: var(--surface); border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: .55; cursor: default; }
+.hint { font-size: 12px; color: var(--muted); }
+.notes { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.notes code { font: 12px var(--mono); color: var(--ink); }
+
+dialog { border: 1px solid var(--rule); border-radius: 10px; padding: 16px; background: var(--surface); color: var(--ink); max-width: min(92vw, 720px); }
+dialog::backdrop { background: rgba(0,0,0,.55); }
+dialog img { display: block; max-width: 100%; height: auto; border-radius: 4px; }
+dialog .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--ground); padding: 9px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>Social Card Sandbox</h1><span id="build-tag">/*__BUILD_TAG__*/</span></div>
+    <nav class="links">
+      <a href="https://github.com/manjunathhk/social-card-generator" target="_blank" rel="noopener">Repository</a>
+      <a href="https://github.com/manjunathhk/social-card-generator/blob/main/docs/TECHNIQUES.md" target="_blank" rel="noopener">Techniques</a>
+    </nav>
+  </header>
+
+  <main class="work">
+    <section class="pane" aria-label="Card source">
+      <div class="toolbar">
+        <label for="example">Example</label>
+        <select id="example"></select>
+        <span class="pill" id="format-pill">Markdown</span>
+        <span class="pill" id="langs-pill" title="Languages bundled in this sandbox">15 languages</span>
+      </div>
+      <div class="toolbar">
+        <label for="layout-sel">Layout</label>
+        <select id="layout-sel"><option value="">from source</option><option value="stack">stack</option><option value="columns">columns</option><option value="grid">grid</option></select>
+        <label for="theme-sel">Theme</label>
+        <select id="theme-sel"><option value="">from source</option><option value="editorial">editorial</option><option value="midnight">midnight</option><option value="custom">custom…</option></select>
+      </div>
+      <div class="palette" id="palette" hidden>
+        <div class="fields palette-fields">
+          <label><span>Background</span><input id="p-bg" type="color" value="#f5f3ee"></label>
+          <label><span>Text</span><input id="p-fg" type="color" value="#162b35"></label>
+          <label><span>Accent</span><input id="p-accent" type="color" value="#007b80"></label>
+          <label><span>Panel</span><input id="p-panel" type="color" value="#111e29"></label>
+          <label><span>Code colours</span><select id="p-code"><option value="github-dark">github-dark</option><option value="one-dark-pro">one-dark-pro</option></select></label>
+          <label class="check"><input id="p-dots" type="checkbox"> <span>Traffic-light dots</span></label>
+        </div>
+        <div class="palette-actions">
+          <button class="btn" id="p-copy">Copy as TypeScript theme</button>
+          <span class="hint">Derived colours (rules, muted text, highlights) are mixed from these four.</span>
+        </div>
+      </div>
+      <div class="editor"><textarea id="source" spellcheck="false" aria-label="Card source in Markdown or JSON"></textarea></div>
+      <div class="banner error" id="error" hidden></div>
+      <details class="brandbox" id="brandbox">
+        <summary>Branding</summary>
+        <div class="fields">
+          <label><span>Author</span><input id="b-author" type="text" placeholder="Your Name"></label>
+          <label><span>Website</span><input id="b-website" type="text" placeholder="example.com"></label>
+          <label><span>Series</span><input id="b-series" type="text" placeholder="Field Notes"></label>
+          <label><span>Monogram</span><input id="b-monogram" type="text" placeholder="initials"></label>
+          <label><span>Footer mark</span><input id="b-footer" type="text" placeholder="blank hides it"></label>
+          <label><span>Issue label</span><input id="b-issue" type="text" placeholder="Note"></label>
+        </div>
+      </details>
+      <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
+    </section>
+
+    <section class="pane" aria-label="Preview and export">
+      <div class="stagewrap">
+        <div class="stagebox" id="stagebox"><div id="stage"><div id="card-host"></div></div></div>
+        <div class="status" id="status">
+          <span>Layout <b id="s-layout">—</b></span>
+          <span>Theme <b id="s-theme">—</b></span>
+          <span>Panels <b id="s-panels">—</b></span>
+          <span>Code <b id="s-font">—</b></span>
+          <span id="s-fit">—</span>
+        </div>
+        <div class="banner warn" id="overflow" hidden></div>
+        <div class="actions">
+          <button class="btn primary" id="export-1">Export PNG 1×</button>
+          <button class="btn" id="export-2">Export PNG 2×</button>
+          <button class="btn" id="copy">Copy image</button>
+          <span class="hint" id="export-hint">Exports are rasterised by your browser; the CLI's Chromium render is the canonical output.</span>
+        </div>
+      </div>
+      <p class="notes">Bundled languages: <span id="langs-list"></span>. PDF carousels and other Shiki languages are available in the CLI only.</p>
+    </section>
+  </main>
+</div>
+
+<dialog id="preview">
+  <img id="preview-img" alt="Exported card">
+  <div class="row"><span class="hint" id="preview-hint">Right-click or long-press the image to save it.</span><button class="btn" id="preview-close">Close</button></div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>/*__BUNDLE__*/</script>
+<script>
+(() => {
+  const SC = window.SocialCard;
+  const $ = (id) => document.getElementById(id);
+  const source = $('source'), example = $('example'), errorBox = $('error'), overflowBox = $('overflow');
+  const stage = $('stage'), stagebox = $('stagebox'), host = $('card-host');
+  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue' };
+  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL' };
+  const DEFAULT_EXAMPLE = 'span-columns.md';
+  let downloads = null;
+  let lastCard = null;
+
+  // Card CSS: fonts + layout + every theme, once.
+  // The card CSS is written for a document that is nothing but cards, so its
+  // page-level rules (html/body/@page) are dropped before it joins this page.
+  const cardOnlyCss = SC.baseCss.replace(/^(html, body|body|@page)\s*\{[^}]*\}\s*$/gm, '');
+  const style = document.createElement('style');
+  document.head.appendChild(style);
+  const FONT_CSS = SC.FONT_CSS;
+  style.textContent = FONT_CSS + '\n' + cardOnlyCss + '\n' + SC.THEME_NAMES.map((n) => SC.getTheme(n).css).join('\n') + '\n#stage .card{break-after:auto}';
+
+  // Examples.
+  for (const name of Object.keys(SC.examples)) {
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = name; example.appendChild(opt);
+  }
+  $('langs-list').textContent = SC.SANDBOX_LANGUAGES.join(', ');
+  $('langs-pill').textContent = SC.SANDBOX_LANGUAGES.length + ' languages';
+
+  // Persistence (per-browser convenience only).
+  const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  const savedSource = store.get('scs:source');
+  source.value = savedSource ?? SC.examples[DEFAULT_EXAMPLE];
+  example.value = store.get('scs:example') ?? DEFAULT_EXAMPLE;
+  try { const b = JSON.parse(store.get('scs:branding') || '{}'); for (const k in brandIds) if (b[k]) $(brandIds[k]).value = b[k]; } catch {}
+
+  function branding() {
+    const env = {}; const values = {};
+    for (const k in brandIds) { const v = $(brandIds[k]).value; values[k] = v; if (v.trim()) env[envKeys[k]] = v; }
+    store.set('scs:branding', JSON.stringify(values));
+    return SC.brandingFromEnv(env);
+  }
+  function detectFormat(text) { return /^\uFEFF?\s*\{/.test(text) ? 'json' : 'markdown'; }
+  function loadRaw(text, format) { return format === 'json' ? JSON.parse(text.replace(/^﻿/, '')) : SC.parseMarkdown(text); }
+
+  // Layout and theme overrides, applied to the raw object before validation so
+  // layout rules (panel counts, line limits) are checked against the override.
+  const layoutSel = $('layout-sel'), themeSel = $('theme-sel'), palette = $('palette');
+  layoutSel.value = store.get('scs:layout') || '';
+  themeSel.value = store.get('scs:theme') || '';
+  layoutSel.addEventListener('change', () => { store.set('scs:layout', layoutSel.value); render(); });
+  themeSel.addEventListener('change', () => { store.set('scs:theme', themeSel.value); palette.hidden = themeSel.value !== 'custom'; render(); });
+  palette.hidden = themeSel.value !== 'custom';
+
+  // Custom theme: four colours plus the code palette, expanded into the full
+  // variable contract that src/themes/base.ts reads.
+  const pIds = { bg: 'p-bg', fg: 'p-fg', accent: 'p-accent', panel: 'p-panel', code: 'p-code', dots: 'p-dots' };
+  try { const saved = JSON.parse(store.get('scs:palette') || '{}'); for (const k in pIds) if (saved[k] !== undefined) { const el = $(pIds[k]); if (el.type === 'checkbox') el.checked = saved[k]; else el.value = saved[k]; } } catch {}
+  const customStyle = document.createElement('style'); document.head.appendChild(customStyle);
+  function paletteValues() { const v = {}; for (const k in pIds) { const el = $(pIds[k]); v[k] = el.type === 'checkbox' ? el.checked : el.value; } return v; }
+  function customThemeCss(p) {
+    const mix = (a, pct, b) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
+    return `.theme-custom {
+  --bg: ${p.bg}; --fg: ${p.fg}; --muted: ${mix(p.fg, 62, p.bg)}; --muted-2: ${mix(p.fg, 35, p.bg)};
+  --accent: ${p.accent}; --rule: ${mix(p.fg, 18, p.bg)}; --mark-border: ${mix(p.fg, 40, p.bg)};
+  --panel: ${p.panel}; --panel-border: ${mix('#ffffff', 8, p.panel)}; --panel-shadow: 0 10px 24px rgb(0 0 0 / 0.16);
+  --panel-header-bg: transparent; --panel-header-fg: ${mix('#ffffff', 72, p.panel)}; --panel-rule: ${mix('#ffffff', 14, p.panel)}; --panel-dot: ${p.accent};
+  --line-highlight: ${mix(p.accent, 24, p.panel)}; --underline: #ff6b6b; --notes-fg: ${mix('#ffffff', 84, p.panel)};
+  --good: #1f9d6b; --bad: #d9534f;
+}${p.dots ? '\n.theme-custom .dots { display: flex; }\n.theme-custom .dot { display: none; }' : ''}`;
+  }
+  function applyCustomTheme() {
+    const p = paletteValues();
+    store.set('scs:palette', JSON.stringify(p));
+    const css = customThemeCss(p);
+    SC.THEMES.custom = { name: 'custom', description: 'Sandbox custom theme', shikiTheme: p.code, css };
+    if (!SC.THEME_NAMES.includes('custom')) SC.THEME_NAMES.push('custom');
+    customStyle.textContent = css;
+  }
+  applyCustomTheme();
+  for (const k in pIds) $(pIds[k]).addEventListener('input', () => { applyCustomTheme(); schedule(); });
+  $('p-copy').addEventListener('click', async () => {
+    const p = paletteValues();
+    const ts = `import type { Theme } from './types.js';\n\n/** Generated in the sandbox; rename and register it in src/themes/index.ts. */\nexport const custom: Theme = {\n  name: 'custom',\n  description: 'Describe the look here.',\n  shikiTheme: '${p.code}',\n  css: /* css */ \`\n${customThemeCss(p)}\n\`,\n};\n`;
+    try { await navigator.clipboard.writeText(ts); toast('Copied src/themes/custom.ts to the clipboard'); } catch { toast('Clipboard is not available here.'); }
+  });
+
+  function fitScale() {
+    const s = stagebox.clientWidth / 1080;
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  new ResizeObserver(fitScale).observe(stagebox);
+
+  let timer; let renderToken = 0;
+  function schedule() { clearTimeout(timer); timer = setTimeout(render, 250); }
+
+  async function render() {
+    const token = ++renderToken;
+    const text = source.value;
+    store.set('scs:source', text);
+    const format = detectFormat(text);
+    $('format-pill').textContent = format === 'json' ? 'JSON' : 'Markdown';
+    let card;
+    try {
+      const raw = loadRaw(text, format);
+      if (layoutSel.value) raw.layout = layoutSel.value;
+      if (themeSel.value) raw.theme = themeSel.value;
+      card = SC.validateCard(raw);
+    }
+    catch (e) { errorBox.textContent = e.message; errorBox.hidden = false; return; }
+    let html;
+    try { html = await SC.renderCard(card, branding()); }
+    catch (e) { errorBox.textContent = e.message; errorBox.hidden = false; return; }
+    if (token !== renderToken) return;
+    errorBox.hidden = true;
+    lastCard = card;
+    host.innerHTML = html;
+    stage.style.transform = 'none';
+    let fit;
+    try { fit = (0, eval)(SC.FIT_SCRIPT)[0]; } finally { fitScale(); }
+    $('s-layout').textContent = card.layout; $('s-theme').textContent = card.theme; $('s-panels').textContent = card.panels.length;
+    $('s-font').textContent = fit.fontSize + 'px';
+    const fitEl = $('s-fit');
+    if (fit.ok) { fitEl.textContent = '✓ fits'; fitEl.className = 'fit-ok'; overflowBox.hidden = true; }
+    else { fitEl.textContent = '✕ overflows'; fitEl.className = 'fit-bad'; overflowBox.textContent = 'The CLI would refuse this card: ' + fit.reason + '.'; overflowBox.hidden = false; }
+    for (const b of ['export-1', 'export-2', 'copy']) $(b).disabled = !fit.ok;
+  }
+
+  source.addEventListener('input', schedule);
+  source.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') { e.preventDefault(); const s = source.selectionStart, t = source.selectionEnd; source.setRangeText('  ', s, t, 'end'); schedule(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
+  });
+  example.addEventListener('change', () => { source.value = SC.examples[example.value]; store.set('scs:example', example.value); render(); });
+  for (const k in brandIds) $(brandIds[k]).addEventListener('input', schedule);
+
+  // Export.
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
+  async function rasterise(scale) {
+    const card = host.querySelector('.card');
+    stage.style.transform = 'none';
+    try {
+      return await SC.toBlob(card, { width: 1080, height: 1350, pixelRatio: scale, cacheBust: false, skipAutoScale: true, fontEmbedCSS: FONT_CSS });
+    } finally { fitScale(); }
+  }
+  function filename(scale) {
+    const stem = (lastCard?.title || 'card').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'card';
+    return stem + (scale > 1 ? '@' + scale + 'x' : '') + '.png';
+  }
+  async function exportPng(scale) {
+    const btn = $('export-' + scale); const label = btn.textContent; btn.disabled = true; btn.textContent = 'Rendering…';
+    try {
+      const blob = await rasterise(scale);
+      if (!blob) throw new Error('The browser could not rasterise the card.');
+      if (downloads) {
+        try { await downloads.save({ filename: filename(scale), data: blob }); toast('Saved ' + filename(scale)); return; }
+        catch (e) { if (e && e.code === 'declined') return; }
+      } else if (!window.claude) {
+        // Plain browser (npm run sandbox): a normal download link works.
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename(scale);
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        toast('Downloaded ' + filename(scale)); return;
+      }
+      const img = $('preview-img'); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(blob);
+      $('preview-hint').textContent = 'Right-click or long-press the image to save it (' + (scale * 1080) + ' × ' + (scale * 1350) + ').';
+      $('preview').showModal();
+    } catch (e) { toast(e.message); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  }
+  async function copyPng() {
+    try {
+      const blob = await rasterise(1);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      toast('Copied 1080 × 1350 PNG');
+    } catch (e) { toast('Copy is not available in this browser; use Export instead.'); }
+  }
+  $('export-1').addEventListener('click', () => exportPng(1));
+  $('export-2').addEventListener('click', () => exportPng(2));
+  $('copy').addEventListener('click', copyPng);
+  $('preview-close').addEventListener('click', () => $('preview').close());
+
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('downloads').then((d) => { downloads = d; if (d) $('export-hint').textContent = 'Exports save as PNG files. They are rasterised by your browser; the CLI\'s Chromium render is the canonical output.'; }).catch(() => {});
+  }
+
+  render();
+})();
+</script>

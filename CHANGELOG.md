@@ -16,6 +16,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - `CARD_BROWSER_PATH` to use an existing Chromium binary.
 - `social-card` binary (`npm run build`), GitHub Actions CI, Prettier, browser-backed render tests, `npm run samples`.
 - `docs/TECHNIQUES.md` developer reference, `CONTRIBUTING.md`, this changelog.
+- `npm run sandbox`: a single-file browser sandbox built from the same core, with a live editor, layout and theme pickers, a custom palette editor that exports a theme module, and PNG export.
 
 ### Changed
 

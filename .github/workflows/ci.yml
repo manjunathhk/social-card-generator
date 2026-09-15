@@ -23,6 +23,8 @@ jobs:
       - run: npm run test:render
       - name: Render the sample gallery with the compiled CLI
         run: npm run samples -- --built
+      - name: Build the browser sandbox
+        run: npm run sandbox && cp out/sandbox.html sample/sandbox.html
       - uses: actions/upload-artifact@v4
         with:
           name: rendered-cards

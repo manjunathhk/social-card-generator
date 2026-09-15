@@ -182,6 +182,16 @@ Copy `.env.sample` to `.env` and fill in your details. Defaults are neutral plac
 
 Shell variables override the file. The committed samples use `examples/branding.env`.
 
+## Browser sandbox
+
+The same core runs in a browser for quick experiments: a Markdown or JSON editor with live preview, layout and theme pickers, a custom palette editor that can be copied out as a theme file, and PNG export.
+
+```sh
+npm run sandbox        # writes out/sandbox.html
+```
+
+Open `out/sandbox.html` directly in a browser. It has no server, no build watcher and no network dependency beyond the UI font. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
+
 ## How it works
 
 Source → parse and validate → Shiki highlights each panel → an HTML document with embedded fonts and the theme's CSS → Chromium lays it out → an in-page script shrinks code to fit or reports overflow → screenshot (PNG) or print (PDF).

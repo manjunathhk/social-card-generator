@@ -1,7 +1,7 @@
 {
   "name": "@manjunathhk/social-card-generator",
   "version": "2.0.0",
-  "description": "Render technical social cards (1080 × 1350 PNG or multi-page PDF carousels) from Markdown or JSON with Shiki syntax highlighting and Playwright.",
+  "description": "Render technical social cards (1080 \u00d7 1350 PNG or multi-page PDF carousels) from Markdown or JSON with Shiki syntax highlighting and Playwright.",
   "keywords": [
     "social-card",
     "linkedin",
@@ -39,6 +39,7 @@
     "test": "tsx --test src/*.test.ts",
     "test:render": "tsx --test src/render/*.test.ts",
     "samples": "tsx scripts/samples.ts",
+    "sandbox": "tsx scripts/build-sandbox.ts",
     "browser:install": "playwright install chromium",
     "prepublishOnly": "npm run build"
   },
@@ -51,6 +52,8 @@
   },
   "devDependencies": {
     "@types/node": "22.19.1",
+    "esbuild": "^0.28.2",
+    "html-to-image": "^1.11.11",
     "prettier": "^3.6.2",
     "tsx": "4.23.13",
     "typescript": "7.0.2"
