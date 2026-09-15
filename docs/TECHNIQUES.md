@@ -19,9 +19,10 @@ A developer reference for how the generator works and why it is built this way. 
 13. [Running the core in the browser](#running-the-core-in-the-browser)
 14. [History: a dumb store behind two backends](#history-a-dumb-store-behind-two-backends)
 15. [The Docker image](#the-docker-image)
-16. [Adding a theme](#adding-a-theme)
-17. [Adding a layout](#adding-a-layout)
-18. [Gotchas](#gotchas)
+16. [Branding: one server default, read-only from the UI](#branding-one-server-default-read-only-from-the-ui)
+17. [Adding a theme](#adding-a-theme)
+18. [Adding a layout](#adding-a-layout)
+19. [Gotchas](#gotchas)
 
 ## The one idea
 
@@ -224,6 +225,14 @@ History is **append-only** by design: `openHistory` loads a record's source back
 The image has two stages, and the split matters more than usual here: the **build** stage needs the full dependency tree (`shiki`, `@fontsource/*`, `esbuild`, `typescript`) to produce `out/sandbox.html` and compile the server, but the **runtime** stage needs neither those dependencies nor Playwright's browser — rendering happens in the visitor's browser, and the server only stores what it's sent. So the runtime stage copies exactly two things out of the build stage, `out/sandbox.html` and `dist-server/`, into a fresh `node:24-slim`, with no `npm ci` and no `node_modules` at all. `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` in the build stage stops Playwright's postinstall from downloading Chromium for an image that will never launch a browser.
 
 `SANDBOX_DATA_DIR` (default `/data`, declared as a `VOLUME`) is where cards live; mount it or history doesn't survive `docker rm`. `SANDBOX_HTML_PATH` and `PORT` are the other two knobs `server/index.ts` reads from the environment. The `HEALTHCHECK` calls `/api/health` with Node's own `fetch` rather than installing `curl`, so the final image stays exactly as minimal as the two-file copy above implies.
+
+## Branding: one server default, read-only from the UI
+
+`GET /api/branding` (`server/index.ts`) reads `CARD_*` env vars once, at server start, and hands the resolved `Branding` back to the client. That's the server's one shared default, and it's read-only by design: nothing the client does changes it.
+
+Editing the Branding fields in the sandbox UI only ever writes to that browser's own `localStorage` (`scs:branding`). It's a personal override, invisible to every other visitor, and it disappears the moment that browser's storage is cleared. If you didn't set `CARD_*` env vars when the container was created, every visitor who wants their own branding has to fill in the form themselves; the server's default stays whatever it was (blank, if nothing was set) until the container is recreated with new env vars.
+
+A UI action cannot make its values "part of the environment": a process's env vars are fixed at the moment it starts, nothing outside can mutate them afterward, and even if something could, the change wouldn't survive a restart. The equivalent that _would_ work — a `POST /api/branding` that writes a `branding.json` next to the cards on the `/data` volume, with `GET /api/branding` preferring that file over the env vars — was considered and deliberately not built. This server already has no authentication and no per-visitor isolation (see History, above); adding a write path here would mean any visitor can silently overwrite the shared default that every other visitor sees, with no way to tell who changed it or revert it short of editing the volume by hand. That's a bigger step than the read-only default it would replace, so it's parked until someone actually wants shared, UI-editable branding defaults badly enough to also want the access-control question that comes with it.
 
 ## Adding a theme
 
