@@ -290,6 +290,24 @@ CI runs all of the above on every push and uploads the rendered gallery as an ar
 - A text-only `list` layout for numbered rules and checklists.
 - Publish to npm.
 
+## Prior art
+
+Other tools turn code into a shareable image. None combine a diffable source file, a deterministic offline render, and a carousel export the way this one does:
+
+| Tool                                                      | Form                          | Self-hostable                            | Carousel / multi-panel              | Source-controlled                                   |
+| --------------------------------------------------------- | ----------------------------- | ---------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| [Carbon](https://carbon.now.sh)                           | Web only                      | No                                       | No                                  | No — paste and screenshot                           |
+| [Ray.so](https://ray.so)                                  | Web only (Raycast)            | No                                       | No                                  | No                                                  |
+| [Snappify](https://snappify.com)                          | Paid SaaS + API               | No                                       | Yes (slides) — closest on this axis | No                                                  |
+| [Chalk.ist](https://chalk.ist)                            | Web, has an API               | No                                       | No                                  | No                                                  |
+| [CodeImage](https://codeimage.dev)                        | Web, open source              | Yes                                      | No                                  | No                                                  |
+| [Silicon](https://github.com/Aloxaf/silicon)              | CLI (Rust)                    | N/A — local binary                       | No                                  | Yes, but no card/branding concept                   |
+| [freeze](https://github.com/charmbracelet/freeze)         | CLI (Go)                      | N/A — local binary                       | No                                  | Yes (a config file)                                 |
+| [carbon-now-cli](https://github.com/mixn/carbon-now-cli)  | CLI wrapper around Carbon     | No — drives the live site via Playwright | No                                  | Partial                                             |
+| [Satori](https://github.com/vercel/satori) / `@vercel/og` | Programmatic OG-image library | Yes — you own the runtime                | No                                  | Yes, but each image is React/JSX, not a card format |
+
+Snappify is the nearest match on carousels, but it's closed SaaS with no self-host option. Silicon and freeze are the nearest on "local, scriptable, CLI-first," but neither has the layout/theme/branding contract a repeatable social card needs. This project sits at the intersection: a Markdown or JSON file you can diff and review, rendered the same way every time, self-hosted as a Docker image when you want a shared history.
+
 ## License
 
 MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter, Bricolage Grotesque, Commit Mono, Geist Sans, Geist Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
