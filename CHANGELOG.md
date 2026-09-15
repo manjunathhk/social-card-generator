@@ -1,12 +1,12 @@
-## [1.0.1](https://github.com/manjunathhk/social-card-generator/compare/v1.0.0...v1.0.1) (2026-09-15)
-
-### Bug Fixes
-
-- **release:** restore version to 2.1.0 after semantic-release's bad first run ([#7](https://github.com/manjunathhk/social-card-generator/issues/7)) ([20ede94](https://github.com/manjunathhk/social-card-generator/commit/20ede94e5237d6a989b43a16f6c1989af3f6a8c2))
-
 # Changelog
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
+
+## [2.1.1] - 2026-09-15
+
+### Fixed
+
+- Two consecutive semantic-release runs (see the 2.1.0 entry below) mis-anchored again because the bad `v1.0.0`/`v1.0.1` tags they created were still the highest tags in the repo. Deleted those tags and their GitHub Releases, and hand-corrected `version` to `2.1.1` — `2.1.0` plus the one `fix:` commit since (#7). Seeded `v2.0.0`/`v2.1.0`/`v2.1.1` tags so future runs anchor correctly.
 
 ## [2.1.0] - 2026-09-15
 
