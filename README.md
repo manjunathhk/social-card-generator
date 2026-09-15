@@ -242,6 +242,27 @@ Opened without a server behind it (a plain `file://` open, or this page viewed a
 | `npm run test:server`       | Runs the server's tests (storage and HTTP routes; no browser needed) |
 | `docker compose up --build` | Builds the image and runs it with a persistent named volume          |
 
+### Deploying a prebuilt image (VPS)
+
+CI publishes the image built from `main` to Docker Hub (`linux/amd64` and `linux/arm64`), so a VPS can pull it directly instead of building from source:
+
+```sh
+docker run -d --name social-card-sandbox -p 8787:8787 -v sandbox-data:/data \
+  --restart unless-stopped manjunathhk/social-card-generator:latest
+```
+
+Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. `:latest` tracks the most recent push to `main` — pin to a specific `:<git-sha>` tag instead if you want deploys to be explicit.
+
+#### Publishing to Docker Hub
+
+The `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds and pushes the image after `verify` and `docker` pass on `main`, or on a manual `workflow_dispatch` run. It needs two repo secrets, and silently skips publishing without them (CI still stays green):
+
+| Setting (Settings → Secrets and variables → Actions) | Value                                                                                                 |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Secret `DOCKERHUB_USERNAME`                          | Your Docker Hub username                                                                              |
+| Secret `DOCKERHUB_TOKEN`                             | A Docker Hub [access token](https://hub.docker.com/settings/security) (not your password)             |
+| Variable `DOCKERHUB_IMAGE` (optional)                | Target image, e.g. `yourname/social-card-generator` — defaults to `manjunathhk/social-card-generator` |
+
 ## How it works
 
 Source → parse and validate → Shiki highlights each panel → an HTML document with embedded fonts and the theme's CSS → Chromium lays it out → an in-page script shrinks code to fit or reports overflow → screenshot (PNG) or print (PDF).
@@ -268,6 +289,24 @@ CI runs all of the above on every push and uploads the rendered gallery as an ar
 - A `terminal` panel style for showing program output under code.
 - A text-only `list` layout for numbered rules and checklists.
 - Publish to npm.
+
+## Prior art
+
+Other tools turn code into a shareable image. None combine a diffable source file, a deterministic offline render, and a carousel export the way this one does:
+
+| Tool                                                      | Form                          | Self-hostable                            | Carousel / multi-panel              | Source-controlled                                   |
+| --------------------------------------------------------- | ----------------------------- | ---------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| [Carbon](https://carbon.now.sh)                           | Web only                      | No                                       | No                                  | No — paste and screenshot                           |
+| [Ray.so](https://ray.so)                                  | Web only (Raycast)            | No                                       | No                                  | No                                                  |
+| [Snappify](https://snappify.com)                          | Paid SaaS + API               | No                                       | Yes (slides) — closest on this axis | No                                                  |
+| [Chalk.ist](https://chalk.ist)                            | Web, has an API               | No                                       | No                                  | No                                                  |
+| [CodeImage](https://codeimage.dev)                        | Web, open source              | Yes                                      | No                                  | No                                                  |
+| [Silicon](https://github.com/Aloxaf/silicon)              | CLI (Rust)                    | N/A — local binary                       | No                                  | Yes, but no card/branding concept                   |
+| [freeze](https://github.com/charmbracelet/freeze)         | CLI (Go)                      | N/A — local binary                       | No                                  | Yes (a config file)                                 |
+| [carbon-now-cli](https://github.com/mixn/carbon-now-cli)  | CLI wrapper around Carbon     | No — drives the live site via Playwright | No                                  | Partial                                             |
+| [Satori](https://github.com/vercel/satori) / `@vercel/og` | Programmatic OG-image library | Yes — you own the runtime                | No                                  | Yes, but each image is React/JSX, not a card format |
+
+Snappify is the nearest match on carousels, but it's closed SaaS with no self-host option. Silicon and freeze are the nearest on "local, scriptable, CLI-first," but neither has the layout/theme/branding contract a repeatable social card needs. This project sits at the intersection: a Markdown or JSON file you can diff and review, rendered the same way every time, self-hosted as a Docker image when you want a shared history.
 
 ## License
 
