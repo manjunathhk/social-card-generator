@@ -544,6 +544,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     store.set('scs:source', NEW_CARD_TEMPLATE);
     layoutSel.value = ''; themeSel.value = ''; palette.hidden = true;
     store.set('scs:layout', ''); store.set('scs:theme', '');
+    example.value = ''; loadedExample = ''; // New starts a blank card, not "still editing that example"
     editingHint.hidden = true; editingHint.textContent = '';
     render();
     source.focus();
