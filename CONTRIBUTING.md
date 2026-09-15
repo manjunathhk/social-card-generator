@@ -21,6 +21,27 @@ npm run samples           # if your change affects rendering
 
 CI runs the same steps on Ubuntu with Node 24. If `npm run samples` changed any image in `sample/`, commit the new images; the gallery in the README is the visual regression record.
 
+## Commit messages
+
+`version` and `CHANGELOG.md` are cut automatically by semantic-release from commit messages on `main`, using [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional BREAKING CHANGE: <description> footer]
+```
+
+| Type                                                               | Effect on the next release                                       |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `fix:`, `perf:`                                                    | patch bump                                                       |
+| `feat:`                                                            | minor bump                                                       |
+| any type + `BREAKING CHANGE:` footer                               | major bump                                                       |
+| `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` | no release, but the image still publishes `:latest`/`:<git-sha>` |
+
+A commit's _type_, not the files it touches, decides this — a `chore:` that happens to fix a real Dockerfile bug will not cut a release, so pick `fix:`/`feat:` for anything user- or deploy-visible. Squash-merge PRs with a Conventional Commits title, since semantic-release reads the commit that lands on `main`.
+
 ## Conventions
 
 - **TypeScript, strict, no unused symbols.** The config enforces it.

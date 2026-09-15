@@ -55,20 +55,61 @@ jobs:
           docker logs sandbox
           docker rm -f sandbox
 
+  release:
+    name: Bump version (semantic-release)
+    needs: [verify, docker]
+    # Only a real push to main can cut a release; a manual dispatch never does
+    # (it may target any ref, and re-running semantic-release on a commit it
+    # already released is a no-op anyway, so there is nothing to gain from
+    # allowing it here).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      published: ${{ steps.release.outputs.new-release-published }}
+      version: ${{ steps.release.outputs.new-release-version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Run semantic-release
+        id: release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish:
     name: Publish image to Docker Hub
-    needs: [verify, docker]
-    # Runs after a verified push to main (or a manual trigger). The secrets
-    # context can't be referenced in *any* if: (job or step) — only in env:
-    # and with: — so whether it actually publishes is decided below via a
-    # step output derived from an env var. See README.md ("Publishing to
-    # Docker Hub") for how to set DOCKERHUB_USERNAME/DOCKERHUB_TOKEN.
+    needs: [verify, docker, release]
+    # Runs after a verified push to main (or a manual trigger), whether or not
+    # semantic-release cut a new version — a commit that doesn't warrant a
+    # version bump (docs, chore, ...) still gets a fresh :latest and :sha
+    # image; only the semver tag depends on `release` actually publishing.
+    # The secrets context can't be referenced in *any* if: (job or step) —
+    # only in env: and with: — so whether it actually publishes is decided
+    # below via a step output derived from an env var. See README.md
+    # ("Publishing to Docker Hub") for how to set
+    # DOCKERHUB_USERNAME/DOCKERHUB_TOKEN.
     if: >-
+      always() && !cancelled() && !failure() &&
       github.event_name != 'pull_request' &&
       (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Re-checks-out main so a version bump `release` just pushed is
+          # included in the image; workflow_dispatch on another ref is left
+          # exactly as dispatched.
+          ref: ${{ github.event_name == 'push' && 'main' || github.ref }}
       - name: Check for Docker Hub credentials
         id: creds
         env:
@@ -81,9 +122,11 @@ jobs:
           fi
       - name: Resolve image name and version
         id: image
+        env:
+          RELEASE_VERSION: ${{ needs.release.outputs.version }}
         run: |
           echo "name=${{ vars.DOCKERHUB_IMAGE || 'manjunathhk/social-card-generator' }}" >> "$GITHUB_OUTPUT"
-          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "version=${RELEASE_VERSION:-$(node -p "require('./package.json').version")}" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@v3
         if: steps.creds.outputs.configured == 'true'
       - uses: docker/setup-buildx-action@v3

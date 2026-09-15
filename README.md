@@ -251,7 +251,9 @@ docker run -d --name social-card-sandbox -p 8787:8787 -v sandbox-data:/data \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
-Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. Every push publishes three tags: `:latest`, the exact commit `:<git-sha>`, and `:<version>` (the `version` field in `package.json`, e.g. `:2.0.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.1.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+
+`version` in `package.json` and `CHANGELOG.md` are no longer hand-edited: the `release` job runs [semantic-release](https://semantic-release.gitbook.io/) on every push to `main`, deriving a patch/minor/major bump from [Conventional Commits](https://www.conventionalcommits.org/) since the last release (`fix:`/`perf:` → patch, `feat:` → minor, a `BREAKING CHANGE:` footer → major; `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` publish `:latest`/`:<git-sha>` but cut no version). It commits the bumped `package.json`/`package-lock.json` and a generated `CHANGELOG.md` entry back to `main` (`chore(release): ... [skip ci]`, which does not retrigger CI) and creates a GitHub Release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the commit message format this depends on.
 
 #### Publishing to Docker Hub
 
