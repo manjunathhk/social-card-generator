@@ -17,9 +17,11 @@ A developer reference for how the generator works and why it is built this way. 
 11. [Testing strategy](#testing-strategy)
 12. [Packaging: tsx in development, compiled JS in the binary](#packaging-tsx-in-development-compiled-js-in-the-binary)
 13. [Running the core in the browser](#running-the-core-in-the-browser)
-14. [Adding a theme](#adding-a-theme)
-15. [Adding a layout](#adding-a-layout)
-16. [Gotchas](#gotchas)
+14. [History: a dumb store behind two backends](#history-a-dumb-store-behind-two-backends)
+15. [The Docker image](#the-docker-image)
+16. [Adding a theme](#adding-a-theme)
+17. [Adding a layout](#adding-a-layout)
+18. [Gotchas](#gotchas)
 
 ## The one idea
 
@@ -206,6 +208,22 @@ Both tiers use Node's built-in `node:test` runner. No test framework dependency.
 In the page, the preview is the real card element, not a screenshot: `renderCard` produces the markup, the page installs the base and theme CSS, and the same `FIT_SCRIPT` string runs against the document. The card is scaled for display with a CSS transform, which is removed for the instant the fit loop measures so that `getBoundingClientRect` and `clientHeight` agree. Export uses `html-to-image` to rasterise the card element at 1x or 2x; it is handed the embedded font CSS directly so it does not scan cross-origin stylesheets. The page-level rules in `base.ts` (`body`, `@page`) are stripped before the card CSS joins a host page, which is a sign they belong in the document wrapper rather than the shared stylesheet.
 
 A theme built in the sandbox's palette editor is expanded into the full variable contract with `color-mix` and can be copied out as a `src/themes/<name>.ts` module, so the path from experiment to committed theme is paste, rename, register.
+
+## History: a dumb store behind two backends
+
+The History panel needs the same behaviour whether the page is opened as a file, viewed as a claude.ai artifact, or served by `server/`. It gets that from one rule: **the server never renders or validates anything.** The browser has already produced a `Card`, highlighted it, and rasterised the PNG by the time anything is saved; the server's only job is to remember bytes it's handed.
+
+That rule is what keeps the server dependency-free. `server/store.ts` writes one `<id>.json` (everything `openHistory` needs to restore the editor: source, format, layout and theme overrides, the custom palette if any, and the branding fields as typed — not the resolved `Branding`, so a blank field stays blank on reopen) and one `<id>.png` per entry under `<dataDir>/cards/`. `server/index.ts` is a hand-rolled router over `node:http`: a handful of routes don't need a framework, and it keeps the server free of any dependency the CLI doesn't already have.
+
+The client (`web/sandbox/index.template.html`) doesn't know which backend it's talking to. `HistoryStore` pings `/api/health` once at startup; if that succeeds, `list`/`save`/`get`/`remove` call the JSON API and `imageUrl` points at `/api/cards/<id>/image`. If it fails — no server, e.g. a plain file open or the claude.ai artifact mirror — the same four functions read and write this browser's IndexedDB instead, and `imageUrl` returns an object URL for the stored `Blob`. Every call site above `HistoryStore` is identical either way. This is the same shape as `claude.use(name)` resolving `null` when a capability isn't available: detect once, branch inside the abstraction, never inside the UI code.
+
+History is **append-only** by design: `openHistory` loads a record's source back into the editor, but exporting again always creates a new entry rather than updating the one that was opened. A feature called "history" that can silently overwrite itself is a footgun; if you want in-place revisions later, that's a deliberate new operation (`PUT /api/cards/:id`), not a change to what Export does.
+
+## The Docker image
+
+The image has two stages, and the split matters more than usual here: the **build** stage needs the full dependency tree (`shiki`, `@fontsource/*`, `esbuild`, `typescript`) to produce `out/sandbox.html` and compile the server, but the **runtime** stage needs neither those dependencies nor Playwright's browser — rendering happens in the visitor's browser, and the server only stores what it's sent. So the runtime stage copies exactly two things out of the build stage, `out/sandbox.html` and `dist-server/`, into a fresh `node:22-slim`, with no `npm ci` and no `node_modules` at all. `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` in the build stage stops Playwright's postinstall from downloading Chromium for an image that will never launch a browser.
+
+`SANDBOX_DATA_DIR` (default `/data`, declared as a `VOLUME`) is where cards live; mount it or history doesn't survive `docker rm`. `SANDBOX_HTML_PATH` and `PORT` are the other two knobs `server/index.ts` reads from the environment. The `HEALTHCHECK` calls `/api/health` with Node's own `fetch` rather than installing `curl`, so the final image stays exactly as minimal as the two-file copy above implies.
 
 ## Adding a theme
 

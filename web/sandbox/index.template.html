@@ -150,6 +150,19 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
 }
 .toast.show { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+.history-head { display: flex; align-items: baseline; justify-content: space-between; }
+.history-head h2 { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); }
+.history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; max-height: 320px; overflow-y: auto; padding-right: 2px; }
+.history-item { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--rule); background: var(--surface-2); cursor: pointer; transition: border-color .15s; }
+.history-item:hover, .history-item:focus-visible { border-color: var(--accent); }
+.history-item img { display: block; width: 100%; aspect-ratio: 1080 / 1350; object-fit: cover; background: var(--surface-3); }
+.history-title { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 6px 3px; font-size: 10px; line-height: 1.3; color: #fff; background: linear-gradient(to top, rgb(0 0 0 / .75), transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-del {
+  position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; border: 0;
+  background: rgb(0 0 0 / .55); color: #fff; font-size: 11px; line-height: 20px; text-align: center; cursor: pointer; padding: 0;
+}
+.history-del:hover { background: var(--bad); }
 </style>
 
 <div class="glow glow-1" aria-hidden="true"></div>
@@ -166,6 +179,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   <main class="work">
     <section class="pane" aria-label="Card source">
       <div class="toolbar">
+        <button class="btn" id="new-card" type="button">New</button>
         <label for="example">Example</label>
         <select id="example"></select>
         <span class="pill" id="format-pill">Markdown</span>
@@ -177,6 +191,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
         <label for="theme-sel">Theme</label>
         <select id="theme-sel"><option value="">from source</option><option value="custom">custom…</option></select>
       </div>
+      <p class="hint" id="editing-hint" hidden></p>
       <div class="palette" id="palette" hidden>
         <div class="fields palette-fields">
           <label><span>Background</span><input id="p-bg" type="color" value="#fffcf0"></label>
@@ -226,6 +241,13 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
         </div>
       </div>
       <p class="notes">Bundled languages: <span id="langs-list"></span>. PDF carousels and other Shiki languages are available in the CLI only.</p>
+
+      <div class="stagewrap">
+        <div class="history-head"><h2>History</h2><span class="hint" id="history-count">0 saved</span></div>
+        <p class="hint" id="history-empty">Exported cards appear here — nothing yet.</p>
+        <div class="history-grid" id="history-list" hidden></div>
+        <p class="hint">Click a card to reopen it for editing. Right-click or long-press its image to save it directly. Saved here: <span id="history-backend">checking…</span>.</p>
+      </div>
     </section>
   </main>
 </div>
@@ -279,10 +301,16 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   example.value = store.get('scs:example') ?? DEFAULT_EXAMPLE;
   try { const b = JSON.parse(store.get('scs:branding') || '{}'); for (const k in brandIds) if (b[k]) $(brandIds[k]).value = b[k]; } catch {}
 
+  function brandingValues() {
+    const values = {};
+    for (const k in brandIds) values[k] = $(brandIds[k]).value;
+    return values;
+  }
   function branding() {
-    const env = {}; const values = {};
-    for (const k in brandIds) { const v = $(brandIds[k]).value; values[k] = v; if (v.trim()) env[envKeys[k]] = v; }
+    const values = brandingValues();
     store.set('scs:branding', JSON.stringify(values));
+    const env = {};
+    for (const k in brandIds) if (values[k].trim()) env[envKeys[k]] = values[k];
     return SC.brandingFromEnv(env);
   }
   function detectFormat(text) { return /^\uFEFF?\s*\{/.test(text) ? 'json' : 'markdown'; }
@@ -336,6 +364,169 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     try { await navigator.clipboard.writeText(ts); toast('Copied src/themes/custom.ts to the clipboard'); } catch { toast('Clipboard is not available here.'); }
   });
 
+  // History: exported cards, saved to the same-origin server (server/) when
+  // this page is served by it, or to this browser's IndexedDB otherwise —
+  // e.g. opened as a plain file, or viewed on claude.ai. Same UI either way;
+  // the page just detects what is available, once, at startup.
+  const HistoryStore = (() => {
+    let apiAvailable;
+    async function hasApi() {
+      if (apiAvailable === undefined) {
+        try { apiAvailable = (await fetch('/api/health', { signal: AbortSignal.timeout(800) })).ok; }
+        catch { apiAvailable = false; }
+      }
+      return apiAvailable;
+    }
+
+    let dbPromise;
+    function idb() {
+      dbPromise ??= new Promise((resolve, reject) => {
+        const req = indexedDB.open('social-card-sandbox', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('cards', { keyPath: 'id' });
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      return dbPromise;
+    }
+    function idbRun(mode, run) {
+      return idb().then((db) => new Promise((resolve, reject) => {
+        const tx = db.transaction('cards', mode);
+        const result = run(tx.objectStore('cards'));
+        tx.oncomplete = () => resolve(result && result.result);
+        tx.onerror = () => reject(tx.error);
+      }));
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1]);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    return {
+      async backendLabel() { return (await hasApi()) ? 'this server' : 'this browser (not shared with other devices)'; },
+      async list() {
+        if (await hasApi()) {
+          const r = await fetch('/api/cards');
+          if (!r.ok) throw new Error('Could not load history.');
+          return (await r.json()).cards;
+        }
+        const all = await idbRun('readonly', (store) => store.getAll());
+        return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      },
+      async save(meta, blob) {
+        if (await hasApi()) {
+          const pngBase64 = await blobToBase64(blob);
+          const r = await fetch('/api/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...meta, pngBase64 }) });
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Could not save to history.');
+          return r.json();
+        }
+        const record = { ...meta, id: crypto.randomUUID(), createdAt: new Date().toISOString(), blob };
+        await idbRun('readwrite', (store) => store.put(record));
+        return record;
+      },
+      async get(id) {
+        if (await hasApi()) {
+          const r = await fetch('/api/cards/' + id);
+          return r.ok ? r.json() : undefined;
+        }
+        return idbRun('readonly', (store) => store.get(id));
+      },
+      async remove(id) {
+        if (await hasApi()) { await fetch('/api/cards/' + id, { method: 'DELETE' }); return; }
+        await idbRun('readwrite', (store) => store.delete(id));
+      },
+      imageUrl(record) {
+        if (record.blob) { record._objectUrl ??= URL.createObjectURL(record.blob); return record._objectUrl; }
+        return '/api/cards/' + record.id + '/image';
+      },
+    };
+  })();
+
+  HistoryStore.backendLabel().then((label) => { $('history-backend').textContent = label; });
+
+  const editingHint = $('editing-hint');
+
+  async function refreshHistory() {
+    let records;
+    try { records = await HistoryStore.list(); } catch (e) { toast(e.message); return; }
+    const list = $('history-list'), empty = $('history-empty');
+    $('history-count').textContent = records.length + (records.length === 1 ? ' saved' : ' saved');
+    if (!records.length) { list.hidden = true; empty.hidden = false; return; }
+    empty.hidden = true; list.hidden = false;
+    list.replaceChildren();
+    for (const record of records.slice(0, 60)) {
+      const tile = document.createElement('div');
+      tile.className = 'history-item'; tile.tabIndex = 0; tile.role = 'button';
+      const img = document.createElement('img'); img.src = HistoryStore.imageUrl(record); img.loading = 'lazy'; img.alt = '';
+      const title = document.createElement('span'); title.className = 'history-title'; title.textContent = record.title || 'Untitled';
+      const del = document.createElement('button'); del.className = 'history-del'; del.type = 'button'; del.textContent = '✕'; del.setAttribute('aria-label', 'Delete from history');
+      tile.append(img, title, del);
+      const open = () => openHistory(record.id);
+      tile.addEventListener('click', open);
+      tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+      del.addEventListener('click', (e) => { e.stopPropagation(); removeHistory(record.id); });
+      list.appendChild(tile);
+    }
+  }
+
+  async function openHistory(id) {
+    const record = await HistoryStore.get(id);
+    if (!record) { toast('That card is no longer available.'); refreshHistory(); return; }
+    source.value = record.source;
+    store.set('scs:source', record.source);
+    layoutSel.value = record.layout || ''; themeSel.value = record.theme || '';
+    store.set('scs:layout', layoutSel.value); store.set('scs:theme', themeSel.value);
+    palette.hidden = themeSel.value !== 'custom';
+    if (themeSel.value === 'custom' && record.customPalette) {
+      for (const k in pIds) if (record.customPalette[k] !== undefined) $(pIds[k]).value = record.customPalette[k];
+      applyCustomTheme();
+    }
+    for (const k in brandIds) if (record.branding && record.branding[k] !== undefined) $(brandIds[k]).value = record.branding[k];
+    editingHint.textContent = 'Editing "' + (record.title || 'Untitled') + '" from history — Export saves this as a new entry.';
+    editingHint.hidden = false;
+    render();
+  }
+
+  async function removeHistory(id) {
+    if (!confirm('Delete this card from history? This cannot be undone.')) return;
+    try { await HistoryStore.remove(id); } catch (e) { toast(e.message); }
+    refreshHistory();
+  }
+
+  async function saveToHistory(scale, blob) {
+    try {
+      await HistoryStore.save({
+        title: (lastCard?.title || 'Untitled').slice(0, 200),
+        format: detectFormat(source.value),
+        source: source.value,
+        layout: layoutSel.value,
+        theme: themeSel.value,
+        customPalette: themeSel.value === 'custom' ? paletteValues() : undefined,
+        branding: brandingValues(),
+        scale, width: 1080 * scale, height: 1350 * scale,
+      }, blob);
+      refreshHistory();
+    } catch (e) { toast('History not saved: ' + e.message); }
+  }
+
+  const NEW_CARD_TEMPLATE = [
+    '---', 'title: New card', 'subtitle: Replace this with your own subtitle.', "tags: []", "issue: '01'", '---', '',
+    '## Example', '```typescript', 'const example = true;', '```', '',
+  ].join('\n');
+  $('new-card').addEventListener('click', () => {
+    source.value = NEW_CARD_TEMPLATE;
+    store.set('scs:source', NEW_CARD_TEMPLATE);
+    layoutSel.value = ''; themeSel.value = ''; palette.hidden = true;
+    store.set('scs:layout', ''); store.set('scs:theme', '');
+    editingHint.hidden = true; editingHint.textContent = '';
+    render();
+    source.focus();
+  });
+
   function fitScale() {
     const s = stagebox.clientWidth / 1080;
     stage.style.transform = 'scale(' + s + ')';
@@ -382,7 +573,11 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     if (e.key === 'Tab') { e.preventDefault(); const s = source.selectionStart, t = source.selectionEnd; source.setRangeText('  ', s, t, 'end'); schedule(); }
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
   });
-  example.addEventListener('change', () => { source.value = SC.examples[example.value]; store.set('scs:example', example.value); render(); });
+  example.addEventListener('change', () => {
+    source.value = SC.examples[example.value]; store.set('scs:example', example.value);
+    editingHint.hidden = true; editingHint.textContent = '';
+    render();
+  });
   for (const k in brandIds) $(brandIds[k]).addEventListener('input', schedule);
 
   // Export.
@@ -403,6 +598,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     try {
       const blob = await rasterise(scale);
       if (!blob) throw new Error('The browser could not rasterise the card.');
+      void saveToHistory(scale, blob);
       if (downloads) {
         try { await downloads.save({ filename: filename(scale), data: blob }); toast('Saved ' + filename(scale)); return; }
         catch (e) { if (e && e.code === 'declined') return; }
@@ -435,5 +631,6 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   }
 
   render();
+  refreshHistory();
 })();
 </script>

@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-server
+out
+sample
+data
+.git
+.github
+.env
+.env.*
+!.env.sample
+*.log

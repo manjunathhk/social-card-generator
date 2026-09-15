@@ -18,6 +18,10 @@ All notable changes to this project are documented here. The format follows [Kee
 - `social-card` binary (`npm run build`), GitHub Actions CI, Prettier, browser-backed render tests, `npm run samples`.
 - `docs/TECHNIQUES.md` developer reference, `CONTRIBUTING.md`, this changelog.
 - `npm run sandbox`: a single-file browser sandbox built from the same core, with a live editor, layout and theme pickers, a custom palette editor that exports a theme module, and PNG export.
+- A **New** button and a **History** panel in the sandbox: every export is kept (source, settings and the PNG) and can be reopened for further editing. History is append-only — reopening and exporting again adds a new entry.
+- `server/`: a dependency-free `node:http` server that serves the sandbox at `/` (never at a `.html` path) and a small JSON API backing the History panel with plain files on disk. Opened without a server (a file, or the claude.ai artifact), history falls back to the browser's own IndexedDB automatically.
+- A two-stage `Dockerfile` and `docker-compose.yml` for self-hosting: `docker compose up --build`, then `http://localhost:8787`. The runtime image needs no `node_modules` and no browser, since rendering still happens client-side. No authentication — see the README for the caveat.
+- `npm run serve`, `npm run build:server`, `npm run test:server`.
 
 ### Changed
 

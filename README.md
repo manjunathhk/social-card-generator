@@ -201,6 +201,35 @@ npm run sandbox        # writes out/sandbox.html
 
 Open `out/sandbox.html` directly in a browser. It has no server, no build watcher and no network dependency beyond the UI font. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
 
+It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. Where that history lives depends on how the page is served, which is what the next section is about.
+
+## Running it as a server (Docker)
+
+`npm run sandbox` on its own produces a file with nowhere to keep history between visits. Serving the same bundle from a small server gives it one: a shared history, backed by plain files on disk, that survives closing the browser.
+
+```sh
+docker compose up --build
+# → http://localhost:8787
+```
+
+Or without Compose:
+
+```sh
+docker build -t social-card-sandbox .
+docker run -p 8787:8787 -v sandbox-data:/data social-card-sandbox
+```
+
+The page is served at `/`, never at a `.html` path. The container needs no Chromium: rendering still happens in the visitor's browser, and the server only stores the PNG and source it already produced, as one JSON file and one PNG per card under `/data/cards` — mount `/data` as a volume or history is lost when the container is removed. There is **no authentication and no per-visitor isolation**: everyone who can reach the server shares one history. That's the right tradeoff for a personal, self-hosted instance on a private network or behind your own reverse proxy; put an auth layer in front before exposing it more widely.
+
+Opened without a server behind it (a plain `file://` open, or this page viewed as a claude.ai artifact), the sandbox falls back to keeping history in that browser's own storage instead — same UI, just not shared across devices. The **Saved here:** line under the History panel says which one is active.
+
+| Command                     | What it does                                                         |
+| --------------------------- | -------------------------------------------------------------------- |
+| `npm run serve`             | Runs the server from source (`tsx`), for local development           |
+| `npm run build:server`      | Compiles the server to `dist-server/`                                |
+| `npm run test:server`       | Runs the server's tests (storage and HTTP routes; no browser needed) |
+| `docker compose up --build` | Builds the image and runs it with a persistent named volume          |
+
 ## How it works
 
 Source → parse and validate → Shiki highlights each panel → an HTML document with embedded fonts and the theme's CSS → Chromium lays it out → an in-page script shrinks code to fit or reports overflow → screenshot (PNG) or print (PDF).

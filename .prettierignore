@@ -6,3 +6,4 @@ package-lock.json
 THIRD_PARTY_NOTICES.md
 LICENSE
 web/sandbox/index.template.html
+dist-server/
