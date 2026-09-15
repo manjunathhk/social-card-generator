@@ -1,13 +1,16 @@
-# 1.0.0 (2026-09-15)
-
-
-### Features
-
-* **ci:** auto-bump version and changelog with semantic-release ([#6](https://github.com/manjunathhk/social-card-generator/issues/6)) ([e2a79ff](https://github.com/manjunathhk/social-card-generator/commit/e2a79ffc0676616da639068acc9696a4007b7b38))
-
 # Changelog
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
+
+## [2.1.0] - 2026-09-15
+
+### Added
+
+- CI now bumps `version` here and in `package.json` automatically via [semantic-release](https://semantic-release.gitbook.io/), driven by [Conventional Commits](https://www.conventionalcommits.org/) on `main`. See `CONTRIBUTING.md` for the commit format.
+
+### Fixed
+
+- semantic-release's first run on this repo had no prior `v2.0.0` git tag to anchor to, so it treated the project as unreleased and reset `version` to `1.0.0` (and published a `:1.0.0`-tagged, `:latest` image to Docker Hub). This restores `2.1.0` — the correct next version given the one `feat:` commit since `2.0.0` — and seeds a `v2.0.0`/`v2.1.0` git tag so future releases compute correctly.
 
 ## [2.0.0] - 2026-09-09
 
