@@ -45,10 +45,11 @@ jobs:
           load: true
       - name: Smoke-test the container
         run: |
-          docker run -d --name sandbox -p 8787:8787 social-card-sandbox:ci
+          docker run -d --name sandbox -p 8787:8787 -e CARD_AUTHOR="CI Author" social-card-sandbox:ci
           for i in $(seq 1 20); do curl -sf http://localhost:8787/api/health && break; sleep 1; done
           curl -sf http://localhost:8787/api/health
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/)" = "200"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/sandbox.html)" = "404"
+          curl -sf http://localhost:8787/api/branding | grep -q '"author":"CI Author"'
           docker logs sandbox
           docker rm -f sandbox

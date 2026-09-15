@@ -28,7 +28,7 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "card": "tsx src/cli.ts",
@@ -57,7 +57,7 @@
     "yaml": "2.9.0"
   },
   "devDependencies": {
-    "@types/node": "22.19.1",
+    "@types/node": "24.13.4",
     "esbuild": "^0.28.2",
     "html-to-image": "^1.11.11",
     "prettier": "^3.6.2",

@@ -9,6 +9,17 @@ services:
     volumes:
       - sandbox-data:/data
     restart: unless-stopped
+    # Optional: pre-fill the sandbox's branding fields for every visitor.
+    # All are optional; a blank or unset variable is simply omitted from the card.
+    # environment:
+    #   CARD_AUTHOR: 'Your Name'
+    #   CARD_WEBSITE: 'example.com'
+    #   CARD_SERIES: 'Field Notes'
+    #   CARD_MONOGRAM: ''
+    #   CARD_FOOTER_MARK: ''
+    #   CARD_ISSUE_LABEL: 'Note'
+    #   CARD_LINKEDIN: 'linkedin.com/in/you'
+    #   CARD_TWITTER: '@you'
 
 volumes:
   sandbox-data:

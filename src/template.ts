@@ -58,9 +58,14 @@ ${renderFooter(branding)}
 }
 
 function renderMasthead(card: Card, branding: Branding): string {
+  const mark = branding.monogram ? `<span class="mark">${e(branding.monogram)}</span>` : '';
+  const seriesName = branding.series ? `<span class="series-name">${e(branding.series)}</span>` : '';
+  const issueLabel = branding.issueLabel
+    ? `<span class="issue-label">${e(branding.issueLabel)}</span><span class="issue-sep">/</span>`
+    : '';
   return `<header class="masthead">
-  <div class="series"><span class="mark">${e(branding.monogram)}</span><span class="series-name">${e(branding.series)}</span></div>
-  <span class="issue"><span class="issue-label">${e(branding.issueLabel)}</span><span class="issue-sep">/</span><span class="issue-no">${e(card.issue)}</span></span>
+  <div class="series">${mark}${seriesName}</div>
+  <span class="issue">${issueLabel}<span class="issue-no">${e(card.issue)}</span></span>
 </header>`;
 }
 
@@ -102,8 +107,12 @@ function renderInsight(card: Card): string {
 
 function renderFooter(branding: Branding): string {
   const mark = branding.footerMark ? `<div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div>` : '';
+  const name = [branding.series, branding.author].filter(Boolean);
+  const nameLine = name.length ? `<strong>${name.map(e).join(' <span>·</span> ')}</strong>` : '';
+  const contact = [branding.website, branding.linkedin, branding.twitter].filter(Boolean);
+  const contactLine = contact.length ? `<span class="contact-line">${contact.map(e).join(' · ')}</span>` : '';
   return `<footer>
-  <div><strong>${e(branding.series)} <span>·</span> ${e(branding.author)}</strong><span class="website">${e(branding.website)}</span></div>
+  <div>${nameLine}${contactLine}</div>
   ${mark}
 </footer>`;
 }

@@ -180,8 +180,11 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     <section class="pane" aria-label="Card source">
       <div class="toolbar">
         <button class="btn" id="new-card" type="button">New</button>
-        <label for="example">Example</label>
-        <select id="example"></select>
+      </div>
+      <div class="toolbar">
+        <select id="example" aria-label="Load from Example">
+          <option value="" selected disabled hidden>Load from Example</option>
+        </select>
         <span class="pill" id="format-pill">Markdown</span>
         <span class="pill" id="langs-pill" title="Languages bundled in this sandbox">15 languages</span>
       </div>
@@ -217,6 +220,8 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <label><span>Monogram</span><input id="b-monogram" type="text" placeholder="initials"></label>
           <label><span>Footer mark</span><input id="b-footer" type="text" placeholder="blank hides it"></label>
           <label><span>Issue label</span><input id="b-issue" type="text" placeholder="Note"></label>
+          <label><span>LinkedIn</span><input id="b-linkedin" type="text" placeholder="linkedin.com/in/you"></label>
+          <label><span>Twitter / X</span><input id="b-twitter" type="text" placeholder="@you"></label>
         </div>
       </details>
       <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Themes: print, vesper. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
@@ -265,8 +270,9 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const $ = (id) => document.getElementById(id);
   const source = $('source'), example = $('example'), errorBox = $('error'), overflowBox = $('overflow');
   const stage = $('stage'), stagebox = $('stagebox'), host = $('card-host');
-  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue' };
-  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL' };
+  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue', linkedin: 'b-linkedin', twitter: 'b-twitter' };
+  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL', linkedin: 'CARD_LINKEDIN', twitter: 'CARD_TWITTER' };
+  const brandingFields = { author: 'author', website: 'website', series: 'series', monogram: 'monogram', footer: 'footerMark', issue: 'issueLabel', linkedin: 'linkedin', twitter: 'twitter' };
   const DEFAULT_EXAMPLE = 'span-columns.md';
   let downloads = null;
   let lastCard = null;
@@ -298,7 +304,6 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const savedSource = store.get('scs:source');
   source.value = savedSource ?? SC.examples[DEFAULT_EXAMPLE];
-  example.value = store.get('scs:example') ?? DEFAULT_EXAMPLE;
   try { const b = JSON.parse(store.get('scs:branding') || '{}'); for (const k in brandIds) if (b[k]) $(brandIds[k]).value = b[k]; } catch {}
 
   function brandingValues() {
@@ -312,6 +317,23 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     const env = {};
     for (const k in brandIds) if (values[k].trim()) env[envKeys[k]] = values[k];
     return SC.brandingFromEnv(env);
+  }
+  // When served by server/index.ts, the container's own branding env vars (set when it
+  // was created) come back from /api/branding. They fill in only the fields the visitor
+  // hasn't already set \u2014 via a saved localStorage value or by typing \u2014 never overriding
+  // a value already on the page. Opened without a server (a plain file, or a claude.ai
+  // artifact), the fetch fails and every field is left exactly as it was.
+  async function applyServerBranding() {
+    try {
+      const r = await fetch('/api/branding', { signal: AbortSignal.timeout(800) });
+      if (!r.ok) return;
+      const { branding: defaults } = await r.json();
+      for (const k in brandIds) {
+        const el = $(brandIds[k]);
+        const value = defaults[brandingFields[k]];
+        if (!el.value && value) el.value = value;
+      }
+    } catch {}
   }
   function detectFormat(text) { return /^\uFEFF?\s*\{/.test(text) ? 'json' : 'markdown'; }
   function loadRaw(text, format) { return format === 'json' ? JSON.parse(text.replace(/^﻿/, '')) : SC.parseMarkdown(text); }
@@ -574,9 +596,12 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
   });
   example.addEventListener('change', () => {
-    source.value = SC.examples[example.value]; store.set('scs:example', example.value);
+    const name = example.value;
+    if (!name) return;
+    source.value = SC.examples[name];
     editingHint.hidden = true; editingHint.textContent = '';
     render();
+    example.value = ''; // back to the placeholder, so picking the same example again still fires "change"
   });
   for (const k in brandIds) $(brandIds[k]).addEventListener('input', schedule);
 
@@ -630,7 +655,6 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     window.claude.use('downloads').then((d) => { downloads = d; if (d) $('export-hint').textContent = 'Exports save as PNG files. They are rasterised by your browser; the CLI\'s Chromium render is the canonical output.'; }).catch(() => {});
   }
 
-  render();
-  refreshHistory();
+  applyServerBranding().finally(() => { render(); refreshHistory(); });
 })();
 </script>

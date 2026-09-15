@@ -118,7 +118,7 @@ pre.shiki code { font: inherit; }
 footer { border-top: 1px solid var(--rule); padding-top: 22px; display: flex; align-items: center; justify-content: space-between; }
 footer strong { font: 600 16px var(--font-sans); letter-spacing: -.2px; }
 footer strong span { color: var(--muted-2); padding: 0 6px; font-weight: 400; }
-.website { display: block; margin-top: 6px; font: 400 13px var(--font-mono); color: var(--muted); letter-spacing: .4px; }
+.contact-line { display: block; margin-top: 6px; font: 400 13px var(--font-mono); color: var(--muted); letter-spacing: .4px; }
 .footer-mark { font: 700 28px var(--font-display); letter-spacing: -1px; }
 .footer-mark span { color: var(--accent); margin-left: 4px; font-size: 22px; }
 `;
