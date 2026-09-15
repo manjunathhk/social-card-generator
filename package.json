@@ -1,7 +1,7 @@
 {
   "name": "@manjunathhk/social-card-generator",
-  "version": "2.0.0",
-  "description": "Render technical social cards (1080 \u00d7 1350 PNG or multi-page PDF carousels) from Markdown or JSON with Shiki syntax highlighting and Playwright.",
+  "version": "1.0.0",
+  "description": "Render technical social cards (1080 × 1350 PNG or multi-page PDF carousels) from Markdown or JSON with Shiki syntax highlighting and Playwright.",
   "keywords": [
     "social-card",
     "linkedin",

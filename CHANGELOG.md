@@ -1,3 +1,10 @@
+# 1.0.0 (2026-09-15)
+
+
+### Features
+
+* **ci:** auto-bump version and changelog with semantic-release ([#6](https://github.com/manjunathhk/social-card-generator/issues/6)) ([e2a79ff](https://github.com/manjunathhk/social-card-generator/commit/e2a79ffc0676616da639068acc9696a4007b7b38))
+
 # Changelog
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
