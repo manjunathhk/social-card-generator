@@ -7,6 +7,8 @@ export type Branding = {
   monogram: string;
   footerMark: string;
   issueLabel: string;
+  linkedin: string;
+  twitter: string;
 };
 
 /**
@@ -38,6 +40,8 @@ export function brandingFromEnv(env: NodeJS.ProcessEnv): Branding {
     monogram: read('CARD_MONOGRAM') || (author ? initials(author) : ''),
     footerMark: read('CARD_FOOTER_MARK'),
     issueLabel: read('CARD_ISSUE_LABEL'),
+    linkedin: read('CARD_LINKEDIN'),
+    twitter: read('CARD_TWITTER'),
   };
 }
 

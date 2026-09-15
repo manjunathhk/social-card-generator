@@ -18,6 +18,8 @@ services:
     #   CARD_MONOGRAM: ''
     #   CARD_FOOTER_MARK: ''
     #   CARD_ISSUE_LABEL: 'Note'
+    #   CARD_LINKEDIN: 'linkedin.com/in/you'
+    #   CARD_TWITTER: '@you'
 
 volumes:
   sandbox-data:

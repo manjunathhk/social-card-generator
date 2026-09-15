@@ -219,6 +219,8 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <label><span>Monogram</span><input id="b-monogram" type="text" placeholder="initials"></label>
           <label><span>Footer mark</span><input id="b-footer" type="text" placeholder="blank hides it"></label>
           <label><span>Issue label</span><input id="b-issue" type="text" placeholder="Note"></label>
+          <label><span>LinkedIn</span><input id="b-linkedin" type="text" placeholder="linkedin.com/in/you"></label>
+          <label><span>Twitter / X</span><input id="b-twitter" type="text" placeholder="@you"></label>
         </div>
       </details>
       <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Themes: print, vesper. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
@@ -267,9 +269,9 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const $ = (id) => document.getElementById(id);
   const source = $('source'), example = $('example'), errorBox = $('error'), overflowBox = $('overflow');
   const stage = $('stage'), stagebox = $('stagebox'), host = $('card-host');
-  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue' };
-  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL' };
-  const brandingFields = { author: 'author', website: 'website', series: 'series', monogram: 'monogram', footer: 'footerMark', issue: 'issueLabel' };
+  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue', linkedin: 'b-linkedin', twitter: 'b-twitter' };
+  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL', linkedin: 'CARD_LINKEDIN', twitter: 'CARD_TWITTER' };
+  const brandingFields = { author: 'author', website: 'website', series: 'series', monogram: 'monogram', footer: 'footerMark', issue: 'issueLabel', linkedin: 'linkedin', twitter: 'twitter' };
   const DEFAULT_EXAMPLE = 'span-columns.md';
   let downloads = null;
   let lastCard = null;

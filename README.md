@@ -187,7 +187,11 @@ Copy `.env.sample` to `.env` and fill in your details. Every field is optional: 
 | `CARD_MONOGRAM`     | author's initials (blank if no author) | Small boxed mark in the masthead                 |
 | `CARD_FOOTER_MARK`  | blank                                  | Optional large mark bottom-right; blank hides it |
 | `CARD_ISSUE_LABEL`  | blank                                  | Prefix before the issue number                   |
+| `CARD_LINKEDIN`     | blank                                  | LinkedIn link/handle, added to the footer        |
+| `CARD_TWITTER`      | blank                                  | Twitter/X link/handle, added to the footer       |
 | `CARD_BROWSER_PATH` | Playwright's build                     | Use an existing Chromium binary                  |
+
+`CARD_WEBSITE`, `CARD_LINKEDIN` and `CARD_TWITTER` are rendered as one contact line in the footer, separated by `·`, in that order — each appears only when set.
 
 Shell variables override the file. The committed samples use `examples/branding.env`. When [running as a server](#running-it-as-a-server-docker), these same variables set on the container become the sandbox's default branding fields for every visitor.
 

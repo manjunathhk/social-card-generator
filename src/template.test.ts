@@ -81,6 +81,19 @@ test('footer mark is optional and escaped', async () => {
   assert.ok(html.includes('<div class="footer-mark">&lt;MK&gt;<span>↗</span></div>'));
 });
 
+test('social links join the contact line only when provided, and are escaped', async () => {
+  const card = validateCard({ title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] });
+
+  const withLinks = await renderDocument(
+    [card],
+    brandingFromEnv({ CARD_WEBSITE: 'example.com', CARD_LINKEDIN: 'in/<x>', CARD_TWITTER: '@x' }),
+  );
+  assert.ok(withLinks.includes('<span class="contact-line">example.com · in/&lt;x&gt; · @x</span>'));
+
+  const noLinks = await renderDocument([card], brandingFromEnv({}));
+  assert.ok(!noLinks.includes('<span class="contact-line">'));
+});
+
 test('underline decorations cover every occurrence and skip overlaps', () => {
   const code = 'Lock a; Lock b;';
   assert.deepEqual(

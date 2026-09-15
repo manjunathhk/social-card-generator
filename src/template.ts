@@ -109,9 +109,10 @@ function renderFooter(branding: Branding): string {
   const mark = branding.footerMark ? `<div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div>` : '';
   const name = [branding.series, branding.author].filter(Boolean);
   const nameLine = name.length ? `<strong>${name.map(e).join(' <span>·</span> ')}</strong>` : '';
-  const website = branding.website ? `<span class="website">${e(branding.website)}</span>` : '';
+  const contact = [branding.website, branding.linkedin, branding.twitter].filter(Boolean);
+  const contactLine = contact.length ? `<span class="contact-line">${contact.map(e).join(' · ')}</span>` : '';
   return `<footer>
-  <div>${nameLine}${website}</div>
+  <div>${nameLine}${contactLine}</div>
   ${mark}
 </footer>`;
 }

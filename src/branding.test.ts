@@ -13,6 +13,8 @@ test('every field is blank when nothing is configured', () => {
   assert.equal(branding.monogram, '');
   assert.equal(branding.footerMark, '');
   assert.equal(branding.issueLabel, '');
+  assert.equal(branding.linkedin, '');
+  assert.equal(branding.twitter, '');
 });
 
 test('blank values stay blank, and the monogram derives from the author when one is set', () => {
@@ -20,6 +22,13 @@ test('blank values stay blank, and the monogram derives from the author when one
   assert.equal(brandingFromEnv({ CARD_AUTHOR: 'Manjunath HK' }).monogram, 'MH');
   assert.equal(brandingFromEnv({ CARD_AUTHOR: 'Manjunath HK', CARD_MONOGRAM: 'MK' }).monogram, 'MK');
   assert.equal(brandingFromEnv({ CARD_FOOTER_MARK: ' ' }).footerMark, '');
+  assert.equal(brandingFromEnv({ CARD_LINKEDIN: ' ' }).linkedin, '');
+});
+
+test('social links are read verbatim from the environment', () => {
+  const branding = brandingFromEnv({ CARD_LINKEDIN: 'linkedin.com/in/example', CARD_TWITTER: '@example' });
+  assert.equal(branding.linkedin, 'linkedin.com/in/example');
+  assert.equal(branding.twitter, '@example');
 });
 
 test('initials', () => {
