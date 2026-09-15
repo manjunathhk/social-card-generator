@@ -595,13 +595,22 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     if (e.key === 'Tab') { e.preventDefault(); const s = source.selectionStart, t = source.selectionEnd; source.setRangeText('  ', s, t, 'end'); schedule(); }
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
   });
+  // Blanking the value on open (rather than after load) is what lets picking
+  // the *same* example twice in a row still fire "change" both times, while
+  // the closed control keeps showing which example is currently loaded.
+  let loadedExample = '';
+  example.addEventListener('mousedown', () => { example.value = ''; });
   example.addEventListener('change', () => {
     const name = example.value;
     if (!name) return;
+    loadedExample = name;
     source.value = SC.examples[name];
     editingHint.hidden = true; editingHint.textContent = '';
     render();
-    example.value = ''; // back to the placeholder, so picking the same example again still fires "change"
+    example.value = name; // reflect the loaded example instead of resetting to the placeholder
+  });
+  example.addEventListener('blur', () => {
+    if (!example.value) example.value = loadedExample; // dropdown opened, then dismissed without a pick
   });
   for (const k in brandIds) $(brandIds[k]).addEventListener('input', schedule);
 
