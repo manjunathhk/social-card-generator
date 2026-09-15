@@ -8,13 +8,15 @@ import { baseCss, getTheme } from './themes/index.js';
 /**
  * Builds one self-contained HTML document containing one or more cards.
  * A single card becomes a PNG; several cards become the pages of a PDF.
- * Fonts are embedded and no external URL is referenced, so the browser
- * can render with the network blocked.
+ * Only the fonts of the themes in use are embedded, and no external URL is
+ * referenced, so the browser can render with the network blocked.
  */
 export async function renderDocument(cards: Card[], branding: Branding): Promise<string> {
-  const themeNames = [...new Set(cards.map((card) => card.theme))];
-  const themeCss = themeNames.map((name) => getTheme(name).css).join('\n');
-  const [fonts, ...bodies] = await Promise.all([fontFaceCss(), ...cards.map((card) => renderCard(card, branding))]);
+  const themes = [...new Set(cards.map((card) => card.theme))].map(getTheme);
+  const [fonts, ...bodies] = await Promise.all([
+    fontFaceCss(themes.flatMap((theme) => theme.fonts)),
+    ...cards.map((card) => renderCard(card, branding)),
+  ]);
   const title = cards.length === 1 ? cards[0].title : `${cards.length} cards`;
 
   return `<!doctype html>
@@ -26,7 +28,7 @@ export async function renderDocument(cards: Card[], branding: Branding): Promise
 <style>
 ${fonts}
 ${baseCss}
-${themeCss}
+${themes.map((theme) => theme.css).join('\n')}
 </style>
 </head>
 <body>
@@ -40,8 +42,11 @@ export async function renderCard(card: Card, branding: Branding): Promise<string
   const rule = LAYOUT_RULES[card.layout];
   const panels = await Promise.all(card.panels.map((panel) => renderPanel(panel, theme.shikiTheme)));
   const classes = ['card', `layout-${card.layout}`, `theme-${card.theme}`, `panels-${card.panels.length}`];
+  const tokens = Object.entries(rule.tokens(card.panels.length))
+    .map(([name, value]) => `${name}:${value}`)
+    .join(';');
 
-  return `<main class="${classes.join(' ')}" data-font-max="${rule.fontMax}" data-font-min="${rule.fontMin}">
+  return `<main class="${classes.join(' ')}" style="${tokens}" data-font-max="${rule.fontMax}" data-font-min="${rule.fontMin}">
 ${renderMasthead(card, branding)}
 ${renderIntro(card)}
 <div class="panels">
@@ -53,10 +58,9 @@ ${renderFooter(branding)}
 }
 
 function renderMasthead(card: Card, branding: Branding): string {
-  const seriesLines = e(branding.series.toUpperCase()).replace(/ /g, '<br>');
   return `<header class="masthead">
-  <div class="series"><span class="mark">${e(branding.monogram)}<span></span></span><span>${seriesLines}</span></div>
-  <span class="issue">${e(branding.issueLabel.toUpperCase())} / ${e(card.issue)}</span>
+  <div class="series"><span class="mark">${e(branding.monogram)}</span><span class="series-name">${e(branding.series)}</span></div>
+  <span class="issue"><span class="issue-label">${e(branding.issueLabel)}</span><span class="issue-sep">/</span><span class="issue-no">${e(card.issue)}</span></span>
 </header>`;
 }
 
@@ -80,8 +84,8 @@ async function renderPanel(panel: Panel, shikiTheme: Parameters<typeof highlight
 
   return `<section class="panel${verdictClass}">
   <div class="panel-header">
-    <span class="panel-title"><span class="dots"><i></i><i></i><i></i></span><i class="dot"></i>${e(panel.label)}</span>
-    <span class="panel-meta">${e(panel.language.toUpperCase())}${badge}</span>
+    <span class="panel-title">${e(panel.label)}</span>
+    <span class="panel-meta">${e(panel.language)}${badge}</span>
   </div>
   <div class="panel-code">${code}</div>
   ${notes}
@@ -91,7 +95,7 @@ async function renderPanel(panel: Panel, shikiTheme: Parameters<typeof highlight
 function renderInsight(card: Card): string {
   if (!card.insight) return '<div class="spacer"></div>';
   return `<section class="insight">
-  <div class="insight-label"><span>↳</span> DESIGN NOTE</div>
+  <div class="insight-label">Note</div>
   <p>${e(card.insight)}</p>
 </section>`;
 }
@@ -99,7 +103,7 @@ function renderInsight(card: Card): string {
 function renderFooter(branding: Branding): string {
   const mark = branding.footerMark ? `<div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div>` : '';
   return `<footer>
-  <div><strong>${e(branding.series)} <span>•</span> ${e(branding.author)}</strong><span class="website">${e(branding.website)}</span></div>
+  <div><strong>${e(branding.series)} <span>·</span> ${e(branding.author)}</strong><span class="website">${e(branding.website)}</span></div>
   ${mark}
 </footer>`;
 }

@@ -7,8 +7,8 @@
 Turn a Markdown file into a polished 1080 × 1350 technical social card, or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
 
 <p align="center">
-  <img src="sample/span-columns.png" alt="Side-by-side comparison card in the midnight theme" width="420">
-  <img src="sample/redis-caching.png" alt="Single-panel card in the editorial theme" width="420">
+  <img src="sample/redis-caching.png" alt="Single-panel card in the print theme" width="420">
+  <img src="sample/span-columns.png" alt="Side-by-side comparison card in the vesper theme" width="420">
 </p>
 
 ## Why
@@ -18,7 +18,7 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 ## Features
 
 - **Three layouts.** `stack` (one or two panels), `columns` (side-by-side comparison), `grid` (up to four panels).
-- **Two themes**, `editorial` and `midnight`, with a documented CSS contract for adding more.
+- **Two themes.** `print`, a paper-and-ink journal page with light code panels, and `vesper`, near-black minimalism with one peach accent. Each theme owns its palette, typefaces and shape through a documented token contract.
 - **Panel decorations.** Line highlights, token underlines, ✓ / ✕ verdict badges, and short bullet notes per panel.
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
 - **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
@@ -27,10 +27,10 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 
 ## Gallery
 
-| `stack` · editorial                                                        | `stack` · editorial, verdicts                              | `stack` · midnight, notes                                                |
+| `stack` · print                                                            | `stack` · print, verdicts                                  | `stack` · vesper, notes                                                  |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
 | [![](sample/redis-caching.png)](examples/redis-caching.md)                 | [![](sample/before-after.png)](examples/before-after.json) | [![](sample/dependency-injection.png)](examples/dependency-injection.md) |
-| `stack` · two languages                                                    | `columns` · midnight, notes + verdicts                     | `grid` · midnight, underlines                                            |
+| `stack` · two languages                                                    | `columns` · vesper, notes + verdicts                       | `grid` · vesper, underlines                                              |
 | [![](sample/typescript-javascript.png)](examples/typescript-javascript.md) | [![](sample/span-columns.png)](examples/span-columns.md)   | [![](sample/concurrency-grid.png)](examples/concurrency-grid.json)       |
 
 All six, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
@@ -67,7 +67,7 @@ subtitle: The same parsing logic, with and without a new string per call.
 tags: [.NET, Performance, Span]
 issue: '04'
 layout: columns
-theme: midnight
+theme: vesper
 insight: Substring allocates a new string every call. Slicing reuses memory the caller owns.
 ---
 
@@ -95,7 +95,7 @@ The same card as JSON gives you every option explicitly, including `underline`:
   "title": "Slice, don't copy.",
   "subtitle": "The same parsing logic, with and without a new string per call.",
   "layout": "columns",
-  "theme": "midnight",
+  "theme": "vesper",
   "panels": [
     { "label": "Substring", "language": "csharp", "verdict": "bad", "code": "var id = line.Substring(4, 6);" },
     {
@@ -135,6 +135,15 @@ The same card as JSON gives you every option explicitly, including `underline`:
 | `underline`      | no       | Exact substrings to underline; JSON only                                   |
 | `verdict`        | no       | `good` or `bad`; Markdown uses a ✅ / ❌ heading prefix                    |
 | `notes`          | no       | Up to 3 bullets of 70 characters; Markdown uses `- ` lines after the fence |
+
+### Themes
+
+| Theme    | Ground and ink                     | Code panels                             | Type                                    |
+| -------- | ---------------------------------- | --------------------------------------- | --------------------------------------- |
+| `print`  | Flexoki paper and ink, blue accent | Light, `vitesse-light`, hairline border | Bricolage Grotesque, Inter, Commit Mono |
+| `vesper` | Near-black, one peach accent       | `#161616`, `vesper`, no chrome          | Geist Sans, Geist Mono                  |
+
+A theme sets colours, typefaces and panel shape through custom properties; layouts set sizes and spacing through their own tokens. The two never overlap, so any theme works with any layout. Only the fonts of the themes a document uses are embedded.
 
 ### Layouts
 
@@ -221,4 +230,4 @@ CI runs all of the above on every push and uploads the rendered gallery as an ar
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Inter and JetBrains Mono are embedded under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter, Bricolage Grotesque, Commit Mono, Geist Sans, Geist Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

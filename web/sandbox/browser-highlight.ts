@@ -16,8 +16,8 @@ import html from '@shikijs/langs/html';
 import css from '@shikijs/langs/css';
 import xml from '@shikijs/langs/xml';
 import docker from '@shikijs/langs/docker';
-import githubDark from '@shikijs/themes/github-dark';
-import oneDarkPro from '@shikijs/themes/one-dark-pro';
+import vitesseLight from '@shikijs/themes/vitesse-light';
+import vesper from '@shikijs/themes/vesper';
 import type { Panel } from '../../src/schema.js';
 
 const LANGS = [
@@ -59,7 +59,7 @@ let highlighterPromise: Promise<HighlighterCore> | undefined;
 function getHighlighter() {
   highlighterPromise ??= createHighlighterCore({
     langs: LANGS,
-    themes: [githubDark, oneDarkPro],
+    themes: [vitesseLight, vesper],
     engine: createJavaScriptRegexEngine({ forgiving: true }),
   });
   return highlighterPromise;

@@ -4,7 +4,7 @@ highlight: Don't build it.
 subtitle: Constructor injection keeps OrderService testable and unaware of concrete mail delivery.
 tags: [.NET, DI, Testability]
 issue: '06'
-theme: midnight
+theme: vesper
 ---
 
 ## ❌ Without DI

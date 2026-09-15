@@ -19,30 +19,19 @@
 import { build, type Plugin } from 'esbuild';
 import { execSync } from 'node:child_process';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fontFaceCss } from '../src/fonts.js';
+import { THEMES } from '../src/themes/index.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = resolve(ROOT, 'web/sandbox');
 const OUT = resolve(ROOT, 'out/sandbox.html');
-const require = createRequire(import.meta.url);
 
-const FONT_FILES = [
-  ['Inter', 400, '@fontsource/inter/files/inter-latin-400-normal.woff2'],
-  ['Inter', 700, '@fontsource/inter/files/inter-latin-700-normal.woff2'],
-  ['Inter', 800, '@fontsource/inter/files/inter-latin-800-normal.woff2'],
-  ['Mono', 400, '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2'],
-] as const;
-
+/** Every theme's fonts, embedded once each, so the sandbox can switch themes without reloading. */
 async function fontCss(): Promise<string> {
-  const rules = await Promise.all(
-    FONT_FILES.map(async ([family, weight, file]) => {
-      const data = (await readFile(require.resolve(file))).toString('base64');
-      return `@font-face{font-family:${family};font-weight:${weight};src:url(data:font/woff2;base64,${data}) format("woff2")}`;
-    }),
-  );
-  return rules.join('\n');
+  const fonts = Object.values(THEMES).flatMap((theme) => theme.fonts);
+  return fontFaceCss(fonts);
 }
 
 async function exampleSources(): Promise<Record<string, string>> {

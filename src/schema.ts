@@ -54,6 +54,13 @@ export const MAX_TAGS = 3;
 export const MAX_NOTES = 3;
 export const MAX_UNDERLINES = 6;
 
+/**
+ * Sizes a layout decides, as CSS custom properties. The template writes them
+ * inline on the card, so themes/base.ts never repeats a number per layout and
+ * this table is the only place a layout's proportions live.
+ */
+export type LayoutTokens = Record<`--${string}`, string>;
+
 export type LayoutRule = {
   minPanels: number;
   maxPanels: number;
@@ -62,6 +69,66 @@ export type LayoutRule = {
   /** Starting and minimum code font size in CSS pixels for the fit loop. */
   fontMax: number;
   fontMin: number;
+  /** Type scale and spacing for a given panel count. */
+  tokens: (panelCount: number) => LayoutTokens;
+};
+
+const ONE_PANEL: LayoutTokens = {
+  '--h1': '65px',
+  '--subtitle': '23px',
+  '--intro-y': '30px',
+  '--panel-gap': '22px',
+  '--header-y': '18px',
+  '--header-x': '28px',
+  '--header-size': '14px',
+  '--code-y': '24px',
+  '--code-x': '28px',
+  '--notes-size': '17px',
+  '--notes-y': '18px',
+  '--insight-y': '28px',
+  '--insight-size': '24px',
+};
+
+const TWO_PANELS: LayoutTokens = {
+  ...ONE_PANEL,
+  '--h1': '59px',
+  '--intro-y': '25px',
+  '--header-y': '16px',
+  '--code-y': '20px',
+  '--insight-y': '22px',
+  '--insight-size': '22px',
+};
+
+const COLUMNS: LayoutTokens = {
+  ...ONE_PANEL,
+  '--h1': '58px',
+  '--intro-y': '26px',
+  '--header-y': '15px',
+  '--header-x': '22px',
+  '--header-size': '13px',
+  '--code-y': '20px',
+  '--code-x': '22px',
+  '--notes-size': '15px',
+  '--notes-y': '14px',
+  '--insight-y': '22px',
+  '--insight-size': '22px',
+};
+
+const GRID: LayoutTokens = {
+  ...ONE_PANEL,
+  '--h1': '54px',
+  '--subtitle': '21px',
+  '--intro-y': '24px',
+  '--panel-gap': '20px',
+  '--header-y': '12px',
+  '--header-x': '20px',
+  '--header-size': '12px',
+  '--code-y': '16px',
+  '--code-x': '20px',
+  '--notes-size': '14px',
+  '--notes-y': '10px',
+  '--insight-y': '22px',
+  '--insight-size': '22px',
 };
 
 export const LAYOUT_RULES: Record<Layout, LayoutRule> = {
@@ -71,6 +138,7 @@ export const LAYOUT_RULES: Record<Layout, LayoutRule> = {
     maxLines: (count) => (count > 1 ? 14 : 22),
     fontMax: 20,
     fontMin: 16,
+    tokens: (count) => (count > 1 ? TWO_PANELS : ONE_PANEL),
   },
   columns: {
     minPanels: 2,
@@ -78,6 +146,7 @@ export const LAYOUT_RULES: Record<Layout, LayoutRule> = {
     maxLines: () => 18,
     fontMax: 18,
     fontMin: 13,
+    tokens: () => COLUMNS,
   },
   grid: {
     minPanels: 3,
@@ -85,6 +154,7 @@ export const LAYOUT_RULES: Record<Layout, LayoutRule> = {
     maxLines: () => 12,
     fontMax: 16,
     fontMin: 12,
+    tokens: () => GRID,
   },
 };
 

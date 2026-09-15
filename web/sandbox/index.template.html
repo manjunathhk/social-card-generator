@@ -124,20 +124,20 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
         <label for="layout-sel">Layout</label>
         <select id="layout-sel"><option value="">from source</option><option value="stack">stack</option><option value="columns">columns</option><option value="grid">grid</option></select>
         <label for="theme-sel">Theme</label>
-        <select id="theme-sel"><option value="">from source</option><option value="editorial">editorial</option><option value="midnight">midnight</option><option value="custom">custom…</option></select>
+        <select id="theme-sel"><option value="">from source</option><option value="custom">custom…</option></select>
       </div>
       <div class="palette" id="palette" hidden>
         <div class="fields palette-fields">
-          <label><span>Background</span><input id="p-bg" type="color" value="#f5f3ee"></label>
-          <label><span>Text</span><input id="p-fg" type="color" value="#162b35"></label>
-          <label><span>Accent</span><input id="p-accent" type="color" value="#007b80"></label>
-          <label><span>Panel</span><input id="p-panel" type="color" value="#111e29"></label>
-          <label><span>Code colours</span><select id="p-code"><option value="github-dark">github-dark</option><option value="one-dark-pro">one-dark-pro</option></select></label>
-          <label class="check"><input id="p-dots" type="checkbox"> <span>Traffic-light dots</span></label>
+          <label><span>Background</span><input id="p-bg" type="color" value="#fffcf0"></label>
+          <label><span>Text</span><input id="p-fg" type="color" value="#100f0f"></label>
+          <label><span>Accent</span><input id="p-accent" type="color" value="#205ea6"></label>
+          <label><span>Panel</span><input id="p-panel" type="color" value="#f2f0e5"></label>
+          <label><span>Code colours</span><select id="p-code"><option value="vitesse-light">vitesse-light (light panels)</option><option value="vesper">vesper (dark panels)</option></select></label>
+          <label><span>Type</span><select id="p-type"><option value="print">Print faces</option><option value="vesper">Vesper faces</option></select></label>
         </div>
         <div class="palette-actions">
           <button class="btn" id="p-copy">Copy as TypeScript theme</button>
-          <span class="hint">Derived colours (rules, muted text, highlights) are mixed from these four.</span>
+          <span class="hint">Rules, muted text, header and highlight colours are mixed from these four; light and dark panels are detected automatically.</span>
         </div>
       </div>
       <div class="editor"><textarea id="source" spellcheck="false" aria-label="Card source in Markdown or JSON"></textarea></div>
@@ -153,7 +153,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <label><span>Issue label</span><input id="b-issue" type="text" placeholder="Note"></label>
         </div>
       </details>
-      <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
+      <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Themes: print, vesper. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
     </section>
 
     <section class="pane" aria-label="Preview and export">
@@ -207,6 +207,13 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const FONT_CSS = SC.FONT_CSS;
   style.textContent = FONT_CSS + '\n' + cardOnlyCss + '\n' + SC.THEME_NAMES.map((n) => SC.getTheme(n).css).join('\n') + '\n#stage .card{break-after:auto}';
 
+  // Themes shipped in the core, then the sandbox-only custom option.
+  const themeSelEl = $('theme-sel');
+  for (const name of SC.THEME_NAMES) {
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+    themeSelEl.insertBefore(opt, themeSelEl.lastElementChild);
+  }
+
   // Examples.
   for (const name of Object.keys(SC.examples)) {
     const opt = document.createElement('option'); opt.value = name; opt.textContent = name; example.appendChild(opt);
@@ -241,26 +248,32 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
 
   // Custom theme: four colours plus the code palette, expanded into the full
   // variable contract that src/themes/base.ts reads.
-  const pIds = { bg: 'p-bg', fg: 'p-fg', accent: 'p-accent', panel: 'p-panel', code: 'p-code', dots: 'p-dots' };
+  const pIds = { bg: 'p-bg', fg: 'p-fg', accent: 'p-accent', panel: 'p-panel', code: 'p-code', type: 'p-type' };
   try { const saved = JSON.parse(store.get('scs:palette') || '{}'); for (const k in pIds) if (saved[k] !== undefined) { const el = $(pIds[k]); if (el.type === 'checkbox') el.checked = saved[k]; else el.value = saved[k]; } } catch {}
   const customStyle = document.createElement('style'); document.head.appendChild(customStyle);
   function paletteValues() { const v = {}; for (const k in pIds) { const el = $(pIds[k]); v[k] = el.type === 'checkbox' ? el.checked : el.value; } return v; }
+  function luminance(hex) { const n = parseInt(hex.slice(1), 16); const c = [16, 8, 0].map((s) => ((n >> s) & 255) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
   function customThemeCss(p) {
     const mix = (a, pct, b) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
+    const darkPanel = luminance(p.panel) < 0.35;
+    const onPanel = darkPanel ? '#ffffff' : p.fg;          // colour to mix towards for text on the panel
+    const type = SC.THEMES[p.type] || SC.THEMES[SC.THEME_NAMES[0]];
+    const typeCss = type.css.match(/--font-display:[^;]+;\s*--font-sans:[^;]+;\s*--font-mono:[^;]+;\s*--h1-weight:[^;]+;\s*--h1-tracking:[^;]+;/)?.[0] ?? '';
     return `.theme-custom {
   --bg: ${p.bg}; --fg: ${p.fg}; --muted: ${mix(p.fg, 62, p.bg)}; --muted-2: ${mix(p.fg, 35, p.bg)};
-  --accent: ${p.accent}; --rule: ${mix(p.fg, 18, p.bg)}; --mark-border: ${mix(p.fg, 40, p.bg)};
-  --panel: ${p.panel}; --panel-border: ${mix('#ffffff', 8, p.panel)}; --panel-shadow: 0 10px 24px rgb(0 0 0 / 0.16);
-  --panel-header-bg: transparent; --panel-header-fg: ${mix('#ffffff', 72, p.panel)}; --panel-rule: ${mix('#ffffff', 14, p.panel)}; --panel-dot: ${p.accent};
-  --line-highlight: ${mix(p.accent, 24, p.panel)}; --underline: #ff6b6b; --notes-fg: ${mix('#ffffff', 84, p.panel)};
-  --good: #1f9d6b; --bad: #d9534f;
-}${p.dots ? '\n.theme-custom .dots { display: flex; }\n.theme-custom .dot { display: none; }' : ''}`;
+  --accent: ${p.accent}; --accent-title: ${p.accent}; --rule: ${mix(p.fg, 18, p.bg)};
+  --panel: ${p.panel}; --panel-border: ${mix(onPanel, darkPanel ? 8 : 12, p.panel)}; --panel-shadow: none;
+  --panel-header-bg: ${darkPanel ? 'transparent' : mix(onPanel, 6, p.panel)}; --panel-header-fg: ${mix(onPanel, darkPanel ? 60 : 70, p.panel)}; --panel-rule: ${mix(onPanel, 14, p.panel)};
+  --line-highlight: ${mix(p.accent, darkPanel ? 14 : 11, p.panel)}; --underline: #d9534f; --notes-fg: ${mix(onPanel, 84, p.panel)};
+  --good: ${darkPanel ? '#99ffe4' : '#66800b'}; --bad: ${darkPanel ? '#ff8080' : '#af3029'}; --badge-fg: ${darkPanel ? p.panel : p.bg};
+  ${typeCss} --panel-radius: 8px;
+}`;
   }
   function applyCustomTheme() {
     const p = paletteValues();
     store.set('scs:palette', JSON.stringify(p));
     const css = customThemeCss(p);
-    SC.THEMES.custom = { name: 'custom', description: 'Sandbox custom theme', shikiTheme: p.code, css };
+    SC.THEMES.custom = { name: 'custom', description: 'Sandbox custom theme', shikiTheme: p.code, fonts: (SC.THEMES[p.type] || SC.THEMES[SC.THEME_NAMES[0]]).fonts, css };
     if (!SC.THEME_NAMES.includes('custom')) SC.THEME_NAMES.push('custom');
     customStyle.textContent = css;
   }
@@ -268,7 +281,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   for (const k in pIds) $(pIds[k]).addEventListener('input', () => { applyCustomTheme(); schedule(); });
   $('p-copy').addEventListener('click', async () => {
     const p = paletteValues();
-    const ts = `import type { Theme } from './types.js';\n\n/** Generated in the sandbox; rename and register it in src/themes/index.ts. */\nexport const custom: Theme = {\n  name: 'custom',\n  description: 'Describe the look here.',\n  shikiTheme: '${p.code}',\n  css: /* css */ \`\n${customThemeCss(p)}\n\`,\n};\n`;
+    const ts = `import type { Theme } from './types.js';\n\n/** Generated in the sandbox; rename and register it in src/themes/index.ts. */\nexport const custom: Theme = {\n  name: 'custom',\n  description: 'Describe the look here.',\n  shikiTheme: '${p.code}',\n  fonts: [/* copy the fonts array from src/themes/${p.type}.ts */],\n  css: /* css */ \`\n${customThemeCss(p)}\n\`,\n};\n`;
     try { await navigator.clipboard.writeText(ts); toast('Copied src/themes/custom.ts to the clipboard'); } catch { toast('Clipboard is not available here.'); }
   });
 

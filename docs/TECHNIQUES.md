@@ -102,7 +102,7 @@ Three details in `highlight.ts`:
 
 The document must render identically on every machine and never wait on a network. Two mechanisms enforce that:
 
-- `fonts.ts` reads the WOFF2 files from `@fontsource/inter` and `@fontsource/jetbrains-mono` and inlines them as base64 `@font-face` rules. The document is around 100 KB larger and completely portable.
+- `fonts.ts` reads the WOFF2 files each used theme lists from its `@fontsource` package and inlines them as base64 `@font-face` rules. Only the fonts of the themes present in the document are embedded, and a file shared by two themes is embedded once. The document grows by roughly 100–150 KB and is completely portable.
 - `renderer.ts` registers `page.route('**/*', route => route.abort())` before loading content. If anyone ever adds an `<img src="https://…">` to a template, the request fails immediately and visibly rather than sometimes working.
 
 The renderer also awaits `document.fonts.ready` before measuring. Without that, the first measurement can happen with a fallback font and the fit loop makes decisions on the wrong metrics.
@@ -117,17 +117,23 @@ A card's appearance is the product of three independent choices, and the code ke
 | Theme       | `theme` field    | `themes/<name>.ts`                       | `.theme-<name>` class sets CSS custom properties                  |
 | Decorations | per-panel fields | `template.ts` markup + `base.ts` CSS     | `.verdict-good`, `.panel-notes`, `[data-highlight]`, `.underline` |
 
-The **theme contract** is the set of custom properties `base.ts` reads. A theme must define all of them:
+Two token sets meet in `base.ts`, and it contains almost no literal numbers of its own:
+
+**Layout tokens** are sizes and spacing. They live in `LAYOUT_RULES[layout].tokens(panelCount)` in `schema.ts` and the template writes them inline on the card element (`style="--h1:58px;--intro-y:26px;…"`). `base.ts` only reads them, so adding a layout means adding a row of numbers, not a block of CSS. The set is `--h1 --subtitle --intro-y --panel-gap --header-y --header-x --header-size --code-y --code-x --notes-size --notes-y --insight-y --insight-size`.
+
+**Theme tokens** are set by each theme under `.theme-<name>`. A theme must define all of them:
 
 ```
---bg --fg --muted --muted-2 --accent --rule --mark-border
---panel --panel-border --panel-shadow --panel-header-bg --panel-header-fg --panel-rule --panel-dot
---line-highlight --underline --notes-fg --good --bad
+palette  --bg --fg --muted --muted-2 --accent --accent-title --rule
+         --panel --panel-border --panel-shadow --panel-header-bg --panel-header-fg --panel-rule
+         --line-highlight --underline --notes-fg --good --bad --badge-fg
+type     --font-display --font-sans --font-mono --h1-weight --h1-tracking
+shape    --panel-radius
 ```
 
-A theme may also add small overrides scoped under its class (the `midnight` theme shows macOS traffic-light dots and tints verdict headers), and it names the Shiki theme used for tokens so code colours match the palette.
+A theme also lists the font files it needs (`fonts`) and names the Shiki theme for code tokens, and may add small overrides scoped under its class: `vesper` hides the monogram and the issue label and enlarges the issue numeral; `print` puts a heavy rule under the running head.
 
-Layouts never set colours and themes never move boxes. If you find yourself writing `.theme-x .panels { grid-template-columns … }`, the change belongs in a layout instead.
+Why custom properties rather than a preprocessor: the values need to be live at render time (a layout override in the sandbox, a custom theme built from four colours), Chromium is the only consumer, and one build tool fewer across the CLI, the compiled binary and the browser bundle is worth more than Sass nesting. Layouts never set colours and themes never move boxes. If you find yourself writing `.theme-x .panels { grid-template-columns … }`, the change belongs in a layout instead.
 
 ## The fit loop: measure, don't guess
 
@@ -182,7 +188,7 @@ Both tiers use Node's built-in `node:test` runner. No test framework dependency.
 
 - `npm run card` runs `tsx src/cli.ts` so development needs no build step.
 - `npm run build` compiles `src/` to `dist/` with `tsconfig.build.json`, which excludes tests. The `bin` entry points at `dist/cli.js`, and the shebang on the first line of `cli.ts` survives compilation.
-- Themes are TypeScript modules exporting CSS strings rather than `.css` files, so the build is a plain `tsc` with no asset copy step, and the compiled package resolves them the same way the source does.
+- Themes are TypeScript modules exporting CSS strings rather than `.css` or `.scss` files, so the build is a plain `tsc` with no asset copy or preprocessor step, and the compiled package resolves them the same way the source does. If a web app with its own bundler arrives, moving them to `.css` files is mechanical.
 - `files` in `package.json` limits the published tarball to `dist/`, the README, and the licence notices. `prepublishOnly` guarantees a fresh build.
 - Card output defaults to `out/` precisely because `dist/` is the compiled CLI.
 
@@ -203,7 +209,7 @@ A theme built in the sandbox's palette editor is expanded into the full variable
 
 ## Adding a theme
 
-1. Create `src/themes/<name>.ts` exporting a `Theme`: `name`, `description`, `shikiTheme` (any Shiki bundled theme id) and `css` defining every variable in the contract under `.theme-<name>`.
+1. Create `src/themes/<name>.ts` exporting a `Theme`: `name`, `description`, `shikiTheme` (any Shiki bundled theme id), `fonts` (the `@fontsource` WOFF2 files the theme's `--font-*` families need) and `css` defining every token in the contract under `.theme-<name>`. The sandbox's custom palette editor can draft the CSS for you.
 2. Register it in the array in `src/themes/index.ts`. `THEME_NAMES` and validation pick it up automatically.
 3. Add an example under `examples/` that sets `theme: <name>`, run `npm run samples`, and add the image to the README gallery.
 4. Add the name to the theme table in the README.
@@ -212,8 +218,8 @@ If the theme needs a structural tweak (hide the dot, show the traffic lights, ch
 
 ## Adding a layout
 
-1. Add the name to `LAYOUTS` in `src/schema.ts` and a `LAYOUT_RULES` entry: panel count range, lines per panel, and the font range the fit loop may use. Lower the font range as panels get narrower.
-2. Add `.layout-<name>` rules to `src/themes/base.ts`: how `.panels` arranges its children (flex or grid) and any spacing reductions for the intro, headers and notes. Keep colours out.
+1. Add the name to `LAYOUTS` in `src/schema.ts` and a `LAYOUT_RULES` entry: panel count range, lines per panel, the font range the fit loop may use, and a `tokens` table with the layout's sizes. Lower the font range as panels get narrower.
+2. If the panels are arranged differently from a vertical stack, add a `.layout-<name> .panels` rule to `src/themes/base.ts` (flex or grid). Sizes come from the tokens; keep colours and numbers out.
 3. Add an example, regenerate samples, and extend the layout table in the README.
 4. Add the example to the list in `src/render/render.test.ts` so CI proves it renders and fits.
 

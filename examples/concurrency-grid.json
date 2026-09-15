@@ -5,7 +5,7 @@
   "tags": [".NET 9", "Threading", "Locks"],
   "issue": "05",
   "layout": "grid",
-  "theme": "midnight",
+  "theme": "vesper",
   "insight": "lock and Lock are for short critical sections on one process. Semaphores bound concurrency; only SemaphoreSlim can be awaited.",
   "panels": [
     {

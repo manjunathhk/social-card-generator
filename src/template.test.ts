@@ -20,13 +20,15 @@ test('document embeds fonts, blocks nothing external, and escapes card text', as
     panels: [{ language: 'csharp', code: 'var x = "<tag>";' }],
   });
   const html = await renderDocument([card], branding);
-  assert.match(html, /@font-face\{font-family:Inter;font-weight:700/);
-  assert.match(html, /@font-face\{font-family:Mono/);
+  assert.match(html, /@font-face\{font-family:"Bricolage Grotesque";font-weight:700/);
+  assert.match(html, /@font-face\{font-family:"Commit Mono"/);
+  assert.ok(!html.includes('Geist'), "only the used theme's fonts are embedded");
   assert.ok(!/https?:\/\//.test(html.replace(/<title>.*<\/title>/, '')), 'no external URLs');
   assert.ok(html.includes('<h1>Title &lt;b&gt;</h1>'));
   assert.ok(html.includes('A&amp;B'));
-  assert.ok(html.includes('class="card layout-stack theme-editorial panels-1"'));
+  assert.ok(html.includes('class="card layout-stack theme-print panels-1"'));
   assert.ok(html.includes('data-font-max="20" data-font-min="16"'));
+  assert.match(html, /style="--h1:65px;--subtitle:23px;/);
   assert.ok(html.includes('Ada Lovelace'));
   assert.ok(!html.includes('<div class="footer-mark">'));
 });
@@ -36,7 +38,7 @@ test('panel decorations render as classes, badges, notes and underlines', async 
     title: 'T',
     subtitle: 'S',
     layout: 'columns',
-    theme: 'midnight',
+    theme: 'vesper',
     panels: [
       { label: 'Bad', language: 'csharp', code: 'var a = 1;', verdict: 'bad', notes: ['slow <x>'] },
       {
@@ -50,24 +52,27 @@ test('panel decorations render as classes, badges, notes and underlines', async 
     ],
   });
   const html = await renderDocument([card], branding);
-  assert.ok(html.includes('layout-columns theme-midnight panels-2'));
+  assert.ok(html.includes('layout-columns theme-vesper panels-2'));
+  assert.match(html, /style="--h1:58px;/);
+  assert.ok(html.includes('font-family:"Geist Mono"'));
   assert.ok(html.includes('<section class="panel verdict-bad">'));
   assert.ok(html.includes('<span class="badge">✓</span>'));
   assert.ok(html.includes('<li>slow &lt;x&gt;</li>'));
   assert.ok(html.includes('class="underline"'));
   assert.ok(html.includes('data-highlight="true"'));
-  assert.ok(html.includes('.theme-midnight {'), 'theme css included');
+  assert.ok(html.includes('.theme-vesper {'), 'theme css included');
 });
 
 test('multi-card documents include every used theme once', async () => {
   const base = { title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] };
   const html = await renderDocument(
-    [validateCard(base), validateCard({ ...base, theme: 'midnight' }), validateCard(base)],
+    [validateCard(base), validateCard({ ...base, theme: 'vesper' }), validateCard(base)],
     branding,
   );
   assert.equal(html.match(/<main class="card/g)?.length, 3);
-  assert.equal(html.match(/\.theme-editorial \{/g)?.length, 1);
-  assert.equal(html.match(/\.theme-midnight \{/g)?.length, 1);
+  assert.equal(html.match(/\.theme-print \{/g)?.length, 1);
+  assert.equal(html.match(/\.theme-vesper \{/g)?.length, 1);
+  assert.equal(html.match(/font-family:"Inter";font-weight:400/g)?.length, 1, 'shared font embedded once');
 });
 
 test('footer mark is optional and escaped', async () => {

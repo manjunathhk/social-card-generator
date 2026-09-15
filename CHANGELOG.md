@@ -8,7 +8,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - `columns` layout: two panels side by side, for comparisons.
 - `grid` layout: three or four panels in a two-column grid.
-- `midnight` theme, and a documented CSS variable contract for themes.
+- Themes `print` (Flexoki paper and ink, light code panels, Bricolage Grotesque, Inter, Commit Mono) and `vesper` (near-black, peach accent, Geist Sans and Mono). Each theme declares its own fonts; only the fonts of the themes in use are embedded.
+- Layout sizes are tokens in `LAYOUT_RULES`, written inline on the card by the template; the base stylesheet reads tokens and contains no per-layout numbers.
 - Panel decorations: `verdict` (✓ / ✕ badge and header tint), `notes` (bullets under the code) and `underline` (token underlines via Shiki decorations).
 - Markdown shorthands: `{1,3-5}` highlight lines on the fence, ✅ / ❌ heading prefixes for verdicts, `- ` bullets after a fence for notes.
 - `--pdf` writes every input, in order, as a multi-page PDF carousel; `--pdf-only` skips the PNGs.
@@ -21,6 +22,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Changed
 
 - Branding defaults are neutral placeholders; personal values live in `.env` (see `.env.sample`). The monogram defaults to the author's initials.
+- The original `editorial` and `midnight` looks are replaced by `print` and `vesper`; the default theme is `print`. JetBrains Mono is no longer embedded.
 - Default PNG output directory is `out/` (was `dist/`, which is now the compiled CLI). HTML previews are opt-in with `--html`.
 - Language ids accept Shiki aliases (`cs`, `ts`) and are normalised to the canonical id; unknown languages fail at validation, before a browser starts.
 - Numeric YAML scalars such as `issue: 03` are accepted as text instead of failing with a length error.

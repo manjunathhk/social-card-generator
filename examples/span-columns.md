@@ -5,7 +5,7 @@ subtitle: The same parsing logic, with and without a new string per call.
 tags: [.NET, Performance, Span]
 issue: '04'
 layout: columns
-theme: midnight
+theme: vesper
 insight: Substring allocates a new string every call. Slicing a ReadOnlySpan<char> reuses the memory the caller already owns.
 ---
 

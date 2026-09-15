@@ -18,7 +18,7 @@ test('Markdown and JSON sources produce identical cards', async () => {
   const fromJson = parseContent(await example('redis-caching.json'), 'json');
   assert.deepEqual(fromMarkdown, fromJson);
   assert.equal(fromMarkdown.layout, 'stack');
-  assert.equal(fromMarkdown.theme, 'editorial');
+  assert.equal(fromMarkdown.theme, 'print');
 });
 
 test('strips a UTF-8 BOM before parsing JSON', () => {
@@ -152,7 +152,7 @@ test('validation: panel decorations', () => {
 });
 
 test('validation: themes must exist', () => {
-  assert.equal(validateCard({ ...minimal(), theme: 'midnight' }).theme, 'midnight');
+  assert.equal(validateCard({ ...minimal(), theme: 'vesper' }).theme, 'vesper');
   assert.throws(() => validateCard({ ...minimal(), theme: 'neon' }), /"theme" must be one of/);
 });
 
