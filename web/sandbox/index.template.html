@@ -209,7 +209,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <span class="hint">Rules, muted text, header and highlight colours are mixed from these four; light and dark panels are detected automatically.</span>
         </div>
       </div>
-      <div class="editor"><textarea id="source" spellcheck="false" aria-label="Card source in Markdown or JSON"></textarea></div>
+      <div class="editor"><textarea id="source" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off" aria-label="Card source in Markdown or JSON"></textarea></div>
       <div class="banner error" id="error" hidden></div>
       <details class="brandbox" id="brandbox">
         <summary>Branding</summary>
@@ -273,7 +273,10 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue', linkedin: 'b-linkedin', twitter: 'b-twitter' };
   const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL', linkedin: 'CARD_LINKEDIN', twitter: 'CARD_TWITTER' };
   const brandingFields = { author: 'author', website: 'website', series: 'series', monogram: 'monogram', footer: 'footerMark', issue: 'issueLabel', linkedin: 'linkedin', twitter: 'twitter' };
-  const DEFAULT_EXAMPLE = 'span-columns.md';
+  const NEW_CARD_TEMPLATE = [
+    '---', 'title: New card', 'subtitle: Replace this with your own subtitle.', "tags: []", "issue: '01'", '---', '',
+    '## Example', '```typescript', 'const example = true;', '```', '',
+  ].join('\n');
   let downloads = null;
   let lastCard = null;
 
@@ -303,7 +306,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   // Persistence (per-browser convenience only).
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const savedSource = store.get('scs:source');
-  source.value = savedSource ?? SC.examples[DEFAULT_EXAMPLE];
+  source.value = savedSource ?? NEW_CARD_TEMPLATE;
   try { const b = JSON.parse(store.get('scs:branding') || '{}'); for (const k in brandIds) if (b[k]) $(brandIds[k]).value = b[k]; } catch {}
 
   function brandingValues() {
@@ -535,10 +538,6 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     } catch (e) { toast('History not saved: ' + e.message); }
   }
 
-  const NEW_CARD_TEMPLATE = [
-    '---', 'title: New card', 'subtitle: Replace this with your own subtitle.', "tags: []", "issue: '01'", '---', '',
-    '## Example', '```typescript', 'const example = true;', '```', '',
-  ].join('\n');
   $('new-card').addEventListener('click', () => {
     source.value = NEW_CARD_TEMPLATE;
     store.set('scs:source', NEW_CARD_TEMPLATE);
