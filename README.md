@@ -251,7 +251,7 @@ docker run -d --name social-card-sandbox -p 8787:8787 -v sandbox-data:/data \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
-Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. `:latest` tracks the most recent push to `main` — pin to a specific `:<git-sha>` tag instead if you want deploys to be explicit.
+Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. Every push publishes three tags: `:latest`, the exact commit `:<git-sha>`, and `:<version>` (the `version` field in `package.json`, e.g. `:2.0.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
 
 #### Publishing to Docker Hub
 

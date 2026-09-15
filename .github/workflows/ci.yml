@@ -79,6 +79,11 @@ jobs:
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Resolve image name and version
+        id: image
+        run: |
+          echo "name=${{ vars.DOCKERHUB_IMAGE || 'manjunathhk/social-card-generator' }}" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@v3
         if: steps.creds.outputs.configured == 'true'
       - uses: docker/setup-buildx-action@v3
@@ -95,8 +100,9 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ vars.DOCKERHUB_IMAGE || 'manjunathhk/social-card-generator' }}:latest
-            ${{ vars.DOCKERHUB_IMAGE || 'manjunathhk/social-card-generator' }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:${{ steps.image.outputs.version }}
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
       - name: Note missing Docker Hub secrets
         if: steps.creds.outputs.configured != 'true'
         run: echo "::notice::DOCKERHUB_USERNAME/DOCKERHUB_TOKEN repo secrets are not set — skipping Docker Hub publish. See README.md, 'Publishing to Docker Hub'."
