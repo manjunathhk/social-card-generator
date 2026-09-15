@@ -1,0 +1,14 @@
+# Convenience for local self-hosting. `docker compose up --build`, then open
+# http://localhost:8787. History persists in the named volume across
+# `docker compose down` / `up`; `docker compose down -v` clears it.
+services:
+  social-card-sandbox:
+    build: .
+    ports:
+      - '8787:8787'
+    volumes:
+      - sandbox-data:/data
+    restart: unless-stopped
+
+volumes:
+  sandbox-data:

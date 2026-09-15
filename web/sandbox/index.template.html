@@ -1,0 +1,636 @@
+<title>Social Card Sandbox</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/*
+ * Chrome for the sandbox tool itself — the toolbar, editor and controls
+ * around the preview. This is independent of the card themes (print.ts,
+ * vesper.ts) rendered inside #stage: nothing here is read by the core, and
+ * nothing the core exports carries a trace of it. Dark-first, one accent
+ * (coral), used only for primary actions and focus — everything else is a
+ * tinted near-black neutral. A light variant follows the OS preference so
+ * the page still holds together for a viewer in light mode.
+ */
+:root {
+  --bg: #050505; --surface: #0d0d0e; --surface-2: #141415; --surface-3: #1c1b1c;
+  --ink: #f2efec; --muted: #9c9691; --faint: #5f5b57;
+  --rule: #201f1f; --rule-strong: #2c2a2a;
+  --accent: #ff6363; --accent-ink: #ffffff; --focus: #ff6363;
+  --good: #57d9a3; --bad: #f2495c; --warn: #f5a524;
+  --editor-bg: #0a0a0b; --editor-ink: #eae6e2;
+  --glow-1: #ff6363; --glow-2: #8b6bff;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #faf8f6; --surface: #ffffff; --surface-2: #f4f1ee; --surface-3: #ece8e3;
+    --ink: #1c1917; --muted: #6f6a65; --faint: #b0a9a2;
+    --rule: #e8e3de; --rule-strong: #d9d2cb;
+    --accent: #e0483f; --accent-ink: #ffffff; --focus: #e0483f;
+    --good: #0f9d70; --bad: #d1344f; --warn: #b3720a;
+    --glow-1: #ff8a80; --glow-2: #a996ff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #faf8f6; --surface: #ffffff; --surface-2: #f4f1ee; --surface-3: #ece8e3;
+  --ink: #1c1917; --muted: #6f6a65; --faint: #b0a9a2;
+  --rule: #e8e3de; --rule-strong: #d9d2cb;
+  --accent: #e0483f; --accent-ink: #ffffff; --focus: #e0483f;
+  --good: #0f9d70; --bad: #d1344f; --warn: #b3720a;
+  --glow-1: #ff8a80; --glow-2: #a996ff;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.glow { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; opacity: .22; }
+.glow-1 { width: 480px; height: 480px; top: -180px; left: -60px; background: var(--glow-1); }
+.glow-2 { width: 420px; height: 420px; top: 120px; right: -140px; background: var(--glow-2); opacity: .14; }
+
+.app { position: relative; z-index: 1; min-height: 100%; display: flex; flex-direction: column; }
+.top {
+  display: flex; align-items: center; gap: 16px; padding: 14px 22px; flex-wrap: wrap;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--rule);
+}
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
+.brand span { font: 12px var(--mono); color: var(--faint); }
+.top .links { margin-left: auto; display: flex; gap: 18px; font-size: 13px; }
+.top a { color: var(--muted); text-decoration: none; transition: color .15s; }
+.top a:hover { color: var(--accent); }
+
+.work { flex: 1; display: grid; grid-template-columns: minmax(340px, 480px) minmax(0, 1fr); gap: 20px; padding: 22px; align-items: start; }
+@media (max-width: 900px) { .work { grid-template-columns: 1fr; } }
+
+.pane { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toolbar label { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: .7px; font-weight: 500; }
+select, input[type="text"] {
+  background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 10px; min-width: 0;
+  transition: border-color .15s, box-shadow .15s;
+}
+select { padding-right: 28px; }
+select:hover, input[type="text"]:hover { border-color: var(--rule-strong); }
+select:focus-visible, input[type="text"]:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); outline: none; }
+.pill { font: 500 11.5px var(--mono); padding: 4px 9px; border-radius: 999px; background: var(--surface-3); color: var(--muted); border: 1px solid var(--rule); }
+
+.editor { position: relative; background: var(--editor-bg); border-radius: 12px; border: 1px solid var(--rule-strong); overflow: hidden; box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent); }
+.editor textarea { display: block; width: 100%; height: 520px; resize: vertical; padding: 16px 18px; background: transparent; color: var(--editor-ink); border: 0; font: 13px/1.6 var(--mono); tab-size: 2; white-space: pre; overflow: auto; }
+.editor textarea:focus-visible { outline-offset: -2px; }
+.banner { border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45; border: 1px solid; }
+.banner[hidden] { display: none; }
+.banner.error { border-color: color-mix(in srgb, var(--bad) 45%, var(--rule)); color: var(--ink); background: color-mix(in srgb, var(--bad) 14%, var(--surface)); }
+.banner.warn { border-color: color-mix(in srgb, var(--warn) 50%, var(--rule)); background: color-mix(in srgb, var(--warn) 14%, var(--surface)); }
+.banner code { font: 12px var(--mono); }
+
+.palette { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.palette[hidden] { display: none; }
+.palette-fields { padding: 0; grid-template-columns: repeat(3, 1fr); }
+.palette-fields input[type="color"] { width: 100%; height: 34px; padding: 2px; border: 1px solid var(--rule); border-radius: 7px; background: var(--surface-2); cursor: pointer; }
+.palette-fields label.check { flex-direction: row; align-items: center; gap: 8px; align-self: end; padding-bottom: 8px; }
+.palette-fields label.check span { text-transform: none; letter-spacing: 0; color: var(--ink); }
+.palette-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+details.brandbox { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); }
+details.brandbox summary { cursor: pointer; padding: 10px 14px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.brandbox summary::after { content: '+'; color: var(--faint); font: 16px var(--mono); }
+details.brandbox[open] summary::after { content: '−'; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 4px 14px 14px; }
+.fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--faint); }
+.fields label span { text-transform: uppercase; letter-spacing: .6px; }
+.fields input { width: 100%; }
+
+.stagewrap { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.stagebox { width: 100%; max-width: 720px; margin: 0 auto; aspect-ratio: 1080 / 1350; position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 20px 48px color-mix(in srgb, #000 55%, transparent); background: var(--surface-2); }
+#stage { position: absolute; top: 0; left: 0; width: 1080px; height: 1350px; transform-origin: top left; }
+.status { display: flex; gap: 8px 18px; flex-wrap: wrap; align-items: center; font: 500 12px var(--mono); color: var(--faint); }
+.status b { color: var(--ink); font-weight: 500; }
+.status .fit-ok { color: var(--good); }
+.status .fit-bad { color: var(--bad); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn {
+  border: 1px solid var(--rule-strong); background: var(--surface-2); color: var(--ink);
+  border-radius: 9px; padding: 8px 15px; cursor: pointer; font-weight: 500;
+  transition: border-color .15s, background .15s, box-shadow .15s, transform .1s;
+}
+.btn:hover { border-color: var(--faint); background: var(--surface-3); }
+.btn:active { transform: translateY(1px); }
+.btn.primary {
+  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.btn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, white); border-color: color-mix(in srgb, var(--accent) 88%, white); }
+.btn:disabled { opacity: .5; cursor: default; box-shadow: none; transform: none; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+.hint { font-size: 12px; color: var(--faint); }
+.notes { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.notes code { font: 12px var(--mono); color: var(--ink); }
+
+dialog {
+  border: 1px solid var(--rule-strong); border-radius: 16px; padding: 18px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  color: var(--ink); max-width: min(92vw, 720px); box-shadow: 0 24px 60px color-mix(in srgb, #000 50%, transparent);
+}
+dialog::backdrop { background: color-mix(in srgb, #000 65%, transparent); }
+dialog img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+dialog .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--surface-3); color: var(--ink); border: 1px solid var(--rule-strong);
+  padding: 9px 15px; border-radius: 999px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none;
+  box-shadow: 0 10px 30px color-mix(in srgb, #000 40%, transparent);
+}
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+.history-head { display: flex; align-items: baseline; justify-content: space-between; }
+.history-head h2 { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); }
+.history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; max-height: 320px; overflow-y: auto; padding-right: 2px; }
+.history-item { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--rule); background: var(--surface-2); cursor: pointer; transition: border-color .15s; }
+.history-item:hover, .history-item:focus-visible { border-color: var(--accent); }
+.history-item img { display: block; width: 100%; aspect-ratio: 1080 / 1350; object-fit: cover; background: var(--surface-3); }
+.history-title { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 6px 3px; font-size: 10px; line-height: 1.3; color: #fff; background: linear-gradient(to top, rgb(0 0 0 / .75), transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-del {
+  position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; border: 0;
+  background: rgb(0 0 0 / .55); color: #fff; font-size: 11px; line-height: 20px; text-align: center; cursor: pointer; padding: 0;
+}
+.history-del:hover { background: var(--bad); }
+</style>
+
+<div class="glow glow-1" aria-hidden="true"></div>
+<div class="glow glow-2" aria-hidden="true"></div>
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>Social Card Sandbox</h1><span id="build-tag">/*__BUILD_TAG__*/</span></div>
+    <nav class="links">
+      <a href="https://github.com/manjunathhk/social-card-generator" target="_blank" rel="noopener">Repository</a>
+      <a href="https://github.com/manjunathhk/social-card-generator/blob/main/docs/TECHNIQUES.md" target="_blank" rel="noopener">Techniques</a>
+    </nav>
+  </header>
+
+  <main class="work">
+    <section class="pane" aria-label="Card source">
+      <div class="toolbar">
+        <button class="btn" id="new-card" type="button">New</button>
+        <label for="example">Example</label>
+        <select id="example"></select>
+        <span class="pill" id="format-pill">Markdown</span>
+        <span class="pill" id="langs-pill" title="Languages bundled in this sandbox">15 languages</span>
+      </div>
+      <div class="toolbar">
+        <label for="layout-sel">Layout</label>
+        <select id="layout-sel"><option value="">from source</option><option value="stack">stack</option><option value="columns">columns</option><option value="grid">grid</option></select>
+        <label for="theme-sel">Theme</label>
+        <select id="theme-sel"><option value="">from source</option><option value="custom">custom…</option></select>
+      </div>
+      <p class="hint" id="editing-hint" hidden></p>
+      <div class="palette" id="palette" hidden>
+        <div class="fields palette-fields">
+          <label><span>Background</span><input id="p-bg" type="color" value="#fffcf0"></label>
+          <label><span>Text</span><input id="p-fg" type="color" value="#100f0f"></label>
+          <label><span>Accent</span><input id="p-accent" type="color" value="#205ea6"></label>
+          <label><span>Panel</span><input id="p-panel" type="color" value="#f2f0e5"></label>
+          <label><span>Code colours</span><select id="p-code"><option value="vitesse-light">vitesse-light (light panels)</option><option value="vesper">vesper (dark panels)</option></select></label>
+          <label><span>Type</span><select id="p-type"><option value="print">Print faces</option><option value="vesper">Vesper faces</option></select></label>
+        </div>
+        <div class="palette-actions">
+          <button class="btn" id="p-copy">Copy as TypeScript theme</button>
+          <span class="hint">Rules, muted text, header and highlight colours are mixed from these four; light and dark panels are detected automatically.</span>
+        </div>
+      </div>
+      <div class="editor"><textarea id="source" spellcheck="false" aria-label="Card source in Markdown or JSON"></textarea></div>
+      <div class="banner error" id="error" hidden></div>
+      <details class="brandbox" id="brandbox">
+        <summary>Branding</summary>
+        <div class="fields">
+          <label><span>Author</span><input id="b-author" type="text" placeholder="Your Name"></label>
+          <label><span>Website</span><input id="b-website" type="text" placeholder="example.com"></label>
+          <label><span>Series</span><input id="b-series" type="text" placeholder="Field Notes"></label>
+          <label><span>Monogram</span><input id="b-monogram" type="text" placeholder="initials"></label>
+          <label><span>Footer mark</span><input id="b-footer" type="text" placeholder="blank hides it"></label>
+          <label><span>Issue label</span><input id="b-issue" type="text" placeholder="Note"></label>
+        </div>
+      </details>
+      <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Themes: print, vesper. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
+    </section>
+
+    <section class="pane" aria-label="Preview and export">
+      <div class="stagewrap">
+        <div class="stagebox" id="stagebox"><div id="stage"><div id="card-host"></div></div></div>
+        <div class="status" id="status">
+          <span>Layout <b id="s-layout">—</b></span>
+          <span>Theme <b id="s-theme">—</b></span>
+          <span>Panels <b id="s-panels">—</b></span>
+          <span>Code <b id="s-font">—</b></span>
+          <span id="s-fit">—</span>
+        </div>
+        <div class="banner warn" id="overflow" hidden></div>
+        <div class="actions">
+          <button class="btn primary" id="export-1">Export PNG 1×</button>
+          <button class="btn" id="export-2">Export PNG 2×</button>
+          <button class="btn" id="copy">Copy image</button>
+          <span class="hint" id="export-hint">Exports are rasterised by your browser; the CLI's Chromium render is the canonical output.</span>
+        </div>
+      </div>
+      <p class="notes">Bundled languages: <span id="langs-list"></span>. PDF carousels and other Shiki languages are available in the CLI only.</p>
+
+      <div class="stagewrap">
+        <div class="history-head"><h2>History</h2><span class="hint" id="history-count">0 saved</span></div>
+        <p class="hint" id="history-empty">Exported cards appear here — nothing yet.</p>
+        <div class="history-grid" id="history-list" hidden></div>
+        <p class="hint">Click a card to reopen it for editing. Right-click or long-press its image to save it directly. Saved here: <span id="history-backend">checking…</span>.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="preview">
+  <img id="preview-img" alt="Exported card">
+  <div class="row"><span class="hint" id="preview-hint">Right-click or long-press the image to save it.</span><button class="btn" id="preview-close">Close</button></div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>/*__BUNDLE__*/</script>
+<script>
+(() => {
+  const SC = window.SocialCard;
+  const $ = (id) => document.getElementById(id);
+  const source = $('source'), example = $('example'), errorBox = $('error'), overflowBox = $('overflow');
+  const stage = $('stage'), stagebox = $('stagebox'), host = $('card-host');
+  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue' };
+  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL' };
+  const DEFAULT_EXAMPLE = 'span-columns.md';
+  let downloads = null;
+  let lastCard = null;
+
+  // Card CSS: fonts + layout + every theme, once.
+  // The card CSS is written for a document that is nothing but cards, so its
+  // page-level rules (html/body/@page) are dropped before it joins this page.
+  const cardOnlyCss = SC.baseCss.replace(/^(html, body|body|@page)\s*\{[^}]*\}\s*$/gm, '');
+  const style = document.createElement('style');
+  document.head.appendChild(style);
+  const FONT_CSS = SC.FONT_CSS;
+  style.textContent = FONT_CSS + '\n' + cardOnlyCss + '\n' + SC.THEME_NAMES.map((n) => SC.getTheme(n).css).join('\n') + '\n#stage .card{break-after:auto}';
+
+  // Themes shipped in the core, then the sandbox-only custom option.
+  const themeSelEl = $('theme-sel');
+  for (const name of SC.THEME_NAMES) {
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+    themeSelEl.insertBefore(opt, themeSelEl.lastElementChild);
+  }
+
+  // Examples.
+  for (const name of Object.keys(SC.examples)) {
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = name; example.appendChild(opt);
+  }
+  $('langs-list').textContent = SC.SANDBOX_LANGUAGES.join(', ');
+  $('langs-pill').textContent = SC.SANDBOX_LANGUAGES.length + ' languages';
+
+  // Persistence (per-browser convenience only).
+  const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  const savedSource = store.get('scs:source');
+  source.value = savedSource ?? SC.examples[DEFAULT_EXAMPLE];
+  example.value = store.get('scs:example') ?? DEFAULT_EXAMPLE;
+  try { const b = JSON.parse(store.get('scs:branding') || '{}'); for (const k in brandIds) if (b[k]) $(brandIds[k]).value = b[k]; } catch {}
+
+  function brandingValues() {
+    const values = {};
+    for (const k in brandIds) values[k] = $(brandIds[k]).value;
+    return values;
+  }
+  function branding() {
+    const values = brandingValues();
+    store.set('scs:branding', JSON.stringify(values));
+    const env = {};
+    for (const k in brandIds) if (values[k].trim()) env[envKeys[k]] = values[k];
+    return SC.brandingFromEnv(env);
+  }
+  function detectFormat(text) { return /^\uFEFF?\s*\{/.test(text) ? 'json' : 'markdown'; }
+  function loadRaw(text, format) { return format === 'json' ? JSON.parse(text.replace(/^﻿/, '')) : SC.parseMarkdown(text); }
+
+  // Layout and theme overrides, applied to the raw object before validation so
+  // layout rules (panel counts, line limits) are checked against the override.
+  const layoutSel = $('layout-sel'), themeSel = $('theme-sel'), palette = $('palette');
+  layoutSel.value = store.get('scs:layout') || '';
+  themeSel.value = store.get('scs:theme') || '';
+  layoutSel.addEventListener('change', () => { store.set('scs:layout', layoutSel.value); render(); });
+  themeSel.addEventListener('change', () => { store.set('scs:theme', themeSel.value); palette.hidden = themeSel.value !== 'custom'; render(); });
+  palette.hidden = themeSel.value !== 'custom';
+
+  // Custom theme: four colours plus the code palette, expanded into the full
+  // variable contract that src/themes/base.ts reads.
+  const pIds = { bg: 'p-bg', fg: 'p-fg', accent: 'p-accent', panel: 'p-panel', code: 'p-code', type: 'p-type' };
+  try { const saved = JSON.parse(store.get('scs:palette') || '{}'); for (const k in pIds) if (saved[k] !== undefined) { const el = $(pIds[k]); if (el.type === 'checkbox') el.checked = saved[k]; else el.value = saved[k]; } } catch {}
+  const customStyle = document.createElement('style'); document.head.appendChild(customStyle);
+  function paletteValues() { const v = {}; for (const k in pIds) { const el = $(pIds[k]); v[k] = el.type === 'checkbox' ? el.checked : el.value; } return v; }
+  function luminance(hex) { const n = parseInt(hex.slice(1), 16); const c = [16, 8, 0].map((s) => ((n >> s) & 255) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+  function customThemeCss(p) {
+    const mix = (a, pct, b) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
+    const darkPanel = luminance(p.panel) < 0.35;
+    const onPanel = darkPanel ? '#ffffff' : p.fg;          // colour to mix towards for text on the panel
+    const type = SC.THEMES[p.type] || SC.THEMES[SC.THEME_NAMES[0]];
+    const typeCss = type.css.match(/--font-display:[^;]+;\s*--font-sans:[^;]+;\s*--font-mono:[^;]+;\s*--h1-weight:[^;]+;\s*--h1-tracking:[^;]+;/)?.[0] ?? '';
+    return `.theme-custom {
+  --bg: ${p.bg}; --fg: ${p.fg}; --muted: ${mix(p.fg, 62, p.bg)}; --muted-2: ${mix(p.fg, 35, p.bg)};
+  --accent: ${p.accent}; --accent-title: ${p.accent}; --rule: ${mix(p.fg, 18, p.bg)};
+  --panel: ${p.panel}; --panel-border: ${mix(onPanel, darkPanel ? 8 : 12, p.panel)}; --panel-shadow: none;
+  --panel-header-bg: ${darkPanel ? 'transparent' : mix(onPanel, 6, p.panel)}; --panel-header-fg: ${mix(onPanel, darkPanel ? 60 : 70, p.panel)}; --panel-rule: ${mix(onPanel, 14, p.panel)};
+  --line-highlight: ${mix(p.accent, darkPanel ? 14 : 11, p.panel)}; --underline: #d9534f; --notes-fg: ${mix(onPanel, 84, p.panel)};
+  --good: ${darkPanel ? '#99ffe4' : '#66800b'}; --bad: ${darkPanel ? '#ff8080' : '#af3029'}; --badge-fg: ${darkPanel ? p.panel : p.bg};
+  ${typeCss} --panel-radius: 8px;
+}`;
+  }
+  function applyCustomTheme() {
+    const p = paletteValues();
+    store.set('scs:palette', JSON.stringify(p));
+    const css = customThemeCss(p);
+    SC.THEMES.custom = { name: 'custom', description: 'Sandbox custom theme', shikiTheme: p.code, fonts: (SC.THEMES[p.type] || SC.THEMES[SC.THEME_NAMES[0]]).fonts, css };
+    if (!SC.THEME_NAMES.includes('custom')) SC.THEME_NAMES.push('custom');
+    customStyle.textContent = css;
+  }
+  applyCustomTheme();
+  for (const k in pIds) $(pIds[k]).addEventListener('input', () => { applyCustomTheme(); schedule(); });
+  $('p-copy').addEventListener('click', async () => {
+    const p = paletteValues();
+    const ts = `import type { Theme } from './types.js';\n\n/** Generated in the sandbox; rename and register it in src/themes/index.ts. */\nexport const custom: Theme = {\n  name: 'custom',\n  description: 'Describe the look here.',\n  shikiTheme: '${p.code}',\n  fonts: [/* copy the fonts array from src/themes/${p.type}.ts */],\n  css: /* css */ \`\n${customThemeCss(p)}\n\`,\n};\n`;
+    try { await navigator.clipboard.writeText(ts); toast('Copied src/themes/custom.ts to the clipboard'); } catch { toast('Clipboard is not available here.'); }
+  });
+
+  // History: exported cards, saved to the same-origin server (server/) when
+  // this page is served by it, or to this browser's IndexedDB otherwise —
+  // e.g. opened as a plain file, or viewed on claude.ai. Same UI either way;
+  // the page just detects what is available, once, at startup.
+  const HistoryStore = (() => {
+    let apiAvailable;
+    async function hasApi() {
+      if (apiAvailable === undefined) {
+        try { apiAvailable = (await fetch('/api/health', { signal: AbortSignal.timeout(800) })).ok; }
+        catch { apiAvailable = false; }
+      }
+      return apiAvailable;
+    }
+
+    let dbPromise;
+    function idb() {
+      dbPromise ??= new Promise((resolve, reject) => {
+        const req = indexedDB.open('social-card-sandbox', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('cards', { keyPath: 'id' });
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      return dbPromise;
+    }
+    function idbRun(mode, run) {
+      return idb().then((db) => new Promise((resolve, reject) => {
+        const tx = db.transaction('cards', mode);
+        const result = run(tx.objectStore('cards'));
+        tx.oncomplete = () => resolve(result && result.result);
+        tx.onerror = () => reject(tx.error);
+      }));
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1]);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    return {
+      async backendLabel() { return (await hasApi()) ? 'this server' : 'this browser (not shared with other devices)'; },
+      async list() {
+        if (await hasApi()) {
+          const r = await fetch('/api/cards');
+          if (!r.ok) throw new Error('Could not load history.');
+          return (await r.json()).cards;
+        }
+        const all = await idbRun('readonly', (store) => store.getAll());
+        return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      },
+      async save(meta, blob) {
+        if (await hasApi()) {
+          const pngBase64 = await blobToBase64(blob);
+          const r = await fetch('/api/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...meta, pngBase64 }) });
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Could not save to history.');
+          return r.json();
+        }
+        const record = { ...meta, id: crypto.randomUUID(), createdAt: new Date().toISOString(), blob };
+        await idbRun('readwrite', (store) => store.put(record));
+        return record;
+      },
+      async get(id) {
+        if (await hasApi()) {
+          const r = await fetch('/api/cards/' + id);
+          return r.ok ? r.json() : undefined;
+        }
+        return idbRun('readonly', (store) => store.get(id));
+      },
+      async remove(id) {
+        if (await hasApi()) { await fetch('/api/cards/' + id, { method: 'DELETE' }); return; }
+        await idbRun('readwrite', (store) => store.delete(id));
+      },
+      imageUrl(record) {
+        if (record.blob) { record._objectUrl ??= URL.createObjectURL(record.blob); return record._objectUrl; }
+        return '/api/cards/' + record.id + '/image';
+      },
+    };
+  })();
+
+  HistoryStore.backendLabel().then((label) => { $('history-backend').textContent = label; });
+
+  const editingHint = $('editing-hint');
+
+  async function refreshHistory() {
+    let records;
+    try { records = await HistoryStore.list(); } catch (e) { toast(e.message); return; }
+    const list = $('history-list'), empty = $('history-empty');
+    $('history-count').textContent = records.length + (records.length === 1 ? ' saved' : ' saved');
+    if (!records.length) { list.hidden = true; empty.hidden = false; return; }
+    empty.hidden = true; list.hidden = false;
+    list.replaceChildren();
+    for (const record of records.slice(0, 60)) {
+      const tile = document.createElement('div');
+      tile.className = 'history-item'; tile.tabIndex = 0; tile.role = 'button';
+      const img = document.createElement('img'); img.src = HistoryStore.imageUrl(record); img.loading = 'lazy'; img.alt = '';
+      const title = document.createElement('span'); title.className = 'history-title'; title.textContent = record.title || 'Untitled';
+      const del = document.createElement('button'); del.className = 'history-del'; del.type = 'button'; del.textContent = '✕'; del.setAttribute('aria-label', 'Delete from history');
+      tile.append(img, title, del);
+      const open = () => openHistory(record.id);
+      tile.addEventListener('click', open);
+      tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+      del.addEventListener('click', (e) => { e.stopPropagation(); removeHistory(record.id); });
+      list.appendChild(tile);
+    }
+  }
+
+  async function openHistory(id) {
+    const record = await HistoryStore.get(id);
+    if (!record) { toast('That card is no longer available.'); refreshHistory(); return; }
+    source.value = record.source;
+    store.set('scs:source', record.source);
+    layoutSel.value = record.layout || ''; themeSel.value = record.theme || '';
+    store.set('scs:layout', layoutSel.value); store.set('scs:theme', themeSel.value);
+    palette.hidden = themeSel.value !== 'custom';
+    if (themeSel.value === 'custom' && record.customPalette) {
+      for (const k in pIds) if (record.customPalette[k] !== undefined) $(pIds[k]).value = record.customPalette[k];
+      applyCustomTheme();
+    }
+    for (const k in brandIds) if (record.branding && record.branding[k] !== undefined) $(brandIds[k]).value = record.branding[k];
+    editingHint.textContent = 'Editing "' + (record.title || 'Untitled') + '" from history — Export saves this as a new entry.';
+    editingHint.hidden = false;
+    render();
+  }
+
+  async function removeHistory(id) {
+    if (!confirm('Delete this card from history? This cannot be undone.')) return;
+    try { await HistoryStore.remove(id); } catch (e) { toast(e.message); }
+    refreshHistory();
+  }
+
+  async function saveToHistory(scale, blob) {
+    try {
+      await HistoryStore.save({
+        title: (lastCard?.title || 'Untitled').slice(0, 200),
+        format: detectFormat(source.value),
+        source: source.value,
+        layout: layoutSel.value,
+        theme: themeSel.value,
+        customPalette: themeSel.value === 'custom' ? paletteValues() : undefined,
+        branding: brandingValues(),
+        scale, width: 1080 * scale, height: 1350 * scale,
+      }, blob);
+      refreshHistory();
+    } catch (e) { toast('History not saved: ' + e.message); }
+  }
+
+  const NEW_CARD_TEMPLATE = [
+    '---', 'title: New card', 'subtitle: Replace this with your own subtitle.', "tags: []", "issue: '01'", '---', '',
+    '## Example', '```typescript', 'const example = true;', '```', '',
+  ].join('\n');
+  $('new-card').addEventListener('click', () => {
+    source.value = NEW_CARD_TEMPLATE;
+    store.set('scs:source', NEW_CARD_TEMPLATE);
+    layoutSel.value = ''; themeSel.value = ''; palette.hidden = true;
+    store.set('scs:layout', ''); store.set('scs:theme', '');
+    editingHint.hidden = true; editingHint.textContent = '';
+    render();
+    source.focus();
+  });
+
+  function fitScale() {
+    const s = stagebox.clientWidth / 1080;
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  new ResizeObserver(fitScale).observe(stagebox);
+
+  let timer; let renderToken = 0;
+  function schedule() { clearTimeout(timer); timer = setTimeout(render, 250); }
+
+  async function render() {
+    const token = ++renderToken;
+    const text = source.value;
+    store.set('scs:source', text);
+    const format = detectFormat(text);
+    $('format-pill').textContent = format === 'json' ? 'JSON' : 'Markdown';
+    let card;
+    try {
+      const raw = loadRaw(text, format);
+      if (layoutSel.value) raw.layout = layoutSel.value;
+      if (themeSel.value) raw.theme = themeSel.value;
+      card = SC.validateCard(raw);
+    }
+    catch (e) { errorBox.textContent = e.message; errorBox.hidden = false; return; }
+    let html;
+    try { html = await SC.renderCard(card, branding()); }
+    catch (e) { errorBox.textContent = e.message; errorBox.hidden = false; return; }
+    if (token !== renderToken) return;
+    errorBox.hidden = true;
+    lastCard = card;
+    host.innerHTML = html;
+    stage.style.transform = 'none';
+    let fit;
+    try { fit = (0, eval)(SC.FIT_SCRIPT)[0]; } finally { fitScale(); }
+    $('s-layout').textContent = card.layout; $('s-theme').textContent = card.theme; $('s-panels').textContent = card.panels.length;
+    $('s-font').textContent = fit.fontSize + 'px';
+    const fitEl = $('s-fit');
+    if (fit.ok) { fitEl.textContent = '✓ fits'; fitEl.className = 'fit-ok'; overflowBox.hidden = true; }
+    else { fitEl.textContent = '✕ overflows'; fitEl.className = 'fit-bad'; overflowBox.textContent = 'The CLI would refuse this card: ' + fit.reason + '.'; overflowBox.hidden = false; }
+    for (const b of ['export-1', 'export-2', 'copy']) $(b).disabled = !fit.ok;
+  }
+
+  source.addEventListener('input', schedule);
+  source.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') { e.preventDefault(); const s = source.selectionStart, t = source.selectionEnd; source.setRangeText('  ', s, t, 'end'); schedule(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
+  });
+  example.addEventListener('change', () => {
+    source.value = SC.examples[example.value]; store.set('scs:example', example.value);
+    editingHint.hidden = true; editingHint.textContent = '';
+    render();
+  });
+  for (const k in brandIds) $(brandIds[k]).addEventListener('input', schedule);
+
+  // Export.
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
+  async function rasterise(scale) {
+    const card = host.querySelector('.card');
+    stage.style.transform = 'none';
+    try {
+      return await SC.toBlob(card, { width: 1080, height: 1350, pixelRatio: scale, cacheBust: false, skipAutoScale: true, fontEmbedCSS: FONT_CSS });
+    } finally { fitScale(); }
+  }
+  function filename(scale) {
+    const stem = (lastCard?.title || 'card').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'card';
+    return stem + (scale > 1 ? '@' + scale + 'x' : '') + '.png';
+  }
+  async function exportPng(scale) {
+    const btn = $('export-' + scale); const label = btn.textContent; btn.disabled = true; btn.textContent = 'Rendering…';
+    try {
+      const blob = await rasterise(scale);
+      if (!blob) throw new Error('The browser could not rasterise the card.');
+      void saveToHistory(scale, blob);
+      if (downloads) {
+        try { await downloads.save({ filename: filename(scale), data: blob }); toast('Saved ' + filename(scale)); return; }
+        catch (e) { if (e && e.code === 'declined') return; }
+      } else if (!window.claude) {
+        // Plain browser (npm run sandbox): a normal download link works.
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename(scale);
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        toast('Downloaded ' + filename(scale)); return;
+      }
+      const img = $('preview-img'); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(blob);
+      $('preview-hint').textContent = 'Right-click or long-press the image to save it (' + (scale * 1080) + ' × ' + (scale * 1350) + ').';
+      $('preview').showModal();
+    } catch (e) { toast(e.message); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  }
+  async function copyPng() {
+    try {
+      const blob = await rasterise(1);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      toast('Copied 1080 × 1350 PNG');
+    } catch (e) { toast('Copy is not available in this browser; use Export instead.'); }
+  }
+  $('export-1').addEventListener('click', () => exportPng(1));
+  $('export-2').addEventListener('click', () => exportPng(2));
+  $('copy').addEventListener('click', copyPng);
+  $('preview-close').addEventListener('click', () => $('preview').close());
+
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('downloads').then((d) => { downloads = d; if (d) $('export-hint').textContent = 'Exports save as PNG files. They are rasterised by your browser; the CLI\'s Chromium render is the canonical output.'; }).catch(() => {});
+  }
+
+  render();
+  refreshHistory();
+})();
+</script>

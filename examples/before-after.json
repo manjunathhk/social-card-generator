@@ -2,22 +2,22 @@
   "title": "Cache expiration",
   "highlight": "Before / After",
   "subtitle": "A sliding window can keep a hot key alive indefinitely.",
-  "language": "csharp",
-  "filename": "BEFORE / sliding expiration only",
+  "tags": [".NET", "Redis", "Expiration"],
   "issue": "02",
-  "code": "await cache.SetStringAsync(key, json, new()\n{\n    SlidingExpiration =\n        TimeSpan.FromMinutes(2)\n}, ct);",
-  "after": {
-    "label": "AFTER / add an absolute lifetime",
-    "code": "await cache.SetStringAsync(key, json, new()\n{\n    SlidingExpiration =\n        TimeSpan.FromMinutes(2),\n    AbsoluteExpirationRelativeToNow =\n        TimeSpan.FromMinutes(10)\n}, ct);",
-    "highlightLines": [
-      5,
-      6
-    ]
-  },
   "insight": "Sliding expiration removes idle entries. Absolute expiration caps each entry's lifetime. Invalidate on writes when freshness matters.",
-  "tags": [
-    ".NET",
-    "Redis",
-    "Expiration"
+  "panels": [
+    {
+      "label": "BEFORE / sliding expiration only",
+      "language": "csharp",
+      "verdict": "bad",
+      "code": "await cache.SetStringAsync(key, json, new()\n{\n    SlidingExpiration =\n        TimeSpan.FromMinutes(2)\n}, ct);"
+    },
+    {
+      "label": "AFTER / add an absolute lifetime",
+      "language": "csharp",
+      "verdict": "good",
+      "highlightLines": [5, 6],
+      "code": "await cache.SetStringAsync(key, json, new()\n{\n    SlidingExpiration =\n        TimeSpan.FromMinutes(2),\n    AbsoluteExpirationRelativeToNow =\n        TimeSpan.FromMinutes(10)\n}, ct);"
+    }
   ]
 }

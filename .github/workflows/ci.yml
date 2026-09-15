@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check
+      - run: npm test
+      - run: npm run test:server
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:render
+      - name: Render the sample gallery with the compiled CLI
+        run: npm run samples -- --built
+      - name: Build the browser sandbox
+        run: npm run sandbox && cp out/sandbox.html sample/sandbox.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rendered-cards
+          path: sample/
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the server image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: social-card-sandbox:ci
+          load: true
+      - name: Smoke-test the container
+        run: |
+          docker run -d --name sandbox -p 8787:8787 social-card-sandbox:ci
+          for i in $(seq 1 20); do curl -sf http://localhost:8787/api/health && break; sleep 1; done
+          curl -sf http://localhost:8787/api/health
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/)" = "200"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/sandbox.html)" = "404"
+          docker logs sandbox
+          docker rm -f sandbox
