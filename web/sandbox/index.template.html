@@ -182,8 +182,9 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
         <button class="btn" id="new-card" type="button">New</button>
       </div>
       <div class="toolbar">
-        <label for="example">Load from Example</label>
-        <select id="example"></select>
+        <select id="example" aria-label="Load from Example">
+          <option value="" selected disabled hidden>Load from Example</option>
+        </select>
         <span class="pill" id="format-pill">Markdown</span>
         <span class="pill" id="langs-pill" title="Languages bundled in this sandbox">15 languages</span>
       </div>
@@ -303,7 +304,6 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const savedSource = store.get('scs:source');
   source.value = savedSource ?? SC.examples[DEFAULT_EXAMPLE];
-  example.value = store.get('scs:example') ?? DEFAULT_EXAMPLE;
   try { const b = JSON.parse(store.get('scs:branding') || '{}'); for (const k in brandIds) if (b[k]) $(brandIds[k]).value = b[k]; } catch {}
 
   function brandingValues() {
@@ -596,9 +596,12 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
   });
   example.addEventListener('change', () => {
-    source.value = SC.examples[example.value]; store.set('scs:example', example.value);
+    const name = example.value;
+    if (!name) return;
+    source.value = SC.examples[name];
     editingHint.hidden = true; editingHint.textContent = '';
     render();
+    example.value = ''; // back to the placeholder, so picking the same example again still fires "change"
   });
   for (const k in brandIds) $(brandIds[k]).addEventListener('input', schedule);
 
