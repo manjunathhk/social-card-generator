@@ -5,16 +5,18 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { brandingFromEnv, initials, loadBranding } from './branding.js';
 
-test('neutral defaults when nothing is configured', () => {
+test('every field is blank when nothing is configured', () => {
   const branding = brandingFromEnv({});
-  assert.equal(branding.author, 'Your Name');
-  assert.equal(branding.website, 'example.com');
-  assert.equal(branding.monogram, 'YN');
+  assert.equal(branding.author, '');
+  assert.equal(branding.website, '');
+  assert.equal(branding.series, '');
+  assert.equal(branding.monogram, '');
   assert.equal(branding.footerMark, '');
+  assert.equal(branding.issueLabel, '');
 });
 
-test('blank values fall back and the monogram derives from the author', () => {
-  assert.equal(brandingFromEnv({ CARD_WEBSITE: ' ' }).website, 'example.com');
+test('blank values stay blank, and the monogram derives from the author when one is set', () => {
+  assert.equal(brandingFromEnv({ CARD_WEBSITE: ' ' }).website, '');
   assert.equal(brandingFromEnv({ CARD_AUTHOR: 'Manjunath HK' }).monogram, 'MH');
   assert.equal(brandingFromEnv({ CARD_AUTHOR: 'Manjunath HK', CARD_MONOGRAM: 'MK' }).monogram, 'MK');
   assert.equal(brandingFromEnv({ CARD_FOOTER_MARK: ' ' }).footerMark, '');

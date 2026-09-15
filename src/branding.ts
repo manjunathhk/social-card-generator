@@ -22,16 +22,22 @@ export function loadBranding(envPath = '.env'): Branding {
   return brandingFromEnv(process.env);
 }
 
+/**
+ * Every field is optional: a blank or unset variable leaves that field blank
+ * rather than falling back to placeholder text, and the template omits blank
+ * fields from the rendered card. The monogram is the one exception — it
+ * still derives from the author when left blank, as long as an author is set.
+ */
 export function brandingFromEnv(env: NodeJS.ProcessEnv): Branding {
-  const read = (key: string, fallback: string) => env[key]?.trim() || fallback;
-  const author = read('CARD_AUTHOR', 'Your Name');
+  const read = (key: string) => env[key]?.trim() || '';
+  const author = read('CARD_AUTHOR');
   return {
     author,
-    website: read('CARD_WEBSITE', 'example.com'),
-    series: read('CARD_SERIES', 'Field Notes'),
-    monogram: read('CARD_MONOGRAM', initials(author)),
-    footerMark: read('CARD_FOOTER_MARK', ''),
-    issueLabel: read('CARD_ISSUE_LABEL', 'Note'),
+    website: read('CARD_WEBSITE'),
+    series: read('CARD_SERIES'),
+    monogram: read('CARD_MONOGRAM') || (author ? initials(author) : ''),
+    footerMark: read('CARD_FOOTER_MARK'),
+    issueLabel: read('CARD_ISSUE_LABEL'),
   };
 }
 

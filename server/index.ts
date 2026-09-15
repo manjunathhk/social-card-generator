@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type RequestListener, type ServerResponse } from 'node:http';
+import { brandingFromEnv } from '../src/branding.js';
 import { createCard, deleteCard, getCard, getCardImage, isValidId, listCards, type NewCard } from './store.js';
 
 /**
@@ -22,6 +23,11 @@ export type ServerOptions = {
 };
 
 export function createRequestListener({ dataDir, html }: ServerOptions): RequestListener {
+  // Read once at server start: the container's branding env vars (set when it was
+  // created, e.g. via `docker run -e CARD_AUTHOR=...` or compose's `environment:`)
+  // become the sandbox's default branding fields for every visitor.
+  const branding = brandingFromEnv(process.env);
+
   return async (req, res) => {
     try {
       const url = new URL(req.url ?? '/', 'http://localhost');
@@ -29,6 +35,7 @@ export function createRequestListener({ dataDir, html }: ServerOptions): Request
 
       if (req.method === 'GET' && pathname === '/') return sendHtml(res, html);
       if (req.method === 'GET' && pathname === '/api/health') return sendJson(res, 200, { ok: true });
+      if (req.method === 'GET' && pathname === '/api/branding') return sendJson(res, 200, { branding });
 
       if (pathname === '/api/cards') {
         if (req.method === 'GET') return sendJson(res, 200, { cards: await listCards(dataDir) });

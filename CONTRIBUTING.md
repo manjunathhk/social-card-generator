@@ -19,7 +19,7 @@ npm run test:render
 npm run samples           # if your change affects rendering
 ```
 
-CI runs the same steps on Ubuntu with Node 22. If `npm run samples` changed any image in `sample/`, commit the new images; the gallery in the README is the visual regression record.
+CI runs the same steps on Ubuntu with Node 24. If `npm run samples` changed any image in `sample/`, commit the new images; the gallery in the README is the visual regression record.
 
 ## Conventions
 

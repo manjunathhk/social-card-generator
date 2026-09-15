@@ -180,7 +180,9 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     <section class="pane" aria-label="Card source">
       <div class="toolbar">
         <button class="btn" id="new-card" type="button">New</button>
-        <label for="example">Example</label>
+      </div>
+      <div class="toolbar">
+        <label for="example">Load from Example</label>
         <select id="example"></select>
         <span class="pill" id="format-pill">Markdown</span>
         <span class="pill" id="langs-pill" title="Languages bundled in this sandbox">15 languages</span>
@@ -267,6 +269,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const stage = $('stage'), stagebox = $('stagebox'), host = $('card-host');
   const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', monogram: 'b-monogram', footer: 'b-footer', issue: 'b-issue' };
   const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', monogram: 'CARD_MONOGRAM', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL' };
+  const brandingFields = { author: 'author', website: 'website', series: 'series', monogram: 'monogram', footer: 'footerMark', issue: 'issueLabel' };
   const DEFAULT_EXAMPLE = 'span-columns.md';
   let downloads = null;
   let lastCard = null;
@@ -312,6 +315,23 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     const env = {};
     for (const k in brandIds) if (values[k].trim()) env[envKeys[k]] = values[k];
     return SC.brandingFromEnv(env);
+  }
+  // When served by server/index.ts, the container's own branding env vars (set when it
+  // was created) come back from /api/branding. They fill in only the fields the visitor
+  // hasn't already set \u2014 via a saved localStorage value or by typing \u2014 never overriding
+  // a value already on the page. Opened without a server (a plain file, or a claude.ai
+  // artifact), the fetch fails and every field is left exactly as it was.
+  async function applyServerBranding() {
+    try {
+      const r = await fetch('/api/branding', { signal: AbortSignal.timeout(800) });
+      if (!r.ok) return;
+      const { branding: defaults } = await r.json();
+      for (const k in brandIds) {
+        const el = $(brandIds[k]);
+        const value = defaults[brandingFields[k]];
+        if (!el.value && value) el.value = value;
+      }
+    } catch {}
   }
   function detectFormat(text) { return /^\uFEFF?\s*\{/.test(text) ? 'json' : 'markdown'; }
   function loadRaw(text, format) { return format === 'json' ? JSON.parse(text.replace(/^﻿/, '')) : SC.parseMarkdown(text); }
@@ -630,7 +650,6 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     window.claude.use('downloads').then((d) => { downloads = d; if (d) $('export-hint').textContent = 'Exports save as PNG files. They are rasterised by your browser; the CLI\'s Chromium render is the canonical output.'; }).catch(() => {});
   }
 
-  render();
-  refreshHistory();
+  applyServerBranding().finally(() => { render(); refreshHistory(); });
 })();
 </script>

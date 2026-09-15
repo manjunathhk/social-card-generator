@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Node 22+](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](.nvmrc)
+[![Node 24+](https://img.shields.io/badge/node-%3E%3D24-brightgreen.svg)](.nvmrc)
 
 Turn a Markdown file into a polished 1080 × 1350 technical social card, or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
 
@@ -37,7 +37,7 @@ All six, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). 
 
 ## Quick start
 
-Requires Node.js 22 or newer.
+Requires Node.js 24 or newer.
 
 ```sh
 git clone https://github.com/manjunathhk/social-card-generator.git
@@ -177,19 +177,19 @@ npm run card -- posts/2026-09-caching --pdf out/caching-carousel.pdf --scale 2
 
 ## Branding
 
-Copy `.env.sample` to `.env` and fill in your details. Defaults are neutral placeholders, so nothing personal lives in the code.
+Copy `.env.sample` to `.env` and fill in your details. Every field is optional: leave a variable blank or unset and the card simply omits it, instead of falling back to placeholder text like `example.com`.
 
-| Variable            | Default            | Purpose                                          |
-| ------------------- | ------------------ | ------------------------------------------------ |
-| `CARD_AUTHOR`       | `Your Name`        | Footer author                                    |
-| `CARD_WEBSITE`      | `example.com`      | Footer website                                   |
-| `CARD_SERIES`       | `Field Notes`      | Masthead series name and footer prefix           |
-| `CARD_MONOGRAM`     | author's initials  | Small boxed mark in the masthead                 |
-| `CARD_FOOTER_MARK`  | empty              | Optional large mark bottom-right; blank hides it |
-| `CARD_ISSUE_LABEL`  | `Note`             | Prefix before the issue number                   |
-| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                  |
+| Variable            | Default                                | Purpose                                          |
+| ------------------- | -------------------------------------- | ------------------------------------------------ |
+| `CARD_AUTHOR`       | blank                                  | Footer author                                    |
+| `CARD_WEBSITE`      | blank                                  | Footer website                                   |
+| `CARD_SERIES`       | blank                                  | Masthead series name and footer prefix           |
+| `CARD_MONOGRAM`     | author's initials (blank if no author) | Small boxed mark in the masthead                 |
+| `CARD_FOOTER_MARK`  | blank                                  | Optional large mark bottom-right; blank hides it |
+| `CARD_ISSUE_LABEL`  | blank                                  | Prefix before the issue number                   |
+| `CARD_BROWSER_PATH` | Playwright's build                     | Use an existing Chromium binary                  |
 
-Shell variables override the file. The committed samples use `examples/branding.env`.
+Shell variables override the file. The committed samples use `examples/branding.env`. When [running as a server](#running-it-as-a-server-docker), these same variables set on the container become the sandbox's default branding fields for every visitor.
 
 ## Browser sandbox
 
@@ -217,6 +217,14 @@ Or without Compose:
 ```sh
 docker build -t social-card-sandbox .
 docker run -p 8787:8787 -v sandbox-data:/data social-card-sandbox
+```
+
+Pass the [branding variables](#branding) as environment variables when creating the container, and they become the sandbox's default branding fields for every visitor (still editable per-browser, and still all optional):
+
+```sh
+docker run -p 8787:8787 -v sandbox-data:/data \
+  -e CARD_AUTHOR="Your Name" -e CARD_WEBSITE="example.com" -e CARD_SERIES="Field Notes" \
+  social-card-sandbox
 ```
 
 The page is served at `/`, never at a `.html` path. The container needs no Chromium: rendering still happens in the visitor's browser, and the server only stores the PNG and source it already produced, as one JSON file and one PNG per card under `/data/cards` — mount `/data` as a volume or history is lost when the container is removed. There is **no authentication and no per-visitor isolation**: everyone who can reach the server shares one history. That's the right tradeoff for a personal, self-hosted instance on a private network or behind your own reverse proxy; put an auth layer in front before exposing it more widely.

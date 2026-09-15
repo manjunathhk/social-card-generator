@@ -54,6 +54,29 @@ test('serves the sandbox at / with no .html in the path, and answers health chec
     assert.deepEqual(await health.json(), { ok: true });
   }));
 
+test('serves branding read from the environment, blank fields included', async () => {
+  // createRequestListener reads process.env once, at server creation, so the
+  // container's branding vars must be set before withServer builds the listener.
+  const previous = { author: process.env.CARD_AUTHOR, website: process.env.CARD_WEBSITE };
+  process.env.CARD_AUTHOR = 'Env Author';
+  delete process.env.CARD_WEBSITE;
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(base + '/api/branding');
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.branding.author, 'Env Author');
+      assert.equal(body.branding.website, '');
+      assert.equal(body.branding.monogram, 'EA');
+    });
+  } finally {
+    if (previous.author === undefined) delete process.env.CARD_AUTHOR;
+    else process.env.CARD_AUTHOR = previous.author;
+    if (previous.website === undefined) delete process.env.CARD_WEBSITE;
+    else process.env.CARD_WEBSITE = previous.website;
+  }
+});
+
 test('creates, lists, fetches, serves the image for, and deletes a card', () =>
   withServer(async (base) => {
     const created = await fetch(base + '/api/cards', { method: 'POST', body: JSON.stringify(validCard) });
