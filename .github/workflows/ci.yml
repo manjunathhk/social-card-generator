@@ -59,26 +59,37 @@ jobs:
     name: Publish image to Docker Hub
     needs: [verify, docker]
     # Runs after a verified push to main (or a manual trigger). The secrets
-    # context isn't available at job level, so whether it actually publishes
-    # is decided step-by-step below — see README.md ("Publishing to Docker
-    # Hub") for how to set DOCKERHUB_USERNAME/DOCKERHUB_TOKEN.
+    # context can't be referenced in *any* if: (job or step) — only in env:
+    # and with: — so whether it actually publishes is decided below via a
+    # step output derived from an env var. See README.md ("Publishing to
+    # Docker Hub") for how to set DOCKERHUB_USERNAME/DOCKERHUB_TOKEN.
     if: >-
       github.event_name != 'pull_request' &&
       (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check for Docker Hub credentials
+        id: creds
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: docker/setup-qemu-action@v3
-        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+        if: steps.creds.outputs.configured == 'true'
       - uses: docker/setup-buildx-action@v3
-        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+        if: steps.creds.outputs.configured == 'true'
       - uses: docker/login-action@v3
-        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+        if: steps.creds.outputs.configured == 'true'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: docker/build-push-action@v6
-        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+        if: steps.creds.outputs.configured == 'true'
         with:
           context: .
           push: true
@@ -87,5 +98,5 @@ jobs:
             ${{ vars.DOCKERHUB_IMAGE || 'manjunathhk/social-card-generator' }}:latest
             ${{ vars.DOCKERHUB_IMAGE || 'manjunathhk/social-card-generator' }}:${{ github.sha }}
       - name: Note missing Docker Hub secrets
-        if: ${{ secrets.DOCKERHUB_TOKEN == '' }}
+        if: steps.creds.outputs.configured != 'true'
         run: echo "::notice::DOCKERHUB_USERNAME/DOCKERHUB_TOKEN repo secrets are not set — skipping Docker Hub publish. See README.md, 'Publishing to Docker Hub'."
