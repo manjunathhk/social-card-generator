@@ -247,15 +247,38 @@ Opened without a server behind it (a plain `file://` open, or this page viewed a
 CI publishes the image built from `main` to Docker Hub (`linux/amd64` and `linux/arm64`), so a VPS can pull it directly instead of building from source:
 
 ```sh
-docker run -d --name social-card-sandbox -p 8787:8787 -v sandbox-data:/data \
+docker run -d --name social-card-sandbox -p 127.0.0.1:8787:8787 -v sandbox-data:/data \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
-Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.1.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it — the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.1.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
 
-#### Reverse-proxying under a path
+#### Reverse-proxying with nginx
 
-Every API call the sandbox makes (`api/health`, `api/branding`, `api/cards`, …) uses a path relative to the page's own URL rather than a domain-root-absolute one, specifically so it can be reverse-proxied under a subpath (`example.com/social-card/`) and not just its own (sub)domain. A minimal nginx `location` block for that:
+A subdomain is the simplest setup — one `server` block, no path-rewriting to get wrong:
+
+```nginx
+server {
+  listen 443 ssl http2;
+  server_name social-card.example.com;
+
+  ssl_certificate     /etc/letsencrypt/live/social-card.example.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/social-card.example.com/privkey.pem;
+
+  location / {
+    proxy_pass http://127.0.0.1:8787/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+server { listen 80; server_name social-card.example.com; return 301 https://$host$request_uri; }
+```
+
+(`certbot --nginx -d social-card.example.com` provisions and renews the certificate.)
+
+Every API call the sandbox makes (`api/health`, `api/branding`, `api/cards`, …) uses a path relative to the page's own URL rather than a domain-root-absolute one, so this also works reverse-proxied under a path instead of a subdomain (`example.com/social-card/`) if you're already committed to one:
 
 ```nginx
 location /social-card/ {
@@ -268,21 +291,21 @@ location /social-card/ {
 location = /social-card { return 301 /social-card/; }
 ```
 
-A subdomain (`social-card.example.com` with `location / { proxy_pass http://127.0.0.1:8787/; }`) needs none of that trailing-slash care and is one line simpler — prefer it if you're not already committed to a path.
-
 #### Metrics (Prometheus / Grafana)
 
 `GET /api/metrics` exposes request counts, request-duration histograms, and card create/delete counters in Prometheus text format (`text/plain; version=0.0.4`) — no dependency on `prom-client`, keeping the runtime image's zero-`node_modules` design (see the Dockerfile) intact. Route labels are a fixed template (`/api/cards/:id`, never the literal id), so scraping never grows unbounded label cardinality.
 
-Point an existing Prometheus at it:
+If Prometheus runs on the same host (typical for a single VPS), scrape the container directly over loopback — it's already bound to `127.0.0.1:8787` per above, so this never touches nginx or the public vhost at all:
 
 ```yaml
 scrape_configs:
   - job_name: social-card-sandbox
     static_configs:
-      - targets: ['<host>:8787']
+      - targets: ['127.0.0.1:8787']
     metrics_path: /api/metrics
 ```
+
+If Prometheus runs elsewhere (a different host, or a container on its own Docker network), either put this container on that network and target it by container name, or add a `location /api/metrics` block scoped to Prometheus's IP — never leave it open on the public vhost next to the app it's monitoring.
 
 Then build Grafana panels from, e.g.:
 
@@ -290,8 +313,6 @@ Then build Grafana panels from, e.g.:
 - `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))` — p95 latency by route
 - `increase(social_card_cards_created_total[1d])` / `increase(social_card_cards_deleted_total[1d])` — daily card activity
 - `nodejs_heap_used_bytes` and `process_uptime_seconds` — basic process health
-
-The endpoint is unauthenticated, same as the rest of the API — fine on a private network, but if you're reverse-proxying this publicly (see above), scope `location /api/metrics` to your Prometheus host's IP (or block it entirely and scrape over a private network/VPN) rather than leaving it open on the public vhost.
 
 `version` in `package.json` and `CHANGELOG.md` are no longer hand-edited: the `release` job runs [semantic-release](https://semantic-release.gitbook.io/) on every push to `main`, deriving a patch/minor/major bump from [Conventional Commits](https://www.conventionalcommits.org/) since the last release (`fix:`/`perf:` → patch, `feat:` → minor, a `BREAKING CHANGE:` footer → major; `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` publish `:latest`/`:<git-sha>` but cut no version). It commits the bumped `package.json`/`package-lock.json` and a generated `CHANGELOG.md` entry back to `main` (`chore(release): ... [skip ci]`, which does not retrigger CI) and creates a GitHub Release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the commit message format this depends on.
 
