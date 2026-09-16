@@ -233,6 +233,8 @@ docker run -p 8787:8787 -v sandbox-data:/data \
 
 The page is served at `/`, never at a `.html` path. The container needs no Chromium: rendering still happens in the visitor's browser, and the server only stores the PNG and source it already produced, as one JSON file and one PNG per card under `/data/cards` — mount `/data` as a volume or history is lost when the container is removed. There is **no authentication and no per-visitor isolation**: everyone who can reach the server shares one history. That's the right tradeoff for a personal, self-hosted instance on a private network or behind your own reverse proxy; put an auth layer in front before exposing it more widely.
 
+Cards older than `CARD_RETENTION_DAYS` days (default `30`) are deleted automatically, swept every six hours. With no auth in front, this is the only thing bounding `/data`'s growth on a publicly reachable instance — raise it, or set it very high, only if you're also gating access some other way.
+
 Opened without a server behind it (a plain `file://` open, or this page viewed as a claude.ai artifact), the sandbox falls back to keeping history in that browser's own storage instead — same UI, just not shared across devices. The **Saved here:** line under the History panel says which one is active.
 
 | Command                     | What it does                                                         |
@@ -247,11 +249,102 @@ Opened without a server behind it (a plain `file://` open, or this page viewed a
 CI publishes the image built from `main` to Docker Hub (`linux/amd64` and `linux/arm64`), so a VPS can pull it directly instead of building from source:
 
 ```sh
-docker run -d --name social-card-sandbox -p 8787:8787 -v sandbox-data:/data \
+docker run -d --name social-card-sandbox -p 127.0.0.1:8787:8787 -v sandbox-data:/data \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
-Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.1.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it — the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.1.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+
+#### Reverse-proxying with nginx
+
+A subdomain is the simplest setup — one `server` block, no path-rewriting to get wrong. This project's own instance runs at `social-card.manjunathhk.in`:
+
+```nginx
+server {
+  listen 443 ssl http2;
+  server_name social-card.manjunathhk.in;
+
+  ssl_certificate     /etc/letsencrypt/live/social-card.manjunathhk.in/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/social-card.manjunathhk.in/privkey.pem;
+
+  location / {
+    proxy_pass http://127.0.0.1:8787/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+server { listen 80; server_name social-card.manjunathhk.in; return 301 https://$host$request_uri; }
+```
+
+(`certbot --nginx -d social-card.manjunathhk.in` provisions and renews the certificate.)
+
+Every API call the sandbox makes (`api/health`, `api/branding`, `api/cards`, …) uses a path relative to the page's own URL rather than a domain-root-absolute one, so this also works reverse-proxied under a path instead of a subdomain (`example.com/social-card/`) if you're already committed to one:
+
+```nginx
+location /social-card/ {
+  # trailing slash on proxy_pass strips the /social-card/ prefix before
+  # forwarding, so the container still sees plain / and /api/... requests
+  proxy_pass http://127.0.0.1:8787/;
+  proxy_set_header Host $host;
+}
+# nginx won't match /social-card (no trailing slash) against the block above
+location = /social-card { return 301 /social-card/; }
+```
+
+#### Metrics (Prometheus / Grafana)
+
+`GET /api/metrics` exposes request counts, request-duration histograms, and card create/delete counters in Prometheus text format (`text/plain; version=0.0.4`) — no dependency on `prom-client`, keeping the runtime image's zero-`node_modules` design (see the Dockerfile) intact. Route labels are a fixed template (`/api/cards/:id`, never the literal id), so scraping never grows unbounded label cardinality.
+
+If Prometheus runs on the same host (typical for a single VPS), scrape the container directly over loopback — it's already bound to `127.0.0.1:8787` per above, so this never touches nginx or the public vhost at all:
+
+```yaml
+scrape_configs:
+  - job_name: social-card-sandbox
+    static_configs:
+      - targets: ['127.0.0.1:8787']
+    metrics_path: /api/metrics
+```
+
+If Prometheus runs elsewhere (a different host, or a container on its own Docker network), either put this container on that network and target it by container name, or add a `location /api/metrics` block scoped to Prometheus's IP — never leave it open on the public vhost next to the app it's monitoring.
+
+Then build Grafana panels from, e.g.:
+
+- `sum(rate(http_requests_total[5m])) by (route, status)` — traffic and error rate by endpoint
+- `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))` — p95 latency by route
+- `increase(social_card_cards_created_total[1d])` / `increase(social_card_cards_deleted_total[1d])` — daily card activity
+- `nodejs_heap_used_bytes` and `process_uptime_seconds` — basic process health
+
+A dashboard nobody's watching isn't monitoring — add alert rules alongside the scrape job so Prometheus pages you instead:
+
+```yaml
+groups:
+  - name: social-card-sandbox
+    rules:
+      - alert: SocialCardDown
+        expr: up{job="social-card-sandbox"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: 'Social Card Sandbox is unreachable.' }
+
+      - alert: SocialCardHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="social-card-sandbox",status=~"5.."}[5m]))
+          / sum(rate(http_requests_total{job="social-card-sandbox"}[5m])) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: 'Over 5% of requests are failing (5xx).' }
+
+      - alert: SocialCardHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="social-card-sandbox"}[5m])) by (le)) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: 'p95 request latency is over 1s.' }
+```
+
+Route these through whatever Alertmanager you already have handling your other domains — nothing here is specific to this app beyond the `job` label matching the scrape config above.
 
 `version` in `package.json` and `CHANGELOG.md` are no longer hand-edited: the `release` job runs [semantic-release](https://semantic-release.gitbook.io/) on every push to `main`, deriving a patch/minor/major bump from [Conventional Commits](https://www.conventionalcommits.org/) since the last release (`fix:`/`perf:` → patch, `feat:` → minor, a `BREAKING CHANGE:` footer → major; `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` publish `:latest`/`:<git-sha>` but cut no version). It commits the bumped `package.json`/`package-lock.json` and a generated `CHANGELOG.md` entry back to `main` (`chore(release): ... [skip ci]`, which does not retrigger CI) and creates a GitHub Release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the commit message format this depends on.
 

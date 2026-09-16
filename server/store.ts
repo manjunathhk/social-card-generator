@@ -99,3 +99,11 @@ export async function deleteCard(dataDir: string, id: string): Promise<boolean> 
   await Promise.all([rm(jsonPath(dataDir, id), { force: true }), rm(pngPath(dataDir, id), { force: true })]);
   return existed;
 }
+
+/** Deletes every card older than `maxAgeMs`. Returns how many were removed. */
+export async function pruneExpiredCards(dataDir: string, maxAgeMs: number): Promise<number> {
+  const cutoff = Date.now() - maxAgeMs;
+  const expired = (await listCards(dataDir)).filter((card) => new Date(card.createdAt).getTime() < cutoff);
+  await Promise.all(expired.map((card) => deleteCard(dataDir, card.id)));
+  return expired.length;
+}

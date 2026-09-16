@@ -1,6 +1,23 @@
 import { createServer, type IncomingMessage, type RequestListener, type ServerResponse } from 'node:http';
 import { brandingFromEnv } from '../src/branding.js';
-import { createCard, deleteCard, getCard, getCardImage, isValidId, listCards, type NewCard } from './store.js';
+import {
+  PROM_CONTENT_TYPE,
+  recordCardCreated,
+  recordCardDeleted,
+  recordCardsPruned,
+  recordRequest,
+  renderMetrics,
+} from './metrics.js';
+import {
+  createCard,
+  deleteCard,
+  getCard,
+  getCardImage,
+  isValidId,
+  listCards,
+  pruneExpiredCards,
+  type NewCard,
+} from './store.js';
 
 /**
  * Serves the sandbox at `/` (never as a `.html` path) plus a small JSON API
@@ -29,15 +46,38 @@ export function createRequestListener({ dataDir, html }: ServerOptions): Request
   const branding = brandingFromEnv(process.env);
 
   return async (req, res) => {
+    // Route label for metrics: a fixed template (`/api/cards/:id`), never the
+    // literal path, so a flood of card ids can't blow up label cardinality.
+    let route = 'unmatched';
+    const start = process.hrtime.bigint();
+    res.on('finish', () => {
+      const durationSeconds = Number(process.hrtime.bigint() - start) / 1e9;
+      recordRequest({ method: req.method ?? 'GET', route, status: res.statusCode, durationSeconds });
+    });
+
     try {
       const url = new URL(req.url ?? '/', 'http://localhost');
       const { pathname } = url;
 
-      if (req.method === 'GET' && pathname === '/') return sendHtml(res, html);
-      if (req.method === 'GET' && pathname === '/api/health') return sendJson(res, 200, { ok: true });
-      if (req.method === 'GET' && pathname === '/api/branding') return sendJson(res, 200, { branding });
+      if (req.method === 'GET' && pathname === '/') {
+        route = '/';
+        return sendHtml(res, html);
+      }
+      if (req.method === 'GET' && pathname === '/api/health') {
+        route = '/api/health';
+        return sendJson(res, 200, { ok: true });
+      }
+      if (req.method === 'GET' && pathname === '/api/metrics') {
+        route = '/api/metrics';
+        return sendMetrics(res);
+      }
+      if (req.method === 'GET' && pathname === '/api/branding') {
+        route = '/api/branding';
+        return sendJson(res, 200, { branding });
+      }
 
       if (pathname === '/api/cards') {
+        route = '/api/cards';
         if (req.method === 'GET') return sendJson(res, 200, { cards: await listCards(dataDir) });
         if (req.method === 'POST') return handleCreate(req, res, dataDir);
         return methodNotAllowed(res);
@@ -45,6 +85,7 @@ export function createRequestListener({ dataDir, html }: ServerOptions): Request
 
       const card = pathname.match(/^\/api\/cards\/([^/]+)$/);
       if (card) {
+        route = '/api/cards/:id';
         const [, id] = card;
         if (!isValidId(id)) return sendJson(res, 400, { error: 'Invalid card id.' });
         if (req.method === 'GET') {
@@ -53,6 +94,7 @@ export function createRequestListener({ dataDir, html }: ServerOptions): Request
         }
         if (req.method === 'DELETE') {
           const existed = await deleteCard(dataDir, id);
+          if (existed) recordCardDeleted();
           return existed ? sendJson(res, 200, { ok: true }) : sendJson(res, 404, { error: 'Card not found.' });
         }
         return methodNotAllowed(res);
@@ -60,6 +102,7 @@ export function createRequestListener({ dataDir, html }: ServerOptions): Request
 
       const image = pathname.match(/^\/api\/cards\/([^/]+)\/image$/);
       if (image) {
+        route = '/api/cards/:id/image';
         const [, id] = image;
         if (!isValidId(id)) return sendJson(res, 400, { error: 'Invalid card id.' });
         if (req.method !== 'GET') return methodNotAllowed(res);
@@ -69,9 +112,11 @@ export function createRequestListener({ dataDir, html }: ServerOptions): Request
         return res.end(png);
       }
 
+      route = 'not_found';
       return sendJson(res, 404, { error: 'Not found.' });
     } catch (error) {
       console.error(error);
+      if (route === 'unmatched') route = 'error';
       return sendJson(res, 500, { error: 'Internal error.' });
     }
   };
@@ -87,6 +132,7 @@ async function handleCreate(req: IncomingMessage, res: ServerResponse, dataDir: 
   const parsed = parseNewCard(body);
   if ('error' in parsed) return sendJson(res, 400, { error: parsed.error });
   const record = await createCard(dataDir, parsed.card, parsed.png);
+  recordCardCreated();
   return sendJson(res, 201, record);
 }
 
@@ -181,6 +227,12 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.end(text);
 }
 
+function sendMetrics(res: ServerResponse): void {
+  const text = renderMetrics();
+  res.writeHead(200, { 'Content-Type': PROM_CONTENT_TYPE, 'Content-Length': Buffer.byteLength(text) });
+  res.end(text);
+}
+
 function sendHtml(res: ServerResponse, html: string): void {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': Buffer.byteLength(html) });
   res.end(html);
@@ -188,6 +240,29 @@ function sendHtml(res: ServerResponse, html: string): void {
 
 function methodNotAllowed(res: ServerResponse): void {
   sendJson(res, 405, { error: 'Method not allowed.' });
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PRUNE_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Deletes cards older than `retentionDays` on a fixed interval. Public,
+ * unauthenticated deployments have no other bound on `/data`'s growth, so
+ * this is the retention policy, not just tidying — see CARD_RETENTION_DAYS.
+ */
+function scheduleCardPruning(dataDir: string, retentionDays: number): void {
+  const maxAgeMs = retentionDays * DAY_MS;
+  const sweep = async () => {
+    try {
+      const removed = await pruneExpiredCards(dataDir, maxAgeMs);
+      recordCardsPruned(removed);
+      if (removed) console.log(`Pruned ${removed} card(s) older than ${retentionDays}d.`);
+    } catch (error) {
+      console.error('Card retention sweep failed:', error);
+    }
+  };
+  sweep();
+  setInterval(sweep, PRUNE_INTERVAL_MS);
 }
 
 /* c8 ignore start -- exercised by running the server, not by unit tests */
@@ -198,11 +273,13 @@ async function main() {
   const port = Number(process.env.PORT) || 8787;
   const htmlPath = resolve(process.env.SANDBOX_HTML_PATH || './out/sandbox.html');
   const html = await readFile(htmlPath, 'utf8');
+  const retentionDays = Number(process.env.CARD_RETENTION_DAYS) || 30;
 
   const server = createServer(createRequestListener({ dataDir, html }));
   server.listen(port, () => {
     console.log(`Social Card Sandbox listening on http://localhost:${port} (data: ${dataDir})`);
   });
+  scheduleCardPruning(dataDir, retentionDays);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

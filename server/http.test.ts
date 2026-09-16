@@ -97,6 +97,35 @@ test('creates, lists, fetches, serves the image for, and deletes a card', () =>
     assert.equal((await fetch(`${base}/api/cards/${record.id}`)).status, 404);
   }));
 
+test('exposes Prometheus metrics reflecting request and card activity', () =>
+  withServer(async (base) => {
+    // The metrics registry is a process-wide singleton (like prom-client's default
+    // registry), so counts only ever go up across tests sharing this process —
+    // assert thresholds and shapes here, not exact values.
+    await fetch(base + '/api/health');
+    const created = await fetch(base + '/api/cards', { method: 'POST', body: JSON.stringify(validCard) });
+    const { id } = await created.json();
+    await fetch(`${base}/api/cards/${id}`, { method: 'DELETE' });
+
+    const res = await fetch(base + '/api/metrics');
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-type') ?? '', /text\/plain/);
+    const text = await res.text();
+
+    assert.match(text, /^# TYPE http_requests_total counter$/m);
+    assert.match(text, /http_requests_total\{method="GET",route="\/api\/health",status="200"\} \d+/);
+    assert.match(text, /^# TYPE http_request_duration_seconds histogram$/m);
+    assert.match(text, /http_request_duration_seconds_bucket\{.*route="\/api\/health".*le="\+Inf"\} \d+/);
+    assert.match(text, /social_card_cards_created_total \d+/);
+    assert.match(text, /social_card_cards_deleted_total \d+/);
+    assert.match(text, /^process_uptime_seconds \d/m);
+
+    // Deleting/fetching by a fixed route template, never the literal card id, keeps
+    // the label set bounded regardless of how many distinct cards are requested.
+    assert.doesNotMatch(text, new RegExp(id));
+    assert.match(text, /route="\/api\/cards\/:id"/);
+  }));
+
 test('rejects malformed input and path traversal attempts', () =>
   withServer(async (base) => {
     const missingField = await fetch(base + '/api/cards', {
