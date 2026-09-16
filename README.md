@@ -255,15 +255,15 @@ Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a r
 
 #### Reverse-proxying with nginx
 
-A subdomain is the simplest setup — one `server` block, no path-rewriting to get wrong:
+A subdomain is the simplest setup — one `server` block, no path-rewriting to get wrong. This project's own instance runs at `social-card.manjunathhk.in`:
 
 ```nginx
 server {
   listen 443 ssl http2;
-  server_name social-card.example.com;
+  server_name social-card.manjunathhk.in;
 
-  ssl_certificate     /etc/letsencrypt/live/social-card.example.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/social-card.example.com/privkey.pem;
+  ssl_certificate     /etc/letsencrypt/live/social-card.manjunathhk.in/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/social-card.manjunathhk.in/privkey.pem;
 
   location / {
     proxy_pass http://127.0.0.1:8787/;
@@ -273,10 +273,10 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
   }
 }
-server { listen 80; server_name social-card.example.com; return 301 https://$host$request_uri; }
+server { listen 80; server_name social-card.manjunathhk.in; return 301 https://$host$request_uri; }
 ```
 
-(`certbot --nginx -d social-card.example.com` provisions and renews the certificate.)
+(`certbot --nginx -d social-card.manjunathhk.in` provisions and renews the certificate.)
 
 Every API call the sandbox makes (`api/health`, `api/branding`, `api/cards`, …) uses a path relative to the page's own URL rather than a domain-root-absolute one, so this also works reverse-proxied under a path instead of a subdomain (`example.com/social-card/`) if you're already committed to one:
 
