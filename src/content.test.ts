@@ -14,8 +14,8 @@ const minimal = () => ({
 });
 
 test('Markdown and JSON sources produce identical cards', async () => {
-  const fromMarkdown = parseContent(await example('redis-caching.md'), 'markdown');
-  const fromJson = parseContent(await example('redis-caching.json'), 'json');
+  const fromMarkdown = parseContent(await example('rabbitmq-idempotency.md'), 'markdown');
+  const fromJson = parseContent(await example('rabbitmq-idempotency.json'), 'json');
   assert.deepEqual(fromMarkdown, fromJson);
   assert.equal(fromMarkdown.layout, 'stack');
   assert.equal(fromMarkdown.theme, 'print');
@@ -158,13 +158,13 @@ test('validation: themes must exist', () => {
 
 test('every shipped example parses', async () => {
   for (const name of [
-    'redis-caching.md',
-    'redis-caching.json',
-    'typescript-javascript.md',
-    'before-after.json',
-    'span-columns.md',
-    'concurrency-grid.json',
-    'dependency-injection.md',
+    'rabbitmq-idempotency.md',
+    'rabbitmq-idempotency.json',
+    'dto-validation.md',
+    'ef-core-n-plus-one.json',
+    'nginx-rate-limit.md',
+    'compose-healthchecks.json',
+    'angular-inject.md',
   ]) {
     const card = parseContent(await example(name), formatFromPath(name));
     assert.ok(card.panels.length >= 1, name);
