@@ -84,7 +84,15 @@ select:focus-visible, input[type="text"]:focus-visible { border-color: var(--acc
 .pill { font: 500 11.5px var(--mono); padding: 4px 9px; border-radius: 999px; background: var(--surface-3); color: var(--muted); border: 1px solid var(--rule); }
 
 .editor { position: relative; background: var(--editor-bg); border-radius: 12px; border: 1px solid var(--rule-strong); overflow: hidden; box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent); }
-.editor textarea { display: block; width: 100%; height: 520px; resize: vertical; padding: 16px 18px; background: transparent; color: var(--editor-ink); border: 0; font: 13px/1.6 var(--mono); tab-size: 2; white-space: pre; overflow: auto; }
+.editor textarea {
+  display: block; width: 100%; height: 520px; resize: vertical; padding: 16px 18px; background: transparent;
+  color: var(--editor-ink); border: 0; font: 13px/1.6 var(--mono); tab-size: 2; white-space: pre; overflow: auto;
+  /* This is a card source, not prose: every "#" the user types must render as its own glyph, never
+     merged into a font ligature (some monospace webfonts substitute a narrower glyph for "##" at
+     end-of-line), or counting heading hashes becomes unreliable. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+}
 .editor textarea:focus-visible { outline-offset: -2px; }
 .banner { border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45; border: 1px solid; }
 .banner[hidden] { display: none; }
