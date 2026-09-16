@@ -28,6 +28,12 @@ npm run samples      # only if the change affects rendering — regenerates samp
 
 CI (`.github/workflows/ci.yml`) runs the same steps on Ubuntu with Node 24, plus a Docker build/smoke-test job. If `npm run samples` changes any image under `sample/`, commit the new images — the README gallery is the visual regression record.
 
+Before opening a PR to `main`, also:
+
+- **Bump `version` in `package.json`** (semver: patch for fixes, minor for features, major for breaking changes) and add a `CHANGELOG.md` entry — see CONTRIBUTING.md, "Releasing". CI's `version-check` job fails the PR if the version is unchanged from `main`; if this PR genuinely ships nothing release-worthy (docs/CI/test-only), apply the `no-version-bump` label instead of bumping.
+- **Skim the docs for staleness** if the change touches anything a doc describes — see "Reviewing docs for staleness" below.
+- Fill in `.github/pull_request_template.md`'s checklist rather than deleting it.
+
 ## Conventions (see [CONTRIBUTING.md](CONTRIBUTING.md) for the full list)
 
 - **TypeScript, strict, no unused symbols.** The config enforces it; don't work around it.
@@ -63,3 +69,18 @@ CI (`.github/workflows/ci.yml`) runs the same steps on Ubuntu with Node 24, plus
 ## Adding a theme or layout
 
 Documented step-by-step in [docs/TECHNIQUES.md](docs/TECHNIQUES.md) under "Adding a theme" / "Adding a layout." Also add an example under `examples/`, a sample under `sample/`, a row in the README gallery, and a case in `src/render/render.test.ts`.
+
+## Reviewing docs for staleness
+
+This is a judgment call, not something CI runs — do it when asked directly ("review the docs"), or when your own change plausibly makes something documented incorrect. Docs in scope: `README.md`, `docs/*.md`, `CONTRIBUTING.md`, this file, and `web/sandbox/index.template.html`'s in-page copy (the hint text, not just the linked docs).
+
+Check, in roughly this order:
+
+1. **Commands.** Every `npm run <script>` mentioned exists in `package.json`'s `scripts`; every CLI flag mentioned (`--out-dir`, `--pdf`, …) exists in `src/cli.ts`'s actual parsing/`--help` output.
+2. **Facts that drift from the code, not just prose.** Layout names and panel counts (`src/themes/`, layout registry), theme names, default values (`layout: stack`, `theme: print`), field limits (character counts in the "Card fields"/"Panel fields" tables) — read the validator/schema, don't trust the last write-up.
+3. **File paths and links.** Every path in backticks (`src/render/`, `docs/TECHNIQUES.md#...`) resolves to something that exists; anchor links match actual headings.
+4. **Counts that go stale silently.** "16 languages", "Three layouts", table row counts — these are the first things a later PR breaks without touching the sentence that states them.
+5. **Screenshots.** If a UI change renamed, moved, or removed something a `docs/images/**` screenshot shows (button labels, panel layout, field names), flag it for regeneration rather than leaving a screenshot that contradicts the live UI.
+6. **Version-specific claims.** Anything that names a specific `version` (badges, the sandbox's `v/*__VERSION__*/` tag, Docker tag examples) should describe the mechanism, not hardcode a value that's already stale by the next release.
+
+Report what you find rather than silently rewriting prose you're not confident about — a wrong fix reads as more authoritative than an admitted gap. When you do fix something, keep the diff to the stale fact; this isn't a rewrite pass.

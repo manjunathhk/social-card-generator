@@ -7,6 +7,27 @@ on:
   workflow_dispatch:
 
 jobs:
+  version-check:
+    name: Version bump check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm package.json version was bumped
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-version-bump') }}
+        run: |
+          git fetch --depth=1 origin "${{ github.event.pull_request.base.sha }}"
+          base_version=$(git show "${{ github.event.pull_request.base.sha }}:package.json" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")
+          head_version=$(node -p "require('./package.json').version")
+          echo "base (${{ github.base_ref }}): $base_version   head: $head_version"
+          if [ "$base_version" = "$head_version" ]; then
+            echo "::error::package.json version ($head_version) is unchanged from ${{ github.base_ref }}. Bump it per CONTRIBUTING.md ('Releasing'), or add the 'no-version-bump' label if this PR intentionally ships nothing release-worthy (docs/CI/test-only changes)."
+            exit 1
+          fi
+      - name: Skipped (no-version-bump label)
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'no-version-bump') }}
+        run: echo "::notice::Version check skipped — PR is labeled 'no-version-bump'."
+
   verify:
     runs-on: ubuntu-latest
     steps:
