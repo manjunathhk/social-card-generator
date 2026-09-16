@@ -57,54 +57,87 @@ npx @manjunathhk/social-card-generator my-card.md
 
 ## Writing a card
 
-A card is YAML front matter followed by one fenced code block per panel. Headings label panels, a ✅ or ❌ prefix sets the verdict, `{2,4-6}` after the language highlights lines, and bullets after a fence become notes.
+A card is YAML front matter followed by one fenced code block per panel. Headings label panels, a ✅ or ❌ prefix sets the verdict, `{5}` after the language highlights lines, and bullets after a fence become notes. This is [examples/nginx-rate-limit.md](examples/nginx-rate-limit.md), one of the samples in the gallery above:
 
 ````markdown
 ---
-title: Slice, don't copy.
-highlight: Span<T> in hot paths
-subtitle: The same parsing logic, with and without a new string per call.
-tags: [.NET, Performance, Span]
-issue: '04'
+title: A limit that trips itself.
+highlight: limit_req needs burst.
+subtitle: Without burst and nodelay, a page load with six assets rate-limits itself.
+tags: [NGINX, Rate limiting]
+issue: '05'
 layout: columns
 theme: vesper
-insight: Substring allocates a new string every call. Slicing reuses memory the caller owns.
+insight: A tight rate without burst rejects the same client's own concurrent
+  asset requests, not just abusive traffic. Zone size and burst are what
+  make the limit usable.
 ---
 
-## ❌ Substring
+## ❌ No burst
 
-```csharp
-var id = line.Substring(4, 6);
+```nginx
+limit_req_zone $binary_remote_addr
+    zone=api:10m rate=5r/s;
+
+location /api/ {
+    limit_req zone=api;
+}
 ```
 
-- Allocates a new string per call
+- Six parallel requests trip the limit for one user
+- 503s show up in real traffic, not just load tests
 
-## ✅ Span
+## ✅ Zone + burst
 
-```csharp {1}
-var id = line.Slice(4, 6);
+```nginx {5}
+limit_req_zone $binary_remote_addr
+    zone=api:10m rate=5r/s;
+
+location /api/ {
+    limit_req zone=api burst=12 nodelay;
+}
 ```
 
-- Works over the caller's memory
+- Absorbs a page's worth of concurrent calls
+- Still caps sustained abuse at 5r/s
 ````
 
-The same card as JSON gives you every option explicitly, including `underline`:
+The same fields are available as JSON, which exposes everything explicitly — including `underline`, which Markdown has no syntax for. This is [examples/compose-healthchecks.json](examples/compose-healthchecks.json):
 
 ```json
 {
-  "title": "Slice, don't copy.",
-  "subtitle": "The same parsing logic, with and without a new string per call.",
-  "layout": "columns",
+  "title": "Healthy doesn't mean started",
+  "highlight": "depends_on: service_healthy",
+  "subtitle": "Four services, four healthchecks — the API waits for real readiness, not just a running container.",
+  "tags": ["Docker", "Compose", "Healthchecks"],
+  "issue": "06",
+  "layout": "grid",
   "theme": "vesper",
+  "insight": "condition: service_started only waits for the container to launch. service_healthy waits for the healthcheck to pass, which is what dependent services actually need.",
   "panels": [
-    { "label": "Substring", "language": "csharp", "verdict": "bad", "code": "var id = line.Substring(4, 6);" },
     {
-      "label": "Span",
-      "language": "csharp",
-      "verdict": "good",
-      "highlightLines": [1],
-      "underline": ["Slice"],
-      "code": "var id = line.Slice(4, 6);"
+      "label": "postgres",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "postgres:\n  image: postgres:16\n  healthcheck:\n    test: [\"CMD-SHELL\", \"pg_isready -U app\"]\n    interval: 5s\n    retries: 5"
+    },
+    {
+      "label": "redis",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "redis:\n  image: redis:7\n  healthcheck:\n    test: [\"CMD\", \"redis-cli\", \"ping\"]\n    interval: 5s\n    retries: 5"
+    },
+    {
+      "label": "rabbitmq",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "rabbitmq:\n  image: rabbitmq:3-management\n  healthcheck:\n    test: [\"CMD\", \"rabbitmq-diagnostics\", \"ping\"]\n    interval: 10s\n    retries: 5"
+    },
+    {
+      "label": "api",
+      "language": "yaml",
+      "underline": ["service_healthy"],
+      "code": "api:\n  build: .\n  depends_on:\n    postgres:\n      condition: service_healthy\n    redis:\n      condition: service_healthy"
     }
   ]
 }
