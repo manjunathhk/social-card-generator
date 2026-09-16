@@ -112,17 +112,17 @@ The same card as JSON gives you every option explicitly, including `underline`:
 
 ### Card fields
 
-| Field       | Required | Default     | Limit                                                 |
-| ----------- | -------- | ----------- | ----------------------------------------------------- |
-| `title`     | yes      |             | 70 characters                                         |
-| `subtitle`  | yes      |             | 150 characters                                        |
-| `highlight` | no       | empty       | 70 characters; second title line in the accent colour |
-| `tags`      | no       | `[]`        | up to 3, 22 characters each                           |
-| `insight`   | no       | empty       | 220 characters; the "design note" under the panels    |
-| `issue`     | no       | `01`        | 12 characters                                         |
-| `layout`    | no       | `stack`     | `stack`, `columns`, `grid`                            |
-| `theme`     | no       | `editorial` | `editorial`, `midnight`                               |
-| `panels`    | yes      |             | count depends on the layout                           |
+| Field       | Required | Default | Limit                                                 |
+| ----------- | -------- | ------- | ----------------------------------------------------- |
+| `title`     | yes      |         | 70 characters                                         |
+| `subtitle`  | yes      |         | 150 characters                                        |
+| `highlight` | no       | empty   | 70 characters; second title line in the accent colour |
+| `tags`      | no       | `[]`    | up to 3, 22 characters each                           |
+| `insight`   | no       | empty   | 220 characters; the "design note" under the panels    |
+| `issue`     | no       | `01`    | 12 characters                                         |
+| `layout`    | no       | `stack` | `stack`, `columns`, `grid`                            |
+| `theme`     | no       | `print` | `print`, `vesper`                                     |
+| `panels`    | yes      |         | count depends on the layout                           |
 
 ### Panel fields
 
@@ -132,7 +132,7 @@ The same card as JSON gives you every option explicitly, including `underline`:
 | `code`           | yes      | Up to 4000 characters; line limit depends on the layout                    |
 | `label`          | no       | Header text; defaults to the language name                                 |
 | `highlightLines` | no       | One-based line numbers; Markdown uses `{1,3-5}` on the fence               |
-| `underline`      | no       | Exact substrings to underline; JSON only                                   |
+| `underline`      | no       | Exact substrings to underline; up to 6; JSON only                          |
 | `verdict`        | no       | `good` or `bad`; Markdown uses a ✅ / ❌ heading prefix                    |
 | `notes`          | no       | Up to 3 bullets of 70 characters; Markdown uses `- ` lines after the fence |
 
@@ -167,6 +167,8 @@ social-card <input.md|input.json|directory>... [options]
   --scale <1|2|3>   Device scale factor for PNGs (2 gives crisper text after platform compression)
   --html            Also write the rendered HTML next to each PNG for debugging
   --env <file>      Branding env file (default: .env in the current directory)
+  --help            Show usage and exit
+  --version         Print the installed version and exit
 ```
 
 During development run it as `npm run card -- <args>`. A directory input renders every `.md` and `.json` inside it in name order, which is how a carousel is assembled:
@@ -251,7 +253,7 @@ docker run -d --name social-card-sandbox -p 127.0.0.1:8787:8787 \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
-Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it — the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.1.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it — the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.3.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
 
 #### Reverse-proxying with nginx
 
