@@ -406,3 +406,4 @@ Snappify is the nearest match on carousels, but it's closed SaaS with no self-ho
 ## License
 
 MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter, Bricolage Grotesque, Commit Mono, Geist Sans, Geist Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+<!-- branch-protection-ruleset-test: safe to delete, verifies main ruleset blocks unreviewed/unchecked merges -->
