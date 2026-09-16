@@ -32,6 +32,7 @@ const HEADING = /^##\s+(.+?)\s*$/;
 const FENCE_OPEN = /^```([^\s{`]+)\s*(\{[^}]*\})?\s*$/;
 const FENCE_CLOSE = /^```\s*$/;
 const BULLET = /^[-*]\s+(.+?)\s*$/;
+const HEADING_LIKE = /^(#+)\s*(.*)$/;
 const GOOD_PREFIX = /^(?:✅|✔️|✔)\s*/u;
 const BAD_PREFIX = /^(?:❌|✖|✗)\s*/u;
 
@@ -73,6 +74,21 @@ function parsePanels(lines: string[], firstLineNumber: number): RawPanel[] {
       pendingHeading = parseHeading(heading[1]);
       index += 1;
       continue;
+    }
+
+    const headingLike = line.match(HEADING_LIKE);
+    if (headingLike) {
+      const [, hashes, rest] = headingLike;
+      const found = line.trim().slice(0, 40);
+      if (hashes !== '##') {
+        throw new Error(
+          `Line ${lineNumber()}: panel headings must use exactly "## Label" (two #'s), but found "${found}".`,
+        );
+      }
+      if (!rest.trim()) {
+        throw new Error(`Line ${lineNumber()}: heading needs a label after "## ", but found "${found}".`);
+      }
+      throw new Error(`Line ${lineNumber()}: add a space after "##", but found "${found}".`);
     }
 
     const fence = line.match(FENCE_OPEN);

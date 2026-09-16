@@ -16,6 +16,7 @@ import html from '@shikijs/langs/html';
 import css from '@shikijs/langs/css';
 import xml from '@shikijs/langs/xml';
 import docker from '@shikijs/langs/docker';
+import nginx from '@shikijs/langs/nginx';
 import vitesseLight from '@shikijs/themes/vitesse-light';
 import vesper from '@shikijs/themes/vesper';
 import type { Panel } from '../../src/schema.js';
@@ -36,6 +37,7 @@ const LANGS = [
   css,
   xml,
   docker,
+  nginx,
 ];
 export const SANDBOX_LANGUAGES = [
   'csharp',
@@ -53,6 +55,7 @@ export const SANDBOX_LANGUAGES = [
   'css',
   'xml',
   'docker',
+  'nginx',
 ];
 
 let highlighterPromise: Promise<HighlighterCore> | undefined;

@@ -17,13 +17,14 @@
  *   core touches.
  */
 import { build, type Plugin } from 'esbuild';
-import { execSync } from 'node:child_process';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fontFaceCss } from '../src/fonts.js';
 import { parseMarkdown } from '../src/markdown.js';
 import { THEMES } from '../src/themes/index.js';
+import { validateCard } from '../src/validate.js';
+import { SANDBOX_LANGUAGES } from '../web/sandbox/browser-highlight.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = resolve(ROOT, 'web/sandbox');
@@ -37,12 +38,26 @@ async function fontCss(): Promise<string> {
 
 type SandboxExample = { label: string; content: string };
 
-/** The dropdown label a card source declares for itself, e.g. "stack · print". */
+/**
+ * The dropdown label a card source declares for itself, e.g. "stack · print".
+ * Also checks every panel against SANDBOX_LANGUAGES: an example that only
+ * the CLI's full Shiki bundle can render would throw at pick-time in the
+ * sandbox dropdown instead of failing loudly here at build time.
+ */
 function sandboxLabel(name: string, content: string): string {
   const raw = name.endsWith('.md') ? parseMarkdown(content) : JSON.parse(content);
   const label = (raw as Record<string, unknown>).sandboxLabel;
   if (typeof label !== 'string' || !label) {
     throw new Error(`examples/${name} is missing a "sandboxLabel" field for the sandbox dropdown.`);
+  }
+  const card = validateCard(raw);
+  for (const panel of card.panels) {
+    if (!SANDBOX_LANGUAGES.includes(panel.language)) {
+      throw new Error(
+        `examples/${name} uses language "${panel.language}", which isn't bundled in the sandbox ` +
+          `(bundled: ${SANDBOX_LANGUAGES.join(', ')}). Add it to web/sandbox/browser-highlight.ts or change the example.`,
+      );
+    }
   }
   return label;
 }
@@ -95,17 +110,8 @@ function browserPlugin(fonts: string, examples: Record<string, SandboxExample>):
   };
 }
 
-function buildTag(): string {
-  try {
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT }).toString().trim();
-    const sha = execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
-    return `core from ${branch} @ ${sha}`;
-  } catch {
-    return 'core from working tree';
-  }
-}
-
 const [fonts, examples] = await Promise.all([fontCss(), exampleSources()]);
+const { version } = JSON.parse(await readFile(resolve(ROOT, 'package.json'), 'utf8')) as { version: string };
 const result = await build({
   entryPoints: [resolve(WEB, 'entry.ts')],
   bundle: true,
@@ -120,7 +126,7 @@ const result = await build({
 
 const bundle = result.outputFiles[0].text;
 const template = await readFile(resolve(WEB, 'index.template.html'), 'utf8');
-const page = template.replace('/*__BUNDLE__*/', () => bundle).replace('/*__BUILD_TAG__*/', buildTag());
+const page = template.replace('/*__BUNDLE__*/', () => bundle).replace('/*__VERSION__*/', `v${version}`);
 await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, page);
 console.log(`Built ${OUT} (${(page.length / 1024).toFixed(0)} KB). Open it in a browser.`);

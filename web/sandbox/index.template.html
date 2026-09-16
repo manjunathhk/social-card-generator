@@ -1,4 +1,4 @@
-<title>Social Card Sandbox</title>
+<title>Social Card Generator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -84,7 +84,15 @@ select:focus-visible, input[type="text"]:focus-visible { border-color: var(--acc
 .pill { font: 500 11.5px var(--mono); padding: 4px 9px; border-radius: 999px; background: var(--surface-3); color: var(--muted); border: 1px solid var(--rule); }
 
 .editor { position: relative; background: var(--editor-bg); border-radius: 12px; border: 1px solid var(--rule-strong); overflow: hidden; box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent); }
-.editor textarea { display: block; width: 100%; height: 520px; resize: vertical; padding: 16px 18px; background: transparent; color: var(--editor-ink); border: 0; font: 13px/1.6 var(--mono); tab-size: 2; white-space: pre; overflow: auto; }
+.editor textarea {
+  display: block; width: 100%; height: 520px; resize: vertical; padding: 16px 18px; background: transparent;
+  color: var(--editor-ink); border: 0; font: 13px/1.6 var(--mono); tab-size: 2; white-space: pre; overflow: auto;
+  /* This is a card source, not prose: every "#" the user types must render as its own glyph, never
+     merged into a font ligature (some monospace webfonts substitute a narrower glyph for "##" at
+     end-of-line), or counting heading hashes becomes unreliable. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+}
 .editor textarea:focus-visible { outline-offset: -2px; }
 .banner { border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45; border: 1px solid; }
 .banner[hidden] { display: none; }
@@ -169,7 +177,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
 <div class="glow glow-2" aria-hidden="true"></div>
 <div class="app">
   <header class="top">
-    <div class="brand"><h1>Social Card Sandbox</h1><span id="build-tag">/*__BUILD_TAG__*/</span></div>
+    <div class="brand"><h1>Social Card Generator</h1><span id="version-tag">/*__VERSION__*/</span></div>
     <nav class="links">
       <a href="https://github.com/manjunathhk/social-card-generator" target="_blank" rel="noopener">Repository</a>
       <a href="https://github.com/manjunathhk/social-card-generator/blob/main/docs/TECHNIQUES.md" target="_blank" rel="noopener">Techniques</a>
