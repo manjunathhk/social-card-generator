@@ -5,7 +5,11 @@ services:
   social-card-sandbox:
     build: .
     ports:
-      - '8787:8787'
+      # Bound to loopback: the app has no auth by design, so if you're running
+      # this on a VPS rather than a laptop, put a reverse proxy (see README ->
+      # "Deploying a prebuilt image (VPS)") in front rather than widening this
+      # to '8787:8787'/'0.0.0.0:8787:8787' and exposing it to the internet directly.
+      - '127.0.0.1:8787:8787'
     volumes:
       - sandbox-data:/data
     restart: unless-stopped
