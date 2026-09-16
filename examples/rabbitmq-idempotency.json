@@ -5,6 +5,7 @@
   "issue": "01",
   "insight": "Brokers guarantee at-least-once delivery, not exactly-once. Track processed message IDs with a short TTL so a redelivery is a no-op, not a duplicate order.",
   "tags": ["RabbitMQ", ".NET", "Idempotency"],
+  "sandboxLabel": "stack · print (JSON)",
   "panels": [
     {
       "label": "OrderConsumer.cs / dedupe guard",

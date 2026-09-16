@@ -27,11 +27,11 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 
 ## Gallery
 
-| `stack` · print                                                            | `stack` · print, verdicts                                  | `stack` · vesper, notes                                                  |
-| -------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [![](sample/rabbitmq-idempotency.png)](examples/rabbitmq-idempotency.md)     | [![](sample/ef-core-n-plus-one.png)](examples/ef-core-n-plus-one.json) | [![](sample/angular-inject.png)](examples/angular-inject.md) |
-| `stack` · two languages                                                      | `columns` · vesper, notes + verdicts                                   | `grid` · vesper, underlines                                  |
-| [![](sample/dto-validation.png)](examples/dto-validation.md)                 | [![](sample/nginx-rate-limit.png)](examples/nginx-rate-limit.md)       | [![](sample/compose-healthchecks.png)](examples/compose-healthchecks.json) |
+| `stack` · print                                                          | `stack` · print, verdicts                                              | `stack` · vesper, notes                                                    |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [![](sample/rabbitmq-idempotency.png)](examples/rabbitmq-idempotency.md) | [![](sample/ef-core-n-plus-one.png)](examples/ef-core-n-plus-one.json) | [![](sample/angular-inject.png)](examples/angular-inject.md)               |
+| `stack` · two languages                                                  | `columns` · vesper, notes + verdicts                                   | `grid` · vesper, underlines                                                |
+| [![](sample/dto-validation.png)](examples/dto-validation.md)             | [![](sample/nginx-rate-limit.png)](examples/nginx-rate-limit.md)       | [![](sample/compose-healthchecks.png)](examples/compose-healthchecks.json) |
 
 All six, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
 

@@ -3,6 +3,7 @@
   "highlight": "Query once, not per row",
   "subtitle": "Loading an order list should not fire one query per order for its line items.",
   "tags": ["EF Core", "PostgreSQL", "N+1"],
+  "sandboxLabel": "stack · print, verdicts",
   "issue": "02",
   "insight": "Lazy navigation looks correct in a unit test with three rows and falls over at production scale. Project or Include so EF Core issues one query, not N+1.",
   "panels": [

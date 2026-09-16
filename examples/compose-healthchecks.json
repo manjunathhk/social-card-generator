@@ -6,6 +6,7 @@
   "issue": "06",
   "layout": "grid",
   "theme": "vesper",
+  "sandboxLabel": "grid · vesper, underlines",
   "insight": "condition: service_started only waits for the container to launch. service_healthy waits for the healthcheck to pass, which is what dependent services actually need.",
   "panels": [
     {

@@ -4,6 +4,7 @@ highlight: Validate at the edge.
 subtitle: A CreateOrder DTO rejected before it reaches the domain layer, in Node and in .NET.
 tags: [NestJS, .NET, Validation]
 issue: '04'
+sandboxLabel: stack · two languages
 ---
 
 ## NestJS

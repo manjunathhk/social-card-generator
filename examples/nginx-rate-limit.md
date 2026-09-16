@@ -6,6 +6,7 @@ tags: [NGINX, Rate limiting]
 issue: '05'
 layout: columns
 theme: vesper
+sandboxLabel: columns · vesper, notes + verdicts
 insight: A tight rate without burst rejects the same client's own concurrent
   asset requests, not just abusive traffic. Zone size and burst are what
   make the limit usable.

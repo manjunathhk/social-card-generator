@@ -298,7 +298,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
 
   // Examples.
   for (const name of Object.keys(SC.examples)) {
-    const opt = document.createElement('option'); opt.value = name; opt.textContent = name; example.appendChild(opt);
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = SC.examples[name].label; example.appendChild(opt);
   }
   $('langs-list').textContent = SC.SANDBOX_LANGUAGES.join(', ');
   $('langs-pill').textContent = SC.SANDBOX_LANGUAGES.length + ' languages';
@@ -607,7 +607,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     const name = example.value;
     if (!name) return;
     loadedExample = name;
-    source.value = SC.examples[name];
+    source.value = SC.examples[name].content;
     editingHint.hidden = true; editingHint.textContent = '';
     render();
     example.value = name; // reflect the loaded example instead of resetting to the placeholder
