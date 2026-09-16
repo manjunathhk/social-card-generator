@@ -21,18 +21,21 @@ npm run samples           # if your change affects rendering
 
 CI runs the same steps on Ubuntu with Node 24. If `npm run samples` changed any image in `sample/`, commit the new images; the gallery in the README is the visual regression record.
 
+CI also runs a `version-check` job on every PR (see "Releasing" below) and the PR description is expected to follow `.github/pull_request_template.md`.
+
 ## Commit messages
 
 No tooling parses these — write clear, conventional messages (`fix:`, `feat:`, `chore:`, ...) because they're what a human reads in `git log` and PR titles, not because anything derives a version from them.
 
 ## Releasing
 
-There is no automated version bump. `version` in `package.json` and `CHANGELOG.md` are hand-edited:
+There is no automated version _inference_ — nothing reads commit messages or diffs to decide the bump size or writes it for you. `version` in `package.json` and `CHANGELOG.md` stay hand-edited, by you, in the PR itself. (This project tried commit-driven auto-versioning once, via semantic-release; it mis-fired twice and got reverted — see the 2.1.0/2.1.1 entries in `CHANGELOG.md`. What follows is deliberately simpler: a human or agent decides the bump, CI only checks that one happened.)
 
-1. When a merged change warrants a release, bump `version` in `package.json` yourself (semver: patch for fixes, minor for features, major for breaking changes) — either in the same PR or a small follow-up one.
+1. Bump `version` in `package.json` yourself in the same PR (semver: patch for fixes, minor for features, major for breaking changes) whenever the change warrants a release.
 2. Add a `CHANGELOG.md` entry for it.
-3. Once that merges to `main`, the `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) reads `package.json`'s version and tags the Docker image with it (plus `:latest` and `:<git-sha>`, always). A merge that doesn't bump the version just republishes `:latest`/`:<git-sha>` under the previous version tag.
-4. Optionally tag the release commit for a GitHub Release: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+3. CI's `version-check` job fails the PR if `package.json`'s version is unchanged from `main`. If the PR genuinely ships nothing release-worthy (docs, CI config, test-only changes), apply the `no-version-bump` label instead of bumping — don't bump just to satisfy the check.
+4. Once the PR merges to `main`, the `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) reads `package.json`'s version and tags the Docker image with it (plus `:latest` and `:<git-sha>`, always). A merge under the `no-version-bump` label just republishes `:latest`/`:<git-sha>` under the previous version tag.
+5. Optionally tag the release commit for a GitHub Release: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 ## Conventions
 

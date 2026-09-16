@@ -9,6 +9,14 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.3.2] - 2026-09-16
+
+### Added
+
+- CI: a `version-check` job fails a PR to `main` if `package.json`'s version is unchanged from `main`; a `no-version-bump` label is the explicit opt-out for changes that ship nothing release-worthy. Never auto-commits a bump — see `CONTRIBUTING.md` ("Releasing").
+- `AGENTS.md`: a "Reviewing docs for staleness" checklist for any AI coding agent (or contributor) to follow on request.
+- `.github/pull_request_template.md`: Summary / Test plan / Checklist, including the two items above.
+
 ## [2.3.1] - 2026-09-16
 
 ### Added
