@@ -3,9 +3,9 @@
  * dependency-free: the runtime image ships no `node_modules` (see the
  * Dockerfile), and pulling in `prom-client` for a handful of counters and
  * one histogram would be the only thing to break that. Route labels are a
- * fixed, low-cardinality set assigned by the caller (e.g. `/api/cards/:id`,
- * never the literal id) — an unbounded label value is how a metrics
- * endpoint quietly becomes a memory leak.
+ * fixed, low-cardinality set assigned by the caller (the route template,
+ * never a literal path with request-controlled data in it) — an unbounded
+ * label value is how a metrics endpoint quietly becomes a memory leak.
  */
 
 const HISTOGRAM_BUCKETS_SECONDS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5];
@@ -94,30 +94,12 @@ const httpRequestDuration = new Histogram(
   'http_request_duration_seconds',
   'HTTP request duration in seconds by route and method.',
 );
-const cardsCreatedTotal = new Counter('social_card_cards_created_total', 'Cards saved to the shared history.');
-const cardsDeletedTotal = new Counter('social_card_cards_deleted_total', 'Cards removed from the shared history.');
-const cardsPrunedTotal = new Counter(
-  'social_card_cards_pruned_total',
-  'Cards removed automatically by the retention sweep (CARD_RETENTION_DAYS), not by a user.',
-);
 const processStartedAt = Date.now();
 
 export function recordRequest(opts: { method: string; route: string; status: number; durationSeconds: number }) {
   const labels = { method: opts.method, route: opts.route, status: opts.status };
   httpRequestsTotal.inc(labels);
   httpRequestDuration.observe({ method: opts.method, route: opts.route }, opts.durationSeconds);
-}
-
-export function recordCardCreated(): void {
-  cardsCreatedTotal.inc();
-}
-
-export function recordCardDeleted(): void {
-  cardsDeletedTotal.inc();
-}
-
-export function recordCardsPruned(count: number): void {
-  if (count > 0) cardsPrunedTotal.inc({}, count);
 }
 
 const uptimeGauge = new Gauge(
@@ -133,16 +115,7 @@ const heapUsedGauge = new Gauge(
 
 export function renderMetrics(): string {
   return (
-    [
-      httpRequestsTotal,
-      httpRequestDuration,
-      cardsCreatedTotal,
-      cardsDeletedTotal,
-      cardsPrunedTotal,
-      uptimeGauge,
-      heapUsedGauge,
-    ]
-      .map((metric) => metric.render())
-      .join('\n') + '\n'
+    [httpRequestsTotal, httpRequestDuration, uptimeGauge, heapUsedGauge].map((metric) => metric.render()).join('\n') +
+    '\n'
   );
 }

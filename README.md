@@ -205,11 +205,11 @@ npm run sandbox        # writes out/sandbox.html
 
 Open `out/sandbox.html` directly in a browser. It has no server, no build watcher and no network dependency beyond the UI font. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
 
-It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. Where that history lives depends on how the page is served, which is what the next section is about.
+It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. History always lives in that browser's own storage (IndexedDB), whether the page is opened as a plain file or served — see the next section for why.
 
 ## Running it as a server (Docker)
 
-`npm run sandbox` on its own produces a file with nowhere to keep history between visits. Serving the same bundle from a small server gives it one: a shared history, backed by plain files on disk, that survives closing the browser.
+`npm run sandbox` on its own produces a single file with no server behind it. Serving the same bundle from a small server buys you one thing: a stable URL you (and anyone else you share it with) can open from any device, plus server-side branding defaults and metrics. It does **not** buy shared history — every visitor's exported cards stay in that visitor's own browser, never on the server, and never visible to anyone else who opens the same URL. That's deliberate: this server has no login, so "shared" storage would mean everyone who can reach the URL can see everyone else's cards.
 
 ```sh
 docker compose up --build
@@ -220,36 +220,34 @@ Or without Compose:
 
 ```sh
 docker build -t social-card-sandbox .
-docker run -p 8787:8787 -v sandbox-data:/data social-card-sandbox
+docker run -p 8787:8787 social-card-sandbox
 ```
 
 Pass the [branding variables](#branding) as environment variables when creating the container, and they become the sandbox's default branding fields for every visitor (still editable per-browser, and still all optional):
 
 ```sh
-docker run -p 8787:8787 -v sandbox-data:/data \
+docker run -p 8787:8787 \
   -e CARD_AUTHOR="Your Name" -e CARD_WEBSITE="example.com" -e CARD_SERIES="Field Notes" \
   social-card-sandbox
 ```
 
-The page is served at `/`, never at a `.html` path. The container needs no Chromium: rendering still happens in the visitor's browser, and the server only stores the PNG and source it already produced, as one JSON file and one PNG per card under `/data/cards` — mount `/data` as a volume or history is lost when the container is removed. There is **no authentication and no per-visitor isolation**: everyone who can reach the server shares one history. That's the right tradeoff for a personal, self-hosted instance on a private network or behind your own reverse proxy; put an auth layer in front before exposing it more widely.
+The page is served at `/`, never at a `.html` path. The container needs no Chromium and no volume: rendering happens in the visitor's browser, and the server itself stores nothing — it has no database and no `/data` directory, so there is nothing on it for one visitor to read that another created. There is still **no authentication**: anyone who can reach the URL can use the tool and sees the same server-wide branding defaults, but never another visitor's cards. That's the right tradeoff for a personal, self-hosted instance on a private network; put an auth layer in front (a reverse proxy with basic auth, an SSO gateway, etc.) if you also want to restrict who can _use_ it at all.
 
-Cards older than `CARD_RETENTION_DAYS` days (default `30`) are deleted automatically, swept every six hours. With no auth in front, this is the only thing bounding `/data`'s growth on a publicly reachable instance — raise it, or set it very high, only if you're also gating access some other way.
+Browser storage is scoped to the browser, not to a person: the same visitor opening this URL from a second browser, a different device, or a private/incognito window starts with empty history there too, and clearing that browser's site data clears it for good. There's no way to see the same history from two places without adding real accounts — this trades that off deliberately for "no login required."
 
-Opened without a server behind it (a plain `file://` open, or this page viewed as a claude.ai artifact), the sandbox falls back to keeping history in that browser's own storage instead — same UI, just not shared across devices. The **Saved here:** line under the History panel says which one is active.
-
-| Command                     | What it does                                                         |
-| --------------------------- | -------------------------------------------------------------------- |
-| `npm run serve`             | Runs the server from source (`tsx`), for local development           |
-| `npm run build:server`      | Compiles the server to `dist-server/`                                |
-| `npm run test:server`       | Runs the server's tests (storage and HTTP routes; no browser needed) |
-| `docker compose up --build` | Builds the image and runs it with a persistent named volume          |
+| Command                     | What it does                                               |
+| --------------------------- | ---------------------------------------------------------- |
+| `npm run serve`             | Runs the server from source (`tsx`), for local development |
+| `npm run build:server`      | Compiles the server to `dist-server/`                      |
+| `npm run test:server`       | Runs the server's HTTP route tests; no browser needed      |
+| `docker compose up --build` | Builds the image and runs it                               |
 
 ### Deploying a prebuilt image (VPS)
 
 CI publishes the image built from `main` to Docker Hub (`linux/amd64` and `linux/arm64`), so a VPS can pull it directly instead of building from source:
 
 ```sh
-docker run -d --name social-card-sandbox -p 127.0.0.1:8787:8787 -v sandbox-data:/data \
+docker run -d --name social-card-sandbox -p 127.0.0.1:8787:8787 \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
@@ -295,7 +293,7 @@ location = /social-card { return 301 /social-card/; }
 
 #### Metrics (Prometheus / Grafana)
 
-`GET /api/metrics` exposes request counts, request-duration histograms, and card create/delete counters in Prometheus text format (`text/plain; version=0.0.4`) — no dependency on `prom-client`, keeping the runtime image's zero-`node_modules` design (see the Dockerfile) intact. Route labels are a fixed template (`/api/cards/:id`, never the literal id), so scraping never grows unbounded label cardinality.
+`GET /api/metrics` exposes request counts and request-duration histograms in Prometheus text format (`text/plain; version=0.0.4`) — no dependency on `prom-client`, keeping the runtime image's zero-`node_modules` design (see the Dockerfile) intact. Route labels are a fixed, low-cardinality set assigned by the server, never a literal path with user input in it, so scraping never grows unbounded label cardinality.
 
 If Prometheus runs on the same host (typical for a single VPS), scrape the container directly over loopback — it's already bound to `127.0.0.1:8787` per above, so this never touches nginx or the public vhost at all:
 
@@ -313,7 +311,6 @@ Then build Grafana panels from, e.g.:
 
 - `sum(rate(http_requests_total[5m])) by (route, status)` — traffic and error rate by endpoint
 - `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))` — p95 latency by route
-- `increase(social_card_cards_created_total[1d])` / `increase(social_card_cards_deleted_total[1d])` — daily card activity
 - `nodejs_heap_used_bytes` and `process_uptime_seconds` — basic process health
 
 A dashboard nobody's watching isn't monitoring — add alert rules alongside the scrape job so Prometheus pages you instead:
@@ -401,7 +398,7 @@ Other tools turn code into a shareable image. None combine a diffable source fil
 | [carbon-now-cli](https://github.com/mixn/carbon-now-cli)  | CLI wrapper around Carbon     | No — drives the live site via Playwright | No                                  | Partial                                             |
 | [Satori](https://github.com/vercel/satori) / `@vercel/og` | Programmatic OG-image library | Yes — you own the runtime                | No                                  | Yes, but each image is React/JSX, not a card format |
 
-Snappify is the nearest match on carousels, but it's closed SaaS with no self-host option. Silicon and freeze are the nearest on "local, scriptable, CLI-first," but neither has the layout/theme/branding contract a repeatable social card needs. This project sits at the intersection: a Markdown or JSON file you can diff and review, rendered the same way every time, self-hosted as a Docker image when you want a shared history.
+Snappify is the nearest match on carousels, but it's closed SaaS with no self-host option. Silicon and freeze are the nearest on "local, scriptable, CLI-first," but neither has the layout/theme/branding contract a repeatable social card needs. This project sits at the intersection: a Markdown or JSON file you can diff and review, rendered the same way every time, self-hosted as a Docker image when you want a stable URL to reach it from.
 
 ## License
 
