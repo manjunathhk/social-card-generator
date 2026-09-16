@@ -78,6 +78,10 @@ test('Markdown: errors point at the offending line', () => {
   assert.throws(() => parseMarkdown('---\ntitle: T\n---\n## Only a heading\n'), /not followed by a code fence/);
   assert.throws(() => parseMarkdown('---\ntitle: T\n---\n```js\nnever closed'), /Line 4: code fence is never closed/);
   assert.throws(() => parseMarkdown('---\ntitle: T\n---\n```js {x}\na\n```'), /must look like \{1,3-5\}/);
+  assert.throws(
+    () => parseMarkdown('---\ntitle: T\n---\n## First\n```js\na\n```\n\n#### Second\n```js\nb\n```'),
+    /Line 9: panel headings must use exactly "## Label"/,
+  );
 });
 
 test('parseHighlightSpec expands ranges', () => {
