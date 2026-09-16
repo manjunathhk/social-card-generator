@@ -322,13 +322,16 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     return SC.brandingFromEnv(env);
   }
   // When served by server/index.ts, the container's own branding env vars (set when it
-  // was created) come back from /api/branding. They fill in only the fields the visitor
+  // was created) come back from api/branding. They fill in only the fields the visitor
   // hasn't already set \u2014 via a saved localStorage value or by typing \u2014 never overriding
   // a value already on the page. Opened without a server (a plain file, or a claude.ai
   // artifact), the fetch fails and every field is left exactly as it was.
+  // Every API path here is relative (no leading slash): the page can be reverse-proxied
+  // under a subpath (e.g. example.com/social-card/) and still resolve requests against
+  // its own base URL instead of the domain root.
   async function applyServerBranding() {
     try {
-      const r = await fetch('/api/branding', { signal: AbortSignal.timeout(800) });
+      const r = await fetch('api/branding', { signal: AbortSignal.timeout(800) });
       if (!r.ok) return;
       const { branding: defaults } = await r.json();
       for (const k in brandIds) {
@@ -397,7 +400,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     let apiAvailable;
     async function hasApi() {
       if (apiAvailable === undefined) {
-        try { apiAvailable = (await fetch('/api/health', { signal: AbortSignal.timeout(800) })).ok; }
+        try { apiAvailable = (await fetch('api/health', { signal: AbortSignal.timeout(800) })).ok; }
         catch { apiAvailable = false; }
       }
       return apiAvailable;
@@ -435,7 +438,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
       async backendLabel() { return (await hasApi()) ? 'this server' : 'this browser (not shared with other devices)'; },
       async list() {
         if (await hasApi()) {
-          const r = await fetch('/api/cards');
+          const r = await fetch('api/cards');
           if (!r.ok) throw new Error('Could not load history.');
           return (await r.json()).cards;
         }
@@ -445,7 +448,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
       async save(meta, blob) {
         if (await hasApi()) {
           const pngBase64 = await blobToBase64(blob);
-          const r = await fetch('/api/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...meta, pngBase64 }) });
+          const r = await fetch('api/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...meta, pngBase64 }) });
           if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Could not save to history.');
           return r.json();
         }
@@ -455,18 +458,18 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
       },
       async get(id) {
         if (await hasApi()) {
-          const r = await fetch('/api/cards/' + id);
+          const r = await fetch('api/cards/' + id);
           return r.ok ? r.json() : undefined;
         }
         return idbRun('readonly', (store) => store.get(id));
       },
       async remove(id) {
-        if (await hasApi()) { await fetch('/api/cards/' + id, { method: 'DELETE' }); return; }
+        if (await hasApi()) { await fetch('api/cards/' + id, { method: 'DELETE' }); return; }
         await idbRun('readwrite', (store) => store.delete(id));
       },
       imageUrl(record) {
         if (record.blob) { record._objectUrl ??= URL.createObjectURL(record.blob); return record._objectUrl; }
-        return '/api/cards/' + record.id + '/image';
+        return 'api/cards/' + record.id + '/image';
       },
     };
   })();

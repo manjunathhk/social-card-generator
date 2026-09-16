@@ -253,6 +253,46 @@ docker run -d --name social-card-sandbox -p 8787:8787 -v sandbox-data:/data \
 
 Point a reverse proxy (nginx, Caddy, Traefik) at port 8787 for TLS and a domain; the container itself only speaks plain HTTP. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.1.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
 
+#### Reverse-proxying under a path
+
+Every API call the sandbox makes (`api/health`, `api/branding`, `api/cards`, …) uses a path relative to the page's own URL rather than a domain-root-absolute one, specifically so it can be reverse-proxied under a subpath (`example.com/social-card/`) and not just its own (sub)domain. A minimal nginx `location` block for that:
+
+```nginx
+location /social-card/ {
+  # trailing slash on proxy_pass strips the /social-card/ prefix before
+  # forwarding, so the container still sees plain / and /api/... requests
+  proxy_pass http://127.0.0.1:8787/;
+  proxy_set_header Host $host;
+}
+# nginx won't match /social-card (no trailing slash) against the block above
+location = /social-card { return 301 /social-card/; }
+```
+
+A subdomain (`social-card.example.com` with `location / { proxy_pass http://127.0.0.1:8787/; }`) needs none of that trailing-slash care and is one line simpler — prefer it if you're not already committed to a path.
+
+#### Metrics (Prometheus / Grafana)
+
+`GET /api/metrics` exposes request counts, request-duration histograms, and card create/delete counters in Prometheus text format (`text/plain; version=0.0.4`) — no dependency on `prom-client`, keeping the runtime image's zero-`node_modules` design (see the Dockerfile) intact. Route labels are a fixed template (`/api/cards/:id`, never the literal id), so scraping never grows unbounded label cardinality.
+
+Point an existing Prometheus at it:
+
+```yaml
+scrape_configs:
+  - job_name: social-card-sandbox
+    static_configs:
+      - targets: ['<host>:8787']
+    metrics_path: /api/metrics
+```
+
+Then build Grafana panels from, e.g.:
+
+- `sum(rate(http_requests_total[5m])) by (route, status)` — traffic and error rate by endpoint
+- `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))` — p95 latency by route
+- `increase(social_card_cards_created_total[1d])` / `increase(social_card_cards_deleted_total[1d])` — daily card activity
+- `nodejs_heap_used_bytes` and `process_uptime_seconds` — basic process health
+
+The endpoint is unauthenticated, same as the rest of the API — fine on a private network, but if you're reverse-proxying this publicly (see above), scope `location /api/metrics` to your Prometheus host's IP (or block it entirely and scrape over a private network/VPN) rather than leaving it open on the public vhost.
+
 `version` in `package.json` and `CHANGELOG.md` are no longer hand-edited: the `release` job runs [semantic-release](https://semantic-release.gitbook.io/) on every push to `main`, deriving a patch/minor/major bump from [Conventional Commits](https://www.conventionalcommits.org/) since the last release (`fix:`/`perf:` → patch, `feat:` → minor, a `BREAKING CHANGE:` footer → major; `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` publish `:latest`/`:<git-sha>` but cut no version). It commits the bumped `package.json`/`package-lock.json` and a generated `CHANGELOG.md` entry back to `main` (`chore(release): ... [skip ci]`, which does not retrigger CI) and creates a GitHub Release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the commit message format this depends on.
 
 #### Publishing to Docker Hub
