@@ -84,11 +84,15 @@ test('Markdown: errors point at the offending line', () => {
   );
   assert.throws(
     () => parseMarkdown('---\ntitle: T\n---\n## First\n```js\na\n```\n\n##'),
-    /Line 9: heading needs a label after "## "/,
+    /Line 9: heading needs a label after "## ", but found "##"/,
+  );
+  assert.throws(
+    () => parseMarkdown('---\ntitle: T\n---\n## First\n```js\na\n```\n\n#'),
+    /Line 9: panel headings must use exactly "## Label" \(two #'s\), but found "#"/,
   );
   assert.throws(
     () => parseMarkdown('---\ntitle: T\n---\n## First\n```js\na\n```\n\n##Second\n```js\nb\n```'),
-    /Line 9: add a space after "##": "## Second"/,
+    /Line 9: add a space after "##", but found "##Second"/,
   );
 });
 

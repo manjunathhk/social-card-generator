@@ -79,15 +79,16 @@ function parsePanels(lines: string[], firstLineNumber: number): RawPanel[] {
     const headingLike = line.match(HEADING_LIKE);
     if (headingLike) {
       const [, hashes, rest] = headingLike;
-      if (!rest.trim()) {
-        throw new Error(`Line ${lineNumber()}: heading needs a label after "## ", e.g. "## Example".`);
-      }
+      const found = line.trim().slice(0, 40);
       if (hashes !== '##') {
         throw new Error(
-          `Line ${lineNumber()}: panel headings must use exactly "## Label" (two #'s), but found "${line.trim().slice(0, 40)}".`,
+          `Line ${lineNumber()}: panel headings must use exactly "## Label" (two #'s), but found "${found}".`,
         );
       }
-      throw new Error(`Line ${lineNumber()}: add a space after "##": "## ${rest.trim()}".`);
+      if (!rest.trim()) {
+        throw new Error(`Line ${lineNumber()}: heading needs a label after "## ", but found "${found}".`);
+      }
+      throw new Error(`Line ${lineNumber()}: add a space after "##", but found "${found}".`);
     }
 
     const fence = line.match(FENCE_OPEN);
