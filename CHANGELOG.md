@@ -1,10 +1,3 @@
-# [2.2.0](https://github.com/manjunathhk/social-card-generator/compare/v2.1.1...v2.2.0) (2026-09-16)
-
-
-### Features
-
-* **server:** add Prometheus metrics, card retention, and subpath-safe API paths ([f47406c](https://github.com/manjunathhk/social-card-generator/commit/f47406c42c8e45174ccb372ab7c5058a6716180c))
-
 # Changelog
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
@@ -34,6 +27,12 @@ All notable changes to this project are documented here. The format follows [Kee
 - Markdown parser: a heading written with the wrong number of `#`'s (or with no label yet, mid-typing) always reports the line's actual text — never a hard-coded `"## "` that could imply a character was dropped.
 - Sandbox source editor: disabled font ligatures, so two consecutive `#` characters can no longer render as a single merged glyph on fonts/platforms that apply a ligature there.
 - Sandbox highlighter: bundled the `nginx` grammar. `examples/nginx-rate-limit.md` — one of the shipped "Load from Example" entries — threw a runtime error when picked, since the browser highlighter's fixed grammar set didn't include it. The sandbox build now also validates every shipped example's panel languages against the bundled set, failing the build if one is missing instead of surfacing only when a visitor picks that example.
+
+## [2.2.0] - 2026-09-16
+
+### Added
+
+- **server:** Prometheus metrics, card retention, and subpath-safe API paths ([f47406c](https://github.com/manjunathhk/social-card-generator/commit/f47406c42c8e45174ccb372ab7c5058a6716180c))
 
 ## [2.1.1] - 2026-09-15
 
