@@ -17,7 +17,6 @@
  *   core touches.
  */
 import { build, type Plugin } from 'esbuild';
-import { execSync } from 'node:child_process';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -95,17 +94,8 @@ function browserPlugin(fonts: string, examples: Record<string, SandboxExample>):
   };
 }
 
-function buildTag(): string {
-  try {
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT }).toString().trim();
-    const sha = execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
-    return `core from ${branch} @ ${sha}`;
-  } catch {
-    return 'core from working tree';
-  }
-}
-
 const [fonts, examples] = await Promise.all([fontCss(), exampleSources()]);
+const { version } = JSON.parse(await readFile(resolve(ROOT, 'package.json'), 'utf8')) as { version: string };
 const result = await build({
   entryPoints: [resolve(WEB, 'entry.ts')],
   bundle: true,
@@ -120,7 +110,7 @@ const result = await build({
 
 const bundle = result.outputFiles[0].text;
 const template = await readFile(resolve(WEB, 'index.template.html'), 'utf8');
-const page = template.replace('/*__BUNDLE__*/', () => bundle).replace('/*__BUILD_TAG__*/', buildTag());
+const page = template.replace('/*__BUNDLE__*/', () => bundle).replace('/*__VERSION__*/', `v${version}`);
 await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, page);
 console.log(`Built ${OUT} (${(page.length / 1024).toFixed(0)} KB). Open it in a browser.`);
