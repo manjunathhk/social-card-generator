@@ -1,8 +1,8 @@
-# Social Card Generator — A Quick Tour
+# Portal Navigation Guide
 
-This is a short, no-jargon walkthrough of the live demo at **[social-card.manjunathhk.in](https://social-card.manjunathhk.in)**. No account, no install, nothing to configure — just open the link in a browser.
+This is a short, no-jargon walkthrough of the live portal at **[social-card.manjunathhk.in](https://social-card.manjunathhk.in)**, for anyone opening it for the first time. No account, no install, nothing to configure — just open the link in a browser.
 
-> **What am I looking at?** This tool turns a short piece of text and a code snippet into a polished, shareable image — the kind of graphic you see on LinkedIn or X posts about programming topics. It's one of Manju's personal projects, built and self-hosted end-to-end.
+> **What am I looking at?** This tool turns a short piece of text and a code snippet into a polished, shareable image — the kind of graphic you see on LinkedIn or X posts about programming topics.
 
 ## 1. What you'll see first
 
