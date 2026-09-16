@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/manjunathhk/social-card-generator/compare/v2.1.1...v2.2.0) (2026-09-16)
+
+
+### Features
+
+* **server:** add Prometheus metrics, card retention, and subpath-safe API paths ([f47406c](https://github.com/manjunathhk/social-card-generator/commit/f47406c42c8e45174ccb372ab7c5058a6716180c))
+
 # Changelog
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
