@@ -23,6 +23,8 @@ import { fileURLToPath } from 'node:url';
 import { fontFaceCss } from '../src/fonts.js';
 import { parseMarkdown } from '../src/markdown.js';
 import { THEMES } from '../src/themes/index.js';
+import { validateCard } from '../src/validate.js';
+import { SANDBOX_LANGUAGES } from '../web/sandbox/browser-highlight.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = resolve(ROOT, 'web/sandbox');
@@ -36,12 +38,26 @@ async function fontCss(): Promise<string> {
 
 type SandboxExample = { label: string; content: string };
 
-/** The dropdown label a card source declares for itself, e.g. "stack · print". */
+/**
+ * The dropdown label a card source declares for itself, e.g. "stack · print".
+ * Also checks every panel against SANDBOX_LANGUAGES: an example that only
+ * the CLI's full Shiki bundle can render would throw at pick-time in the
+ * sandbox dropdown instead of failing loudly here at build time.
+ */
 function sandboxLabel(name: string, content: string): string {
   const raw = name.endsWith('.md') ? parseMarkdown(content) : JSON.parse(content);
   const label = (raw as Record<string, unknown>).sandboxLabel;
   if (typeof label !== 'string' || !label) {
     throw new Error(`examples/${name} is missing a "sandboxLabel" field for the sandbox dropdown.`);
+  }
+  const card = validateCard(raw);
+  for (const panel of card.panels) {
+    if (!SANDBOX_LANGUAGES.includes(panel.language)) {
+      throw new Error(
+        `examples/${name} uses language "${panel.language}", which isn't bundled in the sandbox ` +
+          `(bundled: ${SANDBOX_LANGUAGES.join(', ')}). Add it to web/sandbox/browser-highlight.ts or change the example.`,
+      );
+    }
   }
   return label;
 }
