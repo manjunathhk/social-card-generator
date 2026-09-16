@@ -5,21 +5,21 @@
  *   npm run samples -- --built # runs the compiled dist/cli.js (used by CI)
  *
  * Uses examples/branding.env so the output is reproducible regardless of the
- * local .env. The list is explicit because redis-caching exists as both .md
- * and .json to demonstrate the two formats, and both would render to the
- * same file name.
+ * local .env. The list is explicit because rabbitmq-idempotency exists as
+ * both .md and .json to demonstrate the two formats, and both would render
+ * to the same file name.
  */
 import { spawn } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const SAMPLES = [
-  'redis-caching.md',
-  'before-after.json',
-  'typescript-javascript.md',
-  'span-columns.md',
-  'concurrency-grid.json',
-  'dependency-injection.md',
+  'rabbitmq-idempotency.md',
+  'ef-core-n-plus-one.json',
+  'dto-validation.md',
+  'nginx-rate-limit.md',
+  'compose-healthchecks.json',
+  'angular-inject.md',
 ];
 
 const root = fileURLToPath(new URL('..', import.meta.url));

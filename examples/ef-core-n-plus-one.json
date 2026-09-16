@@ -1,0 +1,24 @@
+{
+  "title": "N+1 hides until traffic finds it",
+  "highlight": "Query once, not per row",
+  "subtitle": "Loading an order list should not fire one query per order for its line items.",
+  "tags": ["EF Core", "PostgreSQL", "N+1"],
+  "sandboxLabel": "stack · print, verdicts",
+  "issue": "02",
+  "insight": "Lazy navigation looks correct in a unit test with three rows and falls over at production scale. Project or Include so EF Core issues one query, not N+1.",
+  "panels": [
+    {
+      "label": "BEFORE / lazy navigation per order",
+      "language": "csharp",
+      "verdict": "bad",
+      "code": "var orders = await db.Orders\n    .Where(o => o.CustomerId == id)\n    .ToListAsync(ct);\n\nforeach (var o in orders)\n{\n    // fires one query per order\n    var total = o.Items.Sum(i => i.Price);\n}"
+    },
+    {
+      "label": "AFTER / project what you need",
+      "language": "csharp",
+      "verdict": "good",
+      "highlightLines": [3, 4],
+      "code": "var orders = await db.Orders\n    .Where(o => o.CustomerId == id)\n    .Select(o => new OrderSummary(\n        o.Id, o.Items.Sum(i => i.Price)))\n    .ToListAsync(ct);"
+    }
+  ]
+}

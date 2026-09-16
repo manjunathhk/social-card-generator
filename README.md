@@ -7,8 +7,8 @@
 Turn a Markdown file into a polished 1080 × 1350 technical social card, or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
 
 <p align="center">
-  <img src="sample/redis-caching.png" alt="Single-panel card in the print theme" width="420">
-  <img src="sample/span-columns.png" alt="Side-by-side comparison card in the vesper theme" width="420">
+  <img src="sample/rabbitmq-idempotency.png" alt="Single-panel card in the print theme" width="420">
+  <img src="sample/nginx-rate-limit.png" alt="Side-by-side comparison card in the vesper theme" width="420">
 </p>
 
 ## Why
@@ -27,11 +27,11 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 
 ## Gallery
 
-| `stack` · print                                                            | `stack` · print, verdicts                                  | `stack` · vesper, notes                                                  |
-| -------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [![](sample/redis-caching.png)](examples/redis-caching.md)                 | [![](sample/before-after.png)](examples/before-after.json) | [![](sample/dependency-injection.png)](examples/dependency-injection.md) |
-| `stack` · two languages                                                    | `columns` · vesper, notes + verdicts                       | `grid` · vesper, underlines                                              |
-| [![](sample/typescript-javascript.png)](examples/typescript-javascript.md) | [![](sample/span-columns.png)](examples/span-columns.md)   | [![](sample/concurrency-grid.png)](examples/concurrency-grid.json)       |
+| `stack` · print                                                          | `stack` · print, verdicts                                              | `stack` · vesper, notes                                                    |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [![](sample/rabbitmq-idempotency.png)](examples/rabbitmq-idempotency.md) | [![](sample/ef-core-n-plus-one.png)](examples/ef-core-n-plus-one.json) | [![](sample/angular-inject.png)](examples/angular-inject.md)               |
+| `stack` · two languages                                                  | `columns` · vesper, notes + verdicts                                   | `grid` · vesper, underlines                                                |
+| [![](sample/dto-validation.png)](examples/dto-validation.md)             | [![](sample/nginx-rate-limit.png)](examples/nginx-rate-limit.md)       | [![](sample/compose-healthchecks.png)](examples/compose-healthchecks.json) |
 
 All six, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
 
@@ -44,10 +44,10 @@ git clone https://github.com/manjunathhk/social-card-generator.git
 cd social-card-generator
 npm ci
 npm run browser:install          # downloads Chromium for Playwright (once)
-npm run card -- examples/span-columns.md
+npm run card -- examples/nginx-rate-limit.md
 ```
 
-The card is written to `out/span-columns.png`. On Linux, add system libraries with `npx playwright install --with-deps chromium` if the launch complains. To use a Chromium you already have, set `CARD_BROWSER_PATH=/path/to/chromium` instead of downloading one.
+The card is written to `out/nginx-rate-limit.png`. On Linux, add system libraries with `npx playwright install --with-deps chromium` if the launch complains. To use a Chromium you already have, set `CARD_BROWSER_PATH=/path/to/chromium` instead of downloading one.
 
 Once published to npm the same tool runs without cloning:
 

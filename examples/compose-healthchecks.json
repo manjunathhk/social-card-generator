@@ -1,0 +1,37 @@
+{
+  "title": "Healthy doesn't mean started",
+  "highlight": "depends_on: service_healthy",
+  "subtitle": "Four services, four healthchecks — the API waits for real readiness, not just a running container.",
+  "tags": ["Docker", "Compose", "Healthchecks"],
+  "issue": "06",
+  "layout": "grid",
+  "theme": "vesper",
+  "sandboxLabel": "grid · vesper, underlines",
+  "insight": "condition: service_started only waits for the container to launch. service_healthy waits for the healthcheck to pass, which is what dependent services actually need.",
+  "panels": [
+    {
+      "label": "postgres",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "postgres:\n  image: postgres:16\n  healthcheck:\n    test: [\"CMD-SHELL\", \"pg_isready -U app\"]\n    interval: 5s\n    retries: 5"
+    },
+    {
+      "label": "redis",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "redis:\n  image: redis:7\n  healthcheck:\n    test: [\"CMD\", \"redis-cli\", \"ping\"]\n    interval: 5s\n    retries: 5"
+    },
+    {
+      "label": "rabbitmq",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "rabbitmq:\n  image: rabbitmq:3-management\n  healthcheck:\n    test: [\"CMD\", \"rabbitmq-diagnostics\", \"ping\"]\n    interval: 10s\n    retries: 5"
+    },
+    {
+      "label": "api",
+      "language": "yaml",
+      "underline": ["service_healthy"],
+      "code": "api:\n  build: .\n  depends_on:\n    postgres:\n      condition: service_healthy\n    redis:\n      condition: service_healthy"
+    }
+  ]
+}

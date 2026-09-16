@@ -25,7 +25,9 @@ function pngSize(png: Buffer): { width: number; height: number } {
 
 test('renders every example layout to a 1080 × 1350 PNG, at 2x when asked', async () => {
   const cards = await Promise.all(
-    ['redis-caching.md', 'span-columns.md', 'concurrency-grid.json', 'dependency-injection.md'].map(loadExample),
+    ['rabbitmq-idempotency.md', 'nginx-rate-limit.md', 'compose-healthchecks.json', 'angular-inject.md'].map(
+      loadExample,
+    ),
   );
   await withBrowser(browserOptions, async (browser) => {
     const page = await openPage(browser, 1);
@@ -68,7 +70,7 @@ test('fit loop shrinks long code and reports overflow instead of clipping', asyn
 
 test('several cards become a multi-page PDF', async () => {
   const cards = await Promise.all(
-    ['before-after.json', 'span-columns.md', 'typescript-javascript.md'].map(loadExample),
+    ['ef-core-n-plus-one.json', 'nginx-rate-limit.md', 'dto-validation.md'].map(loadExample),
   );
   await withBrowser(browserOptions, async (browser) => {
     const page = await openPage(browser, 1);

@@ -22,6 +22,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fontFaceCss } from '../src/fonts.js';
+import { parseMarkdown } from '../src/markdown.js';
 import { THEMES } from '../src/themes/index.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -34,14 +35,31 @@ async function fontCss(): Promise<string> {
   return fontFaceCss(fonts);
 }
 
-async function exampleSources(): Promise<Record<string, string>> {
+type SandboxExample = { label: string; content: string };
+
+/** The dropdown label a card source declares for itself, e.g. "stack · print". */
+function sandboxLabel(name: string, content: string): string {
+  const raw = name.endsWith('.md') ? parseMarkdown(content) : JSON.parse(content);
+  const label = (raw as Record<string, unknown>).sandboxLabel;
+  if (typeof label !== 'string' || !label) {
+    throw new Error(`examples/${name} is missing a "sandboxLabel" field for the sandbox dropdown.`);
+  }
+  return label;
+}
+
+async function exampleSources(): Promise<Record<string, SandboxExample>> {
   const dir = resolve(ROOT, 'examples');
   const names = (await readdir(dir)).filter((name) => /\.(md|json)$/.test(name)).sort();
-  const entries = await Promise.all(names.map(async (name) => [name, await readFile(resolve(dir, name), 'utf8')]));
+  const entries = await Promise.all(
+    names.map(async (name) => {
+      const content = await readFile(resolve(dir, name), 'utf8');
+      return [name, { label: sandboxLabel(name, content), content }] as const;
+    }),
+  );
   return Object.fromEntries(entries);
 }
 
-function browserPlugin(fonts: string, examples: Record<string, string>): Plugin {
+function browserPlugin(fonts: string, examples: Record<string, SandboxExample>): Plugin {
   return {
     name: 'sandbox-browser',
     setup(b) {

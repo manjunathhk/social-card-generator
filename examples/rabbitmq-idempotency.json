@@ -1,0 +1,17 @@
+{
+  "title": "RabbitMQ redelivery in .NET",
+  "highlight": "Dedupe before you process.",
+  "subtitle": "A consumer that rejects a redelivered message instead of reprocessing it.",
+  "issue": "01",
+  "insight": "Brokers guarantee at-least-once delivery, not exactly-once. Track processed message IDs with a short TTL so a redelivery is a no-op, not a duplicate order.",
+  "tags": ["RabbitMQ", ".NET", "Idempotency"],
+  "sandboxLabel": "stack · print (JSON)",
+  "panels": [
+    {
+      "label": "OrderConsumer.cs / dedupe guard",
+      "language": "csharp",
+      "highlightLines": [6, 7, 8, 9, 10, 11, 12, 13],
+      "code": "public async Task HandleAsync(BasicDeliverEventArgs ea, CancellationToken ct)\n{\n    var messageId = ea.BasicProperties.MessageId;\n    var key = $\"processed:{messageId}\";\n\n    var isNew = await cache.StringSetAsync(\n        key, \"1\", TimeSpan.FromHours(24), When.NotExists);\n\n    if (!isNew)\n    {\n        channel.BasicAck(ea.DeliveryTag, false);\n        return;\n    }\n\n    await ProcessOrderAsync(ea.Body, ct);\n    channel.BasicAck(ea.DeliveryTag, false);\n}"
+    }
+  ]
+}
