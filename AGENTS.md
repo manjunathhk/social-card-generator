@@ -22,7 +22,7 @@ npm run format
 npm run check       # tsc --noEmit
 npm test             # src/*.test.ts — parser, validation, template; no browser
 npm run test:render  # src/render/*.test.ts — needs Chromium
-npm run test:server  # server/*.test.ts — storage and HTTP routes; no browser
+npm run test:server  # server/*.test.ts — HTTP routes; no browser
 npm run samples      # only if the change affects rendering — regenerates sample/
 ```
 
@@ -40,18 +40,18 @@ CI (`.github/workflows/ci.yml`) runs the same steps on Ubuntu with Node 24, plus
 
 ## Where things live
 
-| Path                               | What's there                                                                                                                                     |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/`                             | Core pipeline: schema, markdown/JSON parsing, validation, Shiki highlighting, themes, HTML template, Playwright renderer, CLI                    |
-| `src/render/`                      | Browser-backed tests (the only tests allowed to launch Chromium)                                                                                 |
-| `src/themes/`                      | One file per theme (palette) plus `base.ts` (structure/layout CSS) and `index.ts` (registry)                                                     |
-| `server/`                          | The optional self-hosted HTTP server (history storage, branding endpoint) — Node built-ins only, no `node_modules` at runtime                    |
-| `web/sandbox/`                     | The single-file browser sandbox: `entry.ts` (browser build of the core), `index.template.html` (UI + inline page script), `browser-highlight.ts` |
-| `scripts/build-sandbox.ts`         | Bundles `web/sandbox/` into `out/sandbox.html`, injecting examples/fonts as virtual modules                                                      |
-| `examples/`                        | Source cards used by `npm run samples` and the sandbox's "Load from Example" picker                                                              |
-| `sample/`                          | Generated output (PNGs, carousel PDF) — the README gallery; regenerate, don't hand-edit                                                          |
-| `docs/TECHNIQUES.md`               | The real architecture reference — module map, fit loop, theme contract, Docker image, branding model                                             |
-| `Dockerfile`, `docker-compose.yml` | Multi-stage build for the server; `.github/workflows/ci.yml`'s `publish` job pushes it to Docker Hub from `main`                                 |
+| Path                               | What's there                                                                                                                                                            |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/`                             | Core pipeline: schema, markdown/JSON parsing, validation, Shiki highlighting, themes, HTML template, Playwright renderer, CLI                                           |
+| `src/render/`                      | Browser-backed tests (the only tests allowed to launch Chromium)                                                                                                        |
+| `src/themes/`                      | One file per theme (palette) plus `base.ts` (structure/layout CSS) and `index.ts` (registry)                                                                            |
+| `server/`                          | The optional self-hosted HTTP server (branding endpoint, health, metrics — no history storage; that's browser-only) — Node built-ins only, no `node_modules` at runtime |
+| `web/sandbox/`                     | The single-file browser sandbox: `entry.ts` (browser build of the core), `index.template.html` (UI + inline page script), `browser-highlight.ts`                        |
+| `scripts/build-sandbox.ts`         | Bundles `web/sandbox/` into `out/sandbox.html`, injecting examples/fonts as virtual modules                                                                             |
+| `examples/`                        | Source cards used by `npm run samples` and the sandbox's "Load from Example" picker                                                                                     |
+| `sample/`                          | Generated output (PNGs, carousel PDF) — the README gallery; regenerate, don't hand-edit                                                                                 |
+| `docs/TECHNIQUES.md`               | The real architecture reference — module map, fit loop, theme contract, Docker image, branding model                                                                    |
+| `Dockerfile`, `docker-compose.yml` | Multi-stage build for the server; `.github/workflows/ci.yml`'s `publish` job pushes it to Docker Hub from `main`                                                        |
 
 ## Sandbox UI specifics
 

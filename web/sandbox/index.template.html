@@ -251,7 +251,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
         <div class="history-head"><h2>History</h2><span class="hint" id="history-count">0 saved</span></div>
         <p class="hint" id="history-empty">Exported cards appear here — nothing yet.</p>
         <div class="history-grid" id="history-list" hidden></div>
-        <p class="hint">Click a card to reopen it for editing. Right-click or long-press its image to save it directly. Saved here: <span id="history-backend">checking…</span>.</p>
+        <p class="hint">Click a card to reopen it for editing. Right-click or long-press its image to save it directly. Saved only in this browser — not shared with other visitors or devices, and gone if you clear its storage.</p>
       </div>
     </section>
   </main>
@@ -392,20 +392,10 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     try { await navigator.clipboard.writeText(ts); toast('Copied src/themes/custom.ts to the clipboard'); } catch { toast('Clipboard is not available here.'); }
   });
 
-  // History: exported cards, saved to the same-origin server (server/) when
-  // this page is served by it, or to this browser's IndexedDB otherwise —
-  // e.g. opened as a plain file, or viewed on claude.ai. Same UI either way;
-  // the page just detects what is available, once, at startup.
+  // History: exported cards, saved to this browser's own IndexedDB — never to
+  // the server. Whoever else can reach this page (there's no auth) must not
+  // be able to see what another visitor exported, so nothing here is shared.
   const HistoryStore = (() => {
-    let apiAvailable;
-    async function hasApi() {
-      if (apiAvailable === undefined) {
-        try { apiAvailable = (await fetch('api/health', { signal: AbortSignal.timeout(800) })).ok; }
-        catch { apiAvailable = false; }
-      }
-      return apiAvailable;
-    }
-
     let dbPromise;
     function idb() {
       dbPromise ??= new Promise((resolve, reject) => {
@@ -425,56 +415,28 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
       }));
     }
 
-    function blobToBase64(blob) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result).split(',')[1]);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-      });
-    }
-
     return {
-      async backendLabel() { return (await hasApi()) ? 'this server' : 'this browser (not shared with other devices)'; },
       async list() {
-        if (await hasApi()) {
-          const r = await fetch('api/cards');
-          if (!r.ok) throw new Error('Could not load history.');
-          return (await r.json()).cards;
-        }
         const all = await idbRun('readonly', (store) => store.getAll());
         return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       },
       async save(meta, blob) {
-        if (await hasApi()) {
-          const pngBase64 = await blobToBase64(blob);
-          const r = await fetch('api/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...meta, pngBase64 }) });
-          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Could not save to history.');
-          return r.json();
-        }
         const record = { ...meta, id: crypto.randomUUID(), createdAt: new Date().toISOString(), blob };
         await idbRun('readwrite', (store) => store.put(record));
         return record;
       },
       async get(id) {
-        if (await hasApi()) {
-          const r = await fetch('api/cards/' + id);
-          return r.ok ? r.json() : undefined;
-        }
         return idbRun('readonly', (store) => store.get(id));
       },
       async remove(id) {
-        if (await hasApi()) { await fetch('api/cards/' + id, { method: 'DELETE' }); return; }
         await idbRun('readwrite', (store) => store.delete(id));
       },
       imageUrl(record) {
-        if (record.blob) { record._objectUrl ??= URL.createObjectURL(record.blob); return record._objectUrl; }
-        return 'api/cards/' + record.id + '/image';
+        record._objectUrl ??= URL.createObjectURL(record.blob);
+        return record._objectUrl;
       },
     };
   })();
-
-  HistoryStore.backendLabel().then((label) => { $('history-backend').textContent = label; });
 
   const editingHint = $('editing-hint');
 
