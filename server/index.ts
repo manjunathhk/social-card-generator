@@ -1,7 +1,23 @@
 import { createServer, type IncomingMessage, type RequestListener, type ServerResponse } from 'node:http';
 import { brandingFromEnv } from '../src/branding.js';
-import { PROM_CONTENT_TYPE, recordCardCreated, recordCardDeleted, recordRequest, renderMetrics } from './metrics.js';
-import { createCard, deleteCard, getCard, getCardImage, isValidId, listCards, type NewCard } from './store.js';
+import {
+  PROM_CONTENT_TYPE,
+  recordCardCreated,
+  recordCardDeleted,
+  recordCardsPruned,
+  recordRequest,
+  renderMetrics,
+} from './metrics.js';
+import {
+  createCard,
+  deleteCard,
+  getCard,
+  getCardImage,
+  isValidId,
+  listCards,
+  pruneExpiredCards,
+  type NewCard,
+} from './store.js';
 
 /**
  * Serves the sandbox at `/` (never as a `.html` path) plus a small JSON API
@@ -226,6 +242,29 @@ function methodNotAllowed(res: ServerResponse): void {
   sendJson(res, 405, { error: 'Method not allowed.' });
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PRUNE_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Deletes cards older than `retentionDays` on a fixed interval. Public,
+ * unauthenticated deployments have no other bound on `/data`'s growth, so
+ * this is the retention policy, not just tidying — see CARD_RETENTION_DAYS.
+ */
+function scheduleCardPruning(dataDir: string, retentionDays: number): void {
+  const maxAgeMs = retentionDays * DAY_MS;
+  const sweep = async () => {
+    try {
+      const removed = await pruneExpiredCards(dataDir, maxAgeMs);
+      recordCardsPruned(removed);
+      if (removed) console.log(`Pruned ${removed} card(s) older than ${retentionDays}d.`);
+    } catch (error) {
+      console.error('Card retention sweep failed:', error);
+    }
+  };
+  sweep();
+  setInterval(sweep, PRUNE_INTERVAL_MS);
+}
+
 /* c8 ignore start -- exercised by running the server, not by unit tests */
 async function main() {
   const { readFile } = await import('node:fs/promises');
@@ -234,11 +273,13 @@ async function main() {
   const port = Number(process.env.PORT) || 8787;
   const htmlPath = resolve(process.env.SANDBOX_HTML_PATH || './out/sandbox.html');
   const html = await readFile(htmlPath, 'utf8');
+  const retentionDays = Number(process.env.CARD_RETENTION_DAYS) || 30;
 
   const server = createServer(createRequestListener({ dataDir, html }));
   server.listen(port, () => {
     console.log(`Social Card Sandbox listening on http://localhost:${port} (data: ${dataDir})`);
   });
+  scheduleCardPruning(dataDir, retentionDays);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

@@ -233,6 +233,8 @@ docker run -p 8787:8787 -v sandbox-data:/data \
 
 The page is served at `/`, never at a `.html` path. The container needs no Chromium: rendering still happens in the visitor's browser, and the server only stores the PNG and source it already produced, as one JSON file and one PNG per card under `/data/cards` — mount `/data` as a volume or history is lost when the container is removed. There is **no authentication and no per-visitor isolation**: everyone who can reach the server shares one history. That's the right tradeoff for a personal, self-hosted instance on a private network or behind your own reverse proxy; put an auth layer in front before exposing it more widely.
 
+Cards older than `CARD_RETENTION_DAYS` days (default `30`) are deleted automatically, swept every six hours. With no auth in front, this is the only thing bounding `/data`'s growth on a publicly reachable instance — raise it, or set it very high, only if you're also gating access some other way.
+
 Opened without a server behind it (a plain `file://` open, or this page viewed as a claude.ai artifact), the sandbox falls back to keeping history in that browser's own storage instead — same UI, just not shared across devices. The **Saved here:** line under the History panel says which one is active.
 
 | Command                     | What it does                                                         |
@@ -313,6 +315,36 @@ Then build Grafana panels from, e.g.:
 - `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))` — p95 latency by route
 - `increase(social_card_cards_created_total[1d])` / `increase(social_card_cards_deleted_total[1d])` — daily card activity
 - `nodejs_heap_used_bytes` and `process_uptime_seconds` — basic process health
+
+A dashboard nobody's watching isn't monitoring — add alert rules alongside the scrape job so Prometheus pages you instead:
+
+```yaml
+groups:
+  - name: social-card-sandbox
+    rules:
+      - alert: SocialCardDown
+        expr: up{job="social-card-sandbox"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: 'Social Card Sandbox is unreachable.' }
+
+      - alert: SocialCardHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="social-card-sandbox",status=~"5.."}[5m]))
+          / sum(rate(http_requests_total{job="social-card-sandbox"}[5m])) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: 'Over 5% of requests are failing (5xx).' }
+
+      - alert: SocialCardHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="social-card-sandbox"}[5m])) by (le)) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: 'p95 request latency is over 1s.' }
+```
+
+Route these through whatever Alertmanager you already have handling your other domains — nothing here is specific to this app beyond the `job` label matching the scrape config above.
 
 `version` in `package.json` and `CHANGELOG.md` are no longer hand-edited: the `release` job runs [semantic-release](https://semantic-release.gitbook.io/) on every push to `main`, deriving a patch/minor/major bump from [Conventional Commits](https://www.conventionalcommits.org/) since the last release (`fix:`/`perf:` → patch, `feat:` → minor, a `BREAKING CHANGE:` footer → major; `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` publish `:latest`/`:<git-sha>` but cut no version). It commits the bumped `package.json`/`package-lock.json` and a generated `CHANGELOG.md` entry back to `main` (`chore(release): ... [skip ci]`, which does not retrigger CI) and creates a GitHub Release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the commit message format this depends on.
 

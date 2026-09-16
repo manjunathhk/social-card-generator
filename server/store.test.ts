@@ -3,7 +3,16 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { createCard, deleteCard, getCard, getCardImage, isValidId, listCards, type NewCard } from './store.js';
+import {
+  createCard,
+  deleteCard,
+  getCard,
+  getCardImage,
+  isValidId,
+  listCards,
+  pruneExpiredCards,
+  type NewCard,
+} from './store.js';
 
 const sample: NewCard = {
   title: 'Slice, don’t copy.',
@@ -62,6 +71,20 @@ test('listCards sorts newest first', () =>
     const [newest, oldest] = await listCards(dir);
     assert.equal(newest.id, second.id);
     assert.equal(oldest.id, first.id);
+  }));
+
+test('pruneExpiredCards deletes only cards older than maxAgeMs', () =>
+  withTempDir(async (dir) => {
+    const card = await createCard(dir, sample, Buffer.from('x'));
+
+    // The card is only milliseconds old, well inside a one-day window: nothing to prune yet.
+    assert.equal(await pruneExpiredCards(dir, 24 * 60 * 60 * 1000), 0);
+    assert.ok(await getCard(dir, card.id));
+
+    // A zero-width window means "older than right now" — the already-created card qualifies.
+    assert.equal(await pruneExpiredCards(dir, 0), 1);
+    assert.equal(await getCard(dir, card.id), undefined);
+    assert.equal(await getCardImage(dir, card.id), undefined);
   }));
 
 test('optional customPalette survives a round trip', () =>

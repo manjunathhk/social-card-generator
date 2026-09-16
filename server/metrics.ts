@@ -96,6 +96,10 @@ const httpRequestDuration = new Histogram(
 );
 const cardsCreatedTotal = new Counter('social_card_cards_created_total', 'Cards saved to the shared history.');
 const cardsDeletedTotal = new Counter('social_card_cards_deleted_total', 'Cards removed from the shared history.');
+const cardsPrunedTotal = new Counter(
+  'social_card_cards_pruned_total',
+  'Cards removed automatically by the retention sweep (CARD_RETENTION_DAYS), not by a user.',
+);
 const processStartedAt = Date.now();
 
 export function recordRequest(opts: { method: string; route: string; status: number; durationSeconds: number }) {
@@ -112,6 +116,10 @@ export function recordCardDeleted(): void {
   cardsDeletedTotal.inc();
 }
 
+export function recordCardsPruned(count: number): void {
+  if (count > 0) cardsPrunedTotal.inc({}, count);
+}
+
 const uptimeGauge = new Gauge(
   'process_uptime_seconds',
   'Time since the server process started, in seconds.',
@@ -125,7 +133,15 @@ const heapUsedGauge = new Gauge(
 
 export function renderMetrics(): string {
   return (
-    [httpRequestsTotal, httpRequestDuration, cardsCreatedTotal, cardsDeletedTotal, uptimeGauge, heapUsedGauge]
+    [
+      httpRequestsTotal,
+      httpRequestDuration,
+      cardsCreatedTotal,
+      cardsDeletedTotal,
+      cardsPrunedTotal,
+      uptimeGauge,
+      heapUsedGauge,
+    ]
       .map((metric) => metric.render())
       .join('\n') + '\n'
   );
