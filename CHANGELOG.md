@@ -9,6 +9,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.3.1] - 2026-09-16
+
+### Added
+
+- `docs/PORTAL_NAVIGATION_GUIDE.md`: a screenshot-driven walkthrough of the sandbox for non-technical visitors. Linked from the sandbox header as "Guide", alongside Repository and Techniques.
+
 ## [2.3.0] - 2026-09-16
 
 ### Changed
