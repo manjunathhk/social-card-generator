@@ -1,32 +1,37 @@
 ---
-title: Ask for it.
-highlight: Don't build it.
-subtitle: Constructor injection keeps OrderService testable and unaware of concrete mail delivery.
-tags: [.NET, DI, Testability]
-issue: '06'
+title: Same DI, less ceremony.
+highlight: inject() in Angular
+subtitle: Constructor injection still works; the inject() function removes the boilerplate around it.
+tags: [Angular, DI, Signals]
+issue: '03'
 theme: vesper
+insight: inject() must run in an injection context — a constructor, a field
+  initializer, or a factory function — not inside a later callback or
+  setTimeout.
 ---
 
-## ❌ Without DI
+## ❌ Constructor injection
 
-```csharp
-public class OrderService
-{
-    private readonly EmailService _email = new();
+```typescript
+export class OrderListComponent {
+  constructor(
+    private orders: OrderService,
+    private auth: AuthService,
+  ) {}
 }
 ```
 
-- Hard-wired to one implementation
-- Cannot be unit tested in isolation
+- Verbose for components with several dependencies
+- Parameter order matters for readability
 
-## ✅ With DI
+## ✅ inject()
 
-```csharp {3}
-public class OrderService(INotificationService notifications)
-{
-    private readonly INotificationService _notifications = notifications;
+```typescript {2-3}
+export class OrderListComponent {
+  private orders = inject(OrderService);
+  private auth = inject(AuthService);
 }
 ```
 
-- Depends on an abstraction
-- Swappable in tests and in production
+- Reads top to bottom as plain field assignment
+- Works in functional guards and resolvers too

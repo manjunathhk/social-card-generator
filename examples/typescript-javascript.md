@@ -1,27 +1,29 @@
 ---
-title: Same behaviour.
-highlight: Two languages.
-subtitle: Type annotations disappear at runtime.
-tags: [TypeScript, JavaScript]
-issue: '03'
+title: Same contract, two runtimes.
+highlight: Validate at the edge.
+subtitle: A CreateOrder DTO rejected before it reaches the domain layer, in Node and in .NET.
+tags: [NestJS, .NET, Validation]
+issue: '04'
 ---
 
-## TypeScript
+## NestJS
 
 ```typescript
-function greet(name: string): string {
-  return `Hello, ${name}`;
-}
+class CreateOrderDto {
+  @IsUUID()
+  customerId: string;
 
-console.log(greet('Manjunath'));
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
 ```
 
-## JavaScript
+## .NET minimal API
 
-```javascript {1}
-function greet(name) {
-  return `Hello, ${name}`;
-}
-
-console.log(greet('Manjunath'));
+```csharp {2-3}
+public record CreateOrderDto(
+    [property: Required] Guid CustomerId,
+    [property: Range(1, int.MaxValue)] int Quantity
+);
 ```

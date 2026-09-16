@@ -1,36 +1,36 @@
 {
-  "title": "Four ways to guard a resource",
-  "highlight": "Concurrency in .NET",
-  "subtitle": "Pick by what you are protecting and whether the caller is async.",
-  "tags": [".NET 9", "Threading", "Locks"],
-  "issue": "05",
+  "title": "Healthy doesn't mean started",
+  "highlight": "depends_on: service_healthy",
+  "subtitle": "Four services, four healthchecks — the API waits for real readiness, not just a running container.",
+  "tags": ["Docker", "Compose", "Healthchecks"],
+  "issue": "06",
   "layout": "grid",
   "theme": "vesper",
-  "insight": "lock and Lock are for short critical sections on one process. Semaphores bound concurrency; only SemaphoreSlim can be awaited.",
+  "insight": "condition: service_started only waits for the container to launch. service_healthy waits for the healthcheck to pass, which is what dependent services actually need.",
   "panels": [
     {
-      "label": "lock statement",
-      "language": "csharp",
-      "underline": ["object _gate"],
-      "code": "private readonly object _gate = new();\n\npublic void Increment()\n{\n    lock (_gate)\n    {\n        _count++;\n    }\n}"
+      "label": "postgres",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "postgres:\n  image: postgres:16\n  healthcheck:\n    test: [\"CMD-SHELL\", \"pg_isready -U app\"]\n    interval: 5s\n    retries: 5"
     },
     {
-      "label": "System.Threading.Lock",
-      "language": "csharp",
-      "underline": ["Lock _gate"],
-      "code": "private readonly Lock _gate = new();\n\npublic void Increment()\n{\n    lock (_gate)\n    {\n        _count++;\n    }\n}"
+      "label": "redis",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "redis:\n  image: redis:7\n  healthcheck:\n    test: [\"CMD\", \"redis-cli\", \"ping\"]\n    interval: 5s\n    retries: 5"
     },
     {
-      "label": "Semaphore",
-      "language": "csharp",
-      "underline": ["Semaphore _slots"],
-      "code": "private static readonly Semaphore _slots = new(3, 3);\n\npublic void Access()\n{\n    _slots.WaitOne();\n    try { DoWork(); }\n    finally { _slots.Release(); }\n}"
+      "label": "rabbitmq",
+      "language": "yaml",
+      "underline": ["healthcheck"],
+      "code": "rabbitmq:\n  image: rabbitmq:3-management\n  healthcheck:\n    test: [\"CMD\", \"rabbitmq-diagnostics\", \"ping\"]\n    interval: 10s\n    retries: 5"
     },
     {
-      "label": "SemaphoreSlim",
-      "language": "csharp",
-      "underline": ["SemaphoreSlim _slots", "await"],
-      "code": "private static readonly SemaphoreSlim _slots = new(3);\n\npublic async Task AccessAsync()\n{\n    await _slots.WaitAsync();\n    try { await DoWorkAsync(); }\n    finally { _slots.Release(); }\n}"
+      "label": "api",
+      "language": "yaml",
+      "underline": ["service_healthy"],
+      "code": "api:\n  build: .\n  depends_on:\n    postgres:\n      condition: service_healthy\n    redis:\n      condition: service_healthy"
     }
   ]
 }

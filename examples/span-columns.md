@@ -1,50 +1,40 @@
 ---
-title: Slice, don't copy.
-highlight: Span<T> in hot paths
-subtitle: The same parsing logic, with and without a new string per call.
-tags: [.NET, Performance, Span]
-issue: '04'
+title: A limit that trips itself.
+highlight: limit_req needs burst.
+subtitle: Without burst and nodelay, a page load with six assets rate-limits itself.
+tags: [NGINX, Rate limiting]
+issue: '05'
 layout: columns
 theme: vesper
-insight: Substring allocates a new string every call. Slicing a ReadOnlySpan<char> reuses the memory the caller already owns.
+insight: A tight rate without burst rejects the same client's own concurrent
+  asset requests, not just abusive traffic. Zone size and burst are what
+  make the limit usable.
 ---
 
-## ❌ Substring
+## ❌ No burst
 
-```csharp
-static int ReadId(string line)
-{
-    var id = line.Substring(4, 6);
-    return int.Parse(id);
-}
+```nginx
+limit_req_zone $binary_remote_addr
+    zone=api:10m rate=5r/s;
 
-static bool HasFlag(string line)
-{
-    var lower = line.ToLower();
-    return lower.Contains("urgent");
+location /api/ {
+    limit_req zone=api;
 }
 ```
 
-- Allocates a new string per call
-- Extra work for the garbage collector
-- Copies bytes that already exist
+- Six parallel requests trip the limit for one user
+- 503s show up in real traffic, not just load tests
 
-## ✅ Span
+## ✅ Zone + burst
 
-```csharp {3,9}
-static int ReadId(ReadOnlySpan<char> line)
-{
-    var id = line.Slice(4, 6);
-    return int.Parse(id);
-}
+```nginx {5}
+limit_req_zone $binary_remote_addr
+    zone=api:10m rate=5r/s;
 
-static bool HasFlag(ReadOnlySpan<char> line)
-{
-    return line.Contains("urgent",
-        StringComparison.OrdinalIgnoreCase);
+location /api/ {
+    limit_req zone=api burst=12 nodelay;
 }
 ```
 
-- Works over the caller's memory
-- No temporary strings
-- Same readability
+- Absorbs a page's worth of concurrent calls
+- Still caps sustained abuse at 5r/s

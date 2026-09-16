@@ -1,36 +1,35 @@
 ---
-title: Redis caching in .NET
-highlight: Bound the staleness.
-subtitle: A cache-aside read with an explicit expiration policy.
+title: RabbitMQ redelivery in .NET
+highlight: Dedupe before you process.
+subtitle: A consumer that rejects a redelivered message instead of reprocessing it.
 issue: '01'
-insight: A TTL limits staleness; it does not prevent it. Invalidate on writes
-  when freshness matters, and coalesce concurrent misses to protect the
-  database.
+insight: Brokers guarantee at-least-once delivery, not exactly-once. Track
+  processed message IDs with a short TTL so a redelivery is a no-op, not a
+  duplicate order.
 tags:
+  - RabbitMQ
   - .NET
-  - Redis
-  - Cache-aside
+  - Idempotency
 ---
 
-## ProductCache.cs / read path
+## OrderConsumer.cs / dedupe guard
 
-```csharp {11-15}
-// cache: IDistributedCache; db: your data source
-var key = $"product:{id}";
-var json = await cache.GetStringAsync(key, ct);
-
-if (json is null)
+```csharp {6-13}
+public async Task HandleAsync(BasicDeliverEventArgs ea, CancellationToken ct)
 {
-    var product = await db.FindAsync(id, ct);
-    if (product is null) return Results.NotFound();
+    var messageId = ea.BasicProperties.MessageId;
+    var key = $"processed:{messageId}";
 
-    json = JsonSerializer.Serialize(product);
-    await cache.SetStringAsync(key, json, new()
+    var isNew = await cache.StringSetAsync(
+        key, "1", TimeSpan.FromHours(24), When.NotExists);
+
+    if (!isNew)
     {
-        AbsoluteExpirationRelativeToNow =
-            TimeSpan.FromMinutes(5)
-    }, ct);
-}
+        channel.BasicAck(ea.DeliveryTag, false);
+        return;
+    }
 
-return Results.Content(json, "application/json");
+    await ProcessOrderAsync(ea.Body, ct);
+    channel.BasicAck(ea.DeliveryTag, false);
+}
 ```

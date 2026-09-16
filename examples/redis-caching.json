@@ -1,16 +1,16 @@
 {
-  "title": "Redis caching in .NET",
-  "highlight": "Bound the staleness.",
-  "subtitle": "A cache-aside read with an explicit expiration policy.",
+  "title": "RabbitMQ redelivery in .NET",
+  "highlight": "Dedupe before you process.",
+  "subtitle": "A consumer that rejects a redelivered message instead of reprocessing it.",
   "issue": "01",
-  "insight": "A TTL limits staleness; it does not prevent it. Invalidate on writes when freshness matters, and coalesce concurrent misses to protect the database.",
-  "tags": [".NET", "Redis", "Cache-aside"],
+  "insight": "Brokers guarantee at-least-once delivery, not exactly-once. Track processed message IDs with a short TTL so a redelivery is a no-op, not a duplicate order.",
+  "tags": ["RabbitMQ", ".NET", "Idempotency"],
   "panels": [
     {
-      "label": "ProductCache.cs / read path",
+      "label": "OrderConsumer.cs / dedupe guard",
       "language": "csharp",
-      "highlightLines": [11, 12, 13, 14, 15],
-      "code": "// cache: IDistributedCache; db: your data source\nvar key = $\"product:{id}\";\nvar json = await cache.GetStringAsync(key, ct);\n\nif (json is null)\n{\n    var product = await db.FindAsync(id, ct);\n    if (product is null) return Results.NotFound();\n\n    json = JsonSerializer.Serialize(product);\n    await cache.SetStringAsync(key, json, new()\n    {\n        AbsoluteExpirationRelativeToNow =\n            TimeSpan.FromMinutes(5)\n    }, ct);\n}\n\nreturn Results.Content(json, \"application/json\");"
+      "highlightLines": [6, 7, 8, 9, 10, 11, 12, 13],
+      "code": "public async Task HandleAsync(BasicDeliverEventArgs ea, CancellationToken ct)\n{\n    var messageId = ea.BasicProperties.MessageId;\n    var key = $\"processed:{messageId}\";\n\n    var isNew = await cache.StringSetAsync(\n        key, \"1\", TimeSpan.FromHours(24), When.NotExists);\n\n    if (!isNew)\n    {\n        channel.BasicAck(ea.DeliveryTag, false);\n        return;\n    }\n\n    await ProcessOrderAsync(ea.Body, ct);\n    channel.BasicAck(ea.DeliveryTag, false);\n}"
     }
   ]
 }
