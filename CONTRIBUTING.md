@@ -23,24 +23,16 @@ CI runs the same steps on Ubuntu with Node 24. If `npm run samples` changed any 
 
 ## Commit messages
 
-`version` and `CHANGELOG.md` are cut automatically by semantic-release from commit messages on `main`, using [Conventional Commits](https://www.conventionalcommits.org/):
+No tooling parses these — write clear, conventional messages (`fix:`, `feat:`, `chore:`, ...) because they're what a human reads in `git log` and PR titles, not because anything derives a version from them.
 
-```
-<type>[optional scope]: <description>
+## Releasing
 
-[optional body]
+There is no automated version bump. `version` in `package.json` and `CHANGELOG.md` are hand-edited:
 
-[optional BREAKING CHANGE: <description> footer]
-```
-
-| Type                                                               | Effect on the next release                                       |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| `fix:`, `perf:`                                                    | patch bump                                                       |
-| `feat:`                                                            | minor bump                                                       |
-| any type + `BREAKING CHANGE:` footer                               | major bump                                                       |
-| `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` | no release, but the image still publishes `:latest`/`:<git-sha>` |
-
-A commit's _type_, not the files it touches, decides this — a `chore:` that happens to fix a real Dockerfile bug will not cut a release, so pick `fix:`/`feat:` for anything user- or deploy-visible. Squash-merge PRs with a Conventional Commits title, since semantic-release reads the commit that lands on `main`.
+1. When a merged change warrants a release, bump `version` in `package.json` yourself (semver: patch for fixes, minor for features, major for breaking changes) — either in the same PR or a small follow-up one.
+2. Add a `CHANGELOG.md` entry for it.
+3. Once that merges to `main`, the `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) reads `package.json`'s version and tags the Docker image with it (plus `:latest` and `:<git-sha>`, always). A merge that doesn't bump the version just republishes `:latest`/`:<git-sha>` under the previous version tag.
+4. Optionally tag the release commit for a GitHub Release: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 ## Conventions
 
