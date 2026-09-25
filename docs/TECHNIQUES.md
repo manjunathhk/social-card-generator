@@ -46,20 +46,20 @@ flowchart LR
   H --> J["PDF print"]
 ```
 
-| Module              | Responsibility                                                                                      | Depends on                              |
-| ------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| `src/schema.ts`     | The `Card` and `Panel` types, text limits, per-layout rules (panel counts, line limits, font range) | nothing                                 |
-| `src/markdown.ts`   | Front matter plus fences, headings, highlight specs and note bullets, into a raw object             | `yaml`                                  |
-| `src/validate.ts`   | Raw object into a `Card`; coercion, defaults, limits, language alias resolution                     | `schema`, `themes`, Shiki language list |
-| `src/content.ts`    | Picks the parser by file extension and strips a BOM                                                 | `markdown`, `validate`                  |
-| `src/highlight.ts`  | One cached Shiki highlighter; line highlights and underline decorations                             | `shiki`                                 |
-| `src/fonts.ts`      | `@font-face` rules with WOFF2 files inlined as base64                                               | `@fontsource/*`                         |
-| `src/themes/`       | `base.ts` (structure and layout CSS), one file per theme (palette variables), `index.ts` registry   | nothing                                 |
-| `src/template.ts`   | Cards into one HTML document                                                                        | all of the above                        |
-| `src/fit-script.ts` | The in-browser fit loop as a JavaScript string                                                      | `schema`                                |
-| `src/renderer.ts`   | Playwright: launch, route blocking, layout, PNG, PDF                                                | `playwright`, `fit-script`              |
-| `src/branding.ts`   | `.env` loading and neutral defaults                                                                 | `node:process`                          |
-| `src/cli.ts`        | Argument parsing, input expansion, orchestration, output                                            | everything                              |
+| Module              | Responsibility                                                                                                                              | Depends on                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `src/schema.ts`     | The `Card` and `Panel` types, text limits, per-layout rules (panel counts, line limits, font range)                                         | nothing                                       |
+| `src/markdown.ts`   | Front matter plus fences, headings, highlight specs and note bullets, into a raw object                                                     | `yaml`                                        |
+| `src/validate.ts`   | Raw object into a `Card`; coercion, defaults, limits, language alias resolution                                                             | `schema`, `themes`, Shiki language list       |
+| `src/content.ts`    | Picks the parser by file extension and strips a BOM                                                                                         | `markdown`, `validate`                        |
+| `src/highlight.ts`  | One cached Shiki highlighter; line highlights and underline decorations                                                                     | `shiki`                                       |
+| `src/fonts.ts`      | `@font-face` rules with WOFF2 files inlined as base64                                                                                       | `@fontsource/*`, `@manjunathhk/design-tokens` |
+| `src/themes/`       | `base.ts` (structure and layout CSS), one file per theme (palette variables; `denim.ts` holds the light and dark pair), `index.ts` registry | `@manjunathhk/design-tokens` (`denim.ts`)     |
+| `src/template.ts`   | Cards into one HTML document                                                                                                                | all of the above                              |
+| `src/fit-script.ts` | The in-browser fit loop as a JavaScript string                                                                                              | `schema`                                      |
+| `src/renderer.ts`   | Playwright: launch, route blocking, layout, PNG, PDF                                                                                        | `playwright`, `fit-script`                    |
+| `src/branding.ts`   | `.env` loading and neutral defaults                                                                                                         | `node:process`                                |
+| `src/cli.ts`        | Argument parsing, input expansion, orchestration, output                                                                                    | everything                                    |
 
 Data flows one way. Nothing after `validate.ts` re-checks input, and nothing before `template.ts` knows about HTML.
 
@@ -105,7 +105,7 @@ Three details in `highlight.ts`:
 
 The document must render identically on every machine and never wait on a network. Two mechanisms enforce that:
 
-- `fonts.ts` reads the WOFF2 files each used theme lists from its `@fontsource` package and inlines them as base64 `@font-face` rules. Only the fonts of the themes present in the document are embedded, and a file shared by two themes is embedded once. The document grows by roughly 100–150 KB and is completely portable.
+- `fonts.ts` reads the WOFF2 files each used theme lists from its package (`@fontsource/*`, or `@manjunathhk/design-tokens` for IBM Plex) and inlines them as base64 `@font-face` rules. Only the fonts of the themes present in the document are embedded, and a file shared by two themes is embedded once. The document grows by roughly 100–150 KB and is completely portable.
 - `renderer.ts` registers `page.route('**/*', route => route.abort())` before loading content. If anyone ever adds an `<img src="https://…">` to a template, the request fails immediately and visibly rather than sometimes working.
 
 The renderer also awaits `document.fonts.ready` before measuring. Without that, the first measurement can happen with a fallback font and the fit loop makes decisions on the wrong metrics.
@@ -134,7 +134,9 @@ type     --font-display --font-sans --font-mono --h1-weight --h1-tracking
 shape    --panel-radius
 ```
 
-A theme also lists the font files it needs (`fonts`) and names the Shiki theme for code tokens, and may add small overrides scoped under its class: `vesper` hides the monogram and the issue label and enlarges the issue numeral; `print` puts a heavy rule under the running head.
+A theme also lists the font files it needs (`fonts`) and names the Shiki theme for code tokens, and may add small overrides scoped under its class: `vesper` hides the monogram and the issue label and enlarges the issue numeral; `print` puts a heavy rule under the running head; `denim` draws the drafting grid on the card.
+
+**Themes from the shared design system.** `denim` and `denim-dark` hold no colour of their own. `denim.ts` imports the resolved values from `@manjunathhk/design-tokens` (its `tokens.mjs`: `light`, `dark`, `shared`) and writes them into the contract when the module loads, so the card still receives plain values and nothing depends on `prefers-color-scheme`. A palette release reaches both themes with a dependency bump, and `npm run samples` shows the result. The contract has roles the design system doesn't name; `denim.ts` documents which token each one borrows. The package's type scale and spacing are not used: they are `clamp()`/`vw` values for responsive pages, and a card's sizes come from the layout tokens and the fit loop. The IBM Plex WOFF2 files are read from the package's `dist/fonts/`; its `exports` map doesn't list them, so `fonts.ts` finds them next to its `package.json`. The CDN at `design.manjunathhk.in` is not used anywhere: a rendered card must not touch the network.
 
 Why custom properties rather than a preprocessor: the values need to be live at render time (a layout override in the sandbox, a custom theme built from four colours), Chromium is the only consumer, and one build tool fewer across the CLI, the compiled binary and the browser bundle is worth more than Sass nesting. Layouts never set colours and themes never move boxes. If you find yourself writing `.theme-x .panels { grid-template-columns … }`, the change belongs in a layout instead.
 
@@ -199,14 +201,16 @@ Both tiers use Node's built-in `node:test` runner. No test framework dependency.
 
 `npm run sandbox` bundles the core into a single HTML page (`web/sandbox/`, built by `scripts/build-sandbox.ts`). It exists to prove that the pipeline is a rendering core with two hosts, and to give authors a fast preview. The build shows exactly where the core still leans on Node:
 
-| Node dependency                                              | In the browser build                                                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `fonts.ts` reads WOFF2 files from disk                       | A virtual module carries the same `@font-face` CSS, generated at build time                                   |
-| `highlight.ts` uses Shiki's full bundle and WASM             | `browser-highlight.ts` uses `createHighlighterCore` with the JavaScript regex engine and a fixed grammar list |
-| `shiki`'s language and theme tables                          | Their dynamic imports are marked external so 200 grammars are not inlined                                     |
-| `node:path` in `content.ts`, `node:process` in `branding.ts` | Two-line shims; these imports should move out of the core in a later refactor                                 |
+| Node dependency                                              | In the browser build                                                                                                                                                                                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fonts.ts` reads WOFF2 files from disk                       | A virtual module carries the same `@font-face` CSS, generated at build time                                                                                                                                                           |
+| `highlight.ts` uses Shiki's full bundle and WASM             | `browser-highlight.ts` uses `createHighlighterCore` with the JavaScript regex engine and a fixed list of grammars and Shiki themes; the build fails if an example needs a missing grammar or a card theme needs a missing Shiki theme |
+| `shiki`'s language and theme tables                          | Their dynamic imports are marked external so 200 grammars are not inlined                                                                                                                                                             |
+| `node:path` in `content.ts`, `node:process` in `branding.ts` | Two-line shims; these imports should move out of the core in a later refactor                                                                                                                                                         |
 
 In the page, the preview is the real card element, not a screenshot: `renderCard` produces the markup, the page installs the base and theme CSS, and the same `FIT_SCRIPT` string runs against the document. The card is scaled for display with a CSS transform, which is removed for the instant the fit loop measures so that `getBoundingClientRect` and `clientHeight` agree. Export uses `html-to-image` to rasterise the card element at 1x or 2x; it is handed the embedded font CSS directly so it does not scan cross-origin stylesheets. The page-level rules in `base.ts` (`body`, `@page`) are stripped before the card CSS joins a host page, which is a sign they belong in the document wrapper rather than the shared stylesheet.
+
+The sandbox's own UI (toolbar, editor, controls) is styled from the same design system: the build inlines the package's `tokens.css`, which follows the OS light/dark preference and honours `data-theme` on `<html>`, and the IBM Plex faces travel in the same virtual font module as the card fonts. The page's CSS names its own roles (`--surface-2`, `--rule-strong`, …) and points each at a `--mk-*` token; the comment at the top of `index.template.html` lists the three roles that borrow the nearest token because the design system has none of their own. The page makes no network request.
 
 A theme built in the sandbox's palette editor is expanded into the full variable contract with `color-mix` and can be copied out as a `src/themes/<name>.ts` module, so the path from experiment to committed theme is paste, rename, register.
 
@@ -236,9 +240,9 @@ A UI action cannot make its values "part of the environment": a process's env va
 
 ## Adding a theme
 
-1. Create `src/themes/<name>.ts` exporting a `Theme`: `name`, `description`, `shikiTheme` (any Shiki bundled theme id), `fonts` (the `@fontsource` WOFF2 files the theme's `--font-*` families need) and `css` defining every token in the contract under `.theme-<name>`. The sandbox's custom palette editor can draft the CSS for you.
+1. Create `src/themes/<name>.ts` exporting a `Theme`: `name`, `description`, `shikiTheme` (any Shiki bundled theme id; also import it in `web/sandbox/browser-highlight.ts`, or the sandbox build fails), `fonts` (the `@fontsource` WOFF2 files the theme's `--font-*` families need) and `css` defining every token in the contract under `.theme-<name>`. The sandbox's custom palette editor can draft the CSS for you.
 2. Register it in the array in `src/themes/index.ts`. `THEME_NAMES` and validation pick it up automatically.
-3. Add an example under `examples/` that sets `theme: <name>`, run `npm run samples`, and add the image to the README gallery.
+3. Add an example under `examples/` that sets `theme: <name>`, add it to `SAMPLES` in `scripts/samples.ts`, run `npm run samples`, and add the image to the README gallery.
 4. Add the name to the theme table in the README.
 
 If the theme needs a structural tweak (hide the dot, show the traffic lights, change a font weight), scope it under `.theme-<name>` in the same file. If it needs a different arrangement of panels, that is a layout.

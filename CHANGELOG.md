@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-09-26
+
+### Added
+
+- Themes `denim` and `denim-dark`: the Paper & Denim palette and IBM Plex type from the shared design system [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens) (new dependency, `^1.1.0`), with the design system's drafting grid on the card. Every colour, font family, weight and radius is read from the package at build time and inlined, so a palette release reaches these themes with a dependency bump, and cards still render with no network. Code uses Shiki's `github-light` / `github-dark`. `print` stays the default theme.
+- Examples `semantic-tokens.md` (`denim`) and `theme-switch.json` (`denim-dark`), with samples and README gallery entries.
+- Sandbox build: fails if a card theme's Shiki theme isn't bundled in the browser highlighter, the same way it already fails for a missing grammar.
+
+### Changed
+
+- Sandbox UI restyled with the same design system: its colours come from the package's `tokens.css` (inlined; follows the OS light/dark setting and honours `data-theme` on `<html>`), its type is IBM Plex, and the two coloured background glows are replaced by the drafting grid. The Google Fonts request for Inter and JetBrains Mono is gone, so the sandbox page makes no network request at all. The palette editor offers the new Shiki themes and "Denim faces". `docs/images/guide/*` screenshots regenerated.
+
+### Fixed
+
+- Sandbox page declares `<meta charset="utf-8">`. Opened as a local file (or served without a charset header), its curly quotes, `×` and ✅/❌ were decoded as Windows-1252 and showed as mojibake.
+
 ## [2.3.3] - 2026-09-26
 
 ### Fixed

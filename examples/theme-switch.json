@@ -1,0 +1,26 @@
+{
+  "title": "Follow the OS, allow an override",
+  "highlight": "Light and dark from one file",
+  "subtitle": "prefers-color-scheme picks the mode by default; a data-theme attribute on <html> forces one.",
+  "tags": ["CSS", "Dark mode"],
+  "issue": "06",
+  "layout": "columns",
+  "theme": "denim-dark",
+  "sandboxLabel": "columns · denim-dark, notes + underlines",
+  "panels": [
+    {
+      "label": "tokens.css",
+      "language": "css",
+      "underline": ["prefers-color-scheme", "data-theme"],
+      "code": ":root {\n  --mk-color-bg: #F2F0EB;\n  color-scheme: light;\n}\n\n@media (prefers-color-scheme: dark) {\n  :root:not([data-theme=\"light\"]) {\n    --mk-color-bg: #0F141B;\n    color-scheme: dark;\n  }\n}\n\n:root[data-theme=\"dark\"] {\n  --mk-color-bg: #0F141B;\n  color-scheme: dark;\n}",
+      "notes": ["No attribute: the OS preference decides", "color-scheme switches native controls too"]
+    },
+    {
+      "label": "index.html",
+      "language": "html",
+      "highlightLines": [1],
+      "code": "<html data-theme=\"dark\">\n  <head>\n    <link\n      rel=\"stylesheet\"\n      href=\"/v1/index.css\"\n    />\n  </head>\n  <body>\n    …\n  </body>\n</html>",
+      "notes": ["data-theme=\"light\" or \"dark\" forces a mode", "Remove it to follow the OS again"]
+    }
+  ]
+}

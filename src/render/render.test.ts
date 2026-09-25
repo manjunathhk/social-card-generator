@@ -25,9 +25,14 @@ function pngSize(png: Buffer): { width: number; height: number } {
 
 test('renders every example layout to a 1080 × 1350 PNG, at 2x when asked', async () => {
   const cards = await Promise.all(
-    ['rabbitmq-idempotency.md', 'nginx-rate-limit.md', 'compose-healthchecks.json', 'angular-inject.md'].map(
-      loadExample,
-    ),
+    [
+      'rabbitmq-idempotency.md',
+      'nginx-rate-limit.md',
+      'compose-healthchecks.json',
+      'angular-inject.md',
+      'semantic-tokens.md',
+      'theme-switch.json',
+    ].map(loadExample),
   );
   await withBrowser(browserOptions, async (browser) => {
     const page = await openPage(browser, 1);
