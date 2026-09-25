@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.3.3] - 2026-09-26
+
+### Fixed
+
+- `npm run serve` (and `node dist-server/server/index.js`) exited immediately with code 0 on Windows without listening. The entry-point check compared `import.meta.url` with a hand-built `` `file://${process.argv[1]}` ``, which never matches a Windows path (`D:\...` vs `file:///D:/...`); it now uses `pathToFileURL(process.argv[1])`. The Docker image was unaffected, since Linux paths happened to line up.
+
 ## [2.3.2] - 2026-09-16
 
 ### Added
