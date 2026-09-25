@@ -20,6 +20,8 @@ const SAMPLES = [
   'nginx-rate-limit.md',
   'compose-healthchecks.json',
   'angular-inject.md',
+  'semantic-tokens.md',
+  'theme-switch.json',
 ];
 
 const root = fileURLToPath(new URL('..', import.meta.url));

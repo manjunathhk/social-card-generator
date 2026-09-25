@@ -1,11 +1,11 @@
 import type { BundledTheme } from 'shiki';
 
-/** One WOFF2 file from an installed @fontsource package. */
+/** One WOFF2 file from an installed package (`@fontsource/*`, `@manjunathhk/design-tokens`). */
 export type FontFile = {
   /** The `font-family` name the theme's CSS refers to. */
   family: string;
   weight: number;
-  /** Module path resolvable with `require.resolve`. */
+  /** `<package>/<path inside it>`, e.g. an `@fontsource` WOFF2 file. */
   file: string;
 };
 

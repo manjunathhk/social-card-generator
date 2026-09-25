@@ -1,3 +1,4 @@
+import { dark, light } from '@manjunathhk/design-tokens';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { brandingFromEnv } from './branding.js';
@@ -73,6 +74,25 @@ test('multi-card documents include every used theme once', async () => {
   assert.equal(html.match(/\.theme-print \{/g)?.length, 1);
   assert.equal(html.match(/\.theme-vesper \{/g)?.length, 1);
   assert.equal(html.match(/font-family:"Inter";font-weight:400/g)?.length, 1, 'shared font embedded once');
+});
+
+test('denim themes take their palette and IBM Plex faces from @manjunathhk/design-tokens', async () => {
+  const base = { title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] };
+  const html = await renderDocument(
+    [validateCard({ ...base, theme: 'denim' }), validateCard({ ...base, theme: 'denim-dark' })],
+    branding,
+  );
+  assert.ok(html.includes('class="card layout-stack theme-denim panels-1"'));
+  assert.ok(html.includes('class="card layout-stack theme-denim-dark panels-1"'));
+  assert.match(html, new RegExp(`\\.theme-denim \\{\\s*--bg: ${light['color.bg']};`));
+  assert.match(html, new RegExp(`\\.theme-denim-dark \\{\\s*--bg: ${dark['color.bg']};`));
+  assert.equal(
+    html.match(/font-family:"IBM Plex Mono";font-weight:400/g)?.length,
+    1,
+    'font files shared by the two themes are embedded once',
+  );
+  assert.ok(!html.includes('Inter'), "only the used themes' fonts are embedded");
+  assert.ok(!/https?:\/\//.test(html.replace(/<title>.*<\/title>/, '')), 'no external URLs');
 });
 
 test('footer mark is optional and escaped', async () => {

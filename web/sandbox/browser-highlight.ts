@@ -19,6 +19,8 @@ import docker from '@shikijs/langs/docker';
 import nginx from '@shikijs/langs/nginx';
 import vitesseLight from '@shikijs/themes/vitesse-light';
 import vesper from '@shikijs/themes/vesper';
+import githubLight from '@shikijs/themes/github-light';
+import githubDark from '@shikijs/themes/github-dark';
 import type { Panel } from '../../src/schema.js';
 
 const LANGS = [
@@ -57,12 +59,14 @@ export const SANDBOX_LANGUAGES = [
   'docker',
   'nginx',
 ];
+const THEMES = [vitesseLight, vesper, githubLight, githubDark];
+export const SANDBOX_SHIKI_THEMES = THEMES.map((theme) => theme.name);
 
 let highlighterPromise: Promise<HighlighterCore> | undefined;
 function getHighlighter() {
   highlighterPromise ??= createHighlighterCore({
     langs: LANGS,
-    themes: [vitesseLight, vesper],
+    themes: THEMES,
     engine: createJavaScriptRegexEngine({ forgiving: true }),
   });
   return highlighterPromise;
