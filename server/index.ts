@@ -1,4 +1,5 @@
 import { createServer, type RequestListener, type ServerResponse } from 'node:http';
+import { pathToFileURL } from 'node:url';
 import { brandingFromEnv } from '../src/branding.js';
 import { PROM_CONTENT_TYPE, recordRequest, renderMetrics } from './metrics.js';
 
@@ -93,7 +94,10 @@ async function main() {
   });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// pathToFileURL, not a hand-built `file://` string: on Windows argv[1] is
+// `D:\...\index.ts` and would never equal `file:///D:/.../index.ts`.
+// argv[1] is absent under `node -e` or a REPL, where this module is only imported.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error('Failed to start server:', error);
     process.exitCode = 1;
