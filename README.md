@@ -263,6 +263,16 @@ Copy `.env.sample` to `.env` and fill in your details. Every field is optional: 
 
 Shell variables override the file. The committed samples use `examples/branding.env`. When [running as a server](#running-it-as-a-server-docker), these same variables set on the container become the sandbox's default branding fields for every visitor — but that default is read-only from the browser. Editing the Branding fields in the sandbox UI only saves to that browser's own storage; it's a personal override, not a way to change what other visitors see or to update the container's environment. To change the shared default, recreate the container with new `CARD_*` values. See [docs/TECHNIQUES.md](docs/TECHNIQUES.md#branding-one-server-default-read-only-from-the-ui) for why a UI-editable shared default isn't implemented.
 
+## Use with AI agents
+
+[`skills/social-card-source`](skills/social-card-source/SKILL.md) is an [Agent Skill](https://agentskills.io) for card authors: it teaches a coding agent the Markdown and JSON formats, the limits per layout, the themes, and how to check a card before handing it over, so the agent can write valid source without cloning this repository. Install it into your agent with:
+
+```sh
+npx skills add manjunathhk/social-card-generator
+```
+
+The skill's limits tables are tested against `src/schema.ts`, and it points agents at the [schema](#schema) for the authoritative limits. Contributors changing the generator itself should read [AGENTS.md](AGENTS.md) instead.
+
 ## Browser sandbox
 
 The same core runs in a browser for quick experiments: a Markdown or JSON editor with live preview, layout and theme pickers, a custom palette editor that can be copied out as a theme file, and PNG export.
