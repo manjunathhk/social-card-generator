@@ -5,6 +5,7 @@ import csharp from '@shikijs/langs/csharp';
 import typescript from '@shikijs/langs/typescript';
 import javascript from '@shikijs/langs/javascript';
 import json from '@shikijs/langs/json';
+import jsonc from '@shikijs/langs/jsonc';
 import yaml from '@shikijs/langs/yaml';
 import sql from '@shikijs/langs/sql';
 import shellscript from '@shikijs/langs/shellscript';
@@ -28,6 +29,7 @@ const LANGS = [
   typescript,
   javascript,
   json,
+  jsonc,
   yaml,
   sql,
   shellscript,
@@ -46,6 +48,7 @@ export const SANDBOX_LANGUAGES = [
   'typescript',
   'javascript',
   'json',
+  'jsonc',
   'yaml',
   'sql',
   'shellscript',
