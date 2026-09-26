@@ -2,6 +2,8 @@
 
 Instructions for AI coding agents (Claude Code, Codex, Cursor, or otherwise) working in this repository. If your tool looks for a different file (`CLAUDE.md`, `.cursorrules`, etc.) and doesn't find one, that's deliberate — this is the single entry point; read it first.
 
+This file is for contributors. To write card source (not change the generator), use the card-author skill in [skills/social-card-source/SKILL.md](skills/social-card-source/SKILL.md).
+
 ## What this is
 
 A CLI (and optional self-hosted server) that renders a Markdown or JSON source file into a 1080 × 1350 PNG social card or a multi-page PDF carousel, using Shiki for syntax highlighting and Playwright/Chromium for layout and capture. The core idea: the card is an HTML page, rendered by a real browser, never a canvas/image library re-implementing text layout. See [docs/TECHNIQUES.md](docs/TECHNIQUES.md) for the full pipeline.

@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.5.1] - 2026-09-26
+
+### Added
+
+- `skills/social-card-source/SKILL.md`: an [Agent Skill](https://agentskills.io) for card authors, installable with `npx skills add manjunathhk/social-card-generator`. Covers the Markdown and JSON formats, card and panel fields, per-layout limits, themes, authoring lessons, why branding never goes in the source, and how to verify a card (`--check`, or the hosted sandbox). `src/skill.test.ts` fails if its limits, layout, theme or sandbox language tables drift from `src/schema.ts` and the registries, or if its examples stop validating.
+- README "Use with AI agents" section; `AGENTS.md` points card authors to `skills/`.
+
 ## [2.5.0] - 2026-09-26
 
 ### Added
