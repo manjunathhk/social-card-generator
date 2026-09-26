@@ -206,6 +206,8 @@ social-card <input.md|input.json|directory>... [options]
   --scale <1|2|3>   Device scale factor for PNGs (2 gives crisper text after platform compression)
   --html            Also write the rendered HTML next to each PNG for debugging
   --env <file>      Branding env file (default: .env in the current directory)
+  --check           Parse and validate the inputs without launching Chromium
+  --schema          Print the card source JSON Schema and exit
   --help            Show usage and exit
   --version         Print the installed version and exit
 ```
@@ -215,6 +217,31 @@ During development run it as `npm run card -- <args>`. A directory input renders
 ```sh
 npm run card -- posts/2026-09-caching --pdf out/caching-carousel.pdf --scale 2
 ```
+
+`--check` runs the parser and validator only: text limits, panel counts per layout and lines per panel. It reports every invalid input with the field that failed (`panels[1].notes[0] must be 1–70 characters.`) and exits non-zero if any failed, which makes it a fast pre-commit or CI step. It cannot tell whether the code fits at the layout's minimum font size; only a real render measures that.
+
+```sh
+npm run card -- --check examples
+```
+
+## Schema
+
+[`schema/card.schema.json`](schema/card.schema.json) is a JSON Schema (draft 2020-12) for card source, generated from the limits in `src/schema.ts` and the theme registry by `npm run schema`, so it always matches the validator. It ships in the npm package, `social-card --schema` prints it, and it is published at:
+
+```
+https://raw.githubusercontent.com/manjunathhk/social-card-generator/main/schema/card.schema.json
+```
+
+Point a JSON card at it for editor autocomplete and inline errors:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/manjunathhk/social-card-generator/main/schema/card.schema.json",
+  "title": "..."
+}
+```
+
+The same shape describes a Markdown card's front matter plus its panels. Lines per panel and the code font range have no JSON Schema keyword, so each layout lists them as `x-maxLines` and `x-fontRange` and in its description.
 
 ## Branding
 
@@ -413,6 +440,7 @@ The techniques behind each stage, including the fit loop, the theme contract, Sh
 | `npm run format`      | Prettier write                                               |
 | `npm run build`       | Compile to `dist/` (what the `social-card` binary runs)      |
 | `npm run samples`     | Regenerate `sample/` from `examples/`                        |
+| `npm run schema`      | Regenerate `schema/card.schema.json` from `src/schema.ts`    |
 
 CI runs all of the above on every push and uploads the rendered gallery as an artifact. See [CONTRIBUTING.md](CONTRIBUTING.md) for the conventions.
 
