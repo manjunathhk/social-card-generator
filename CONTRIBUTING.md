@@ -39,11 +39,11 @@ There is no automated version _inference_ — nothing reads commit messages or d
 
 ### One-time setup for publishing
 
-These live outside the repository, so a fresh fork or a transferred repo needs them again. Each missing piece fails its job on `main`, not on the PR.
+These live outside the repository, so a fresh fork or a transferred repo needs them again. Each missing piece fails its job on `main`, not on the PR, except the Docker Hub secrets: without them the `publish` job skips pushing and stays green.
 
 - **npm trusted publisher.** On npmjs.com, the package's Settings → Trusted publishing: publisher GitHub Actions, user `manjunathhk`, repository `social-card-generator`, workflow `ci.yml` (the file name only), environment empty. The entry must also be allowed to run `npm publish`. Without that permission the job reaches npm but fails with `E403 OIDC permission denied for this action`; with a wrong repository or workflow name it fails with `E404`.
-- **GitHub Pages.** Repository Settings → Pages → Source: GitHub Actions.
-- **Docker Hub.** The `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets; see README.md, "Publishing to Docker Hub". Without them the `publish` job skips pushing and stays green.
+- **GitHub Pages.** Repository Settings → Pages → Source: GitHub Actions. The custom domain `social-card.apps.manjunathhk.in` is set on that page too (no `CNAME` file, since the site deploys from Actions), with a Cloudflare CNAME to `manjunathhk.github.io` on DNS only: Cloudflare's proxy would block GitHub's certificate, and its free certificate does not cover a name two levels deep.
+- **Docker Hub.** The `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets; see README.md, "Publishing to Docker Hub".
 
 ## Conventions
 
