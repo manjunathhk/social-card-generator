@@ -29,7 +29,7 @@ npm run samples      # only if the change affects rendering — regenerates samp
 npm run schema       # only if the change touches src/schema.ts limits or themes; regenerates schema/card.schema.json
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same steps on Ubuntu with Node 24, plus a Docker build/smoke-test job. If `npm run samples` changes any image under `sample/`, commit the new images — the README gallery is the visual regression record.
+CI (`.github/workflows/ci.yml`) runs the same steps on Ubuntu with Node 24, plus a Docker build/smoke-test job and `actionlint` on the workflow files. On `main` it also publishes: the npm package with its tag and GitHub Release, the Docker image, and the sandbox to GitHub Pages (see CONTRIBUTING.md, "Releasing"). If `npm run samples` changes any image under `sample/`, commit the new images — the README gallery is the visual regression record.
 
 Before opening a PR to `main`, also:
 

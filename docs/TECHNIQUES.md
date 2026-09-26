@@ -195,7 +195,7 @@ Both tiers use Node's built-in `node:test` runner. No test framework dependency.
 - `npm run card` runs `tsx src/cli.ts` so development needs no build step.
 - `npm run build` compiles `src/` to `dist/` with `tsconfig.build.json`, which excludes tests. The `bin` entry points at `dist/cli.js`, and the shebang on the first line of `cli.ts` survives compilation.
 - Themes are TypeScript modules exporting CSS strings rather than `.css` or `.scss` files, so the build is a plain `tsc` with no asset copy or preprocessor step, and the compiled package resolves them the same way the source does. If a web app with its own bundler arrives, moving them to `.css` files is mechanical.
-- `files` in `package.json` limits the published tarball to `dist/`, the README, and the licence notices. `prepublishOnly` guarantees a fresh build.
+- `files` in `package.json` limits the published tarball to `dist/**/*.js`, `schema/`, the README, and the licence notices, so stray output in a local `dist/` is never shipped. `prepublishOnly` guarantees a fresh build, and CI's `npm` job is the only publisher (see CONTRIBUTING.md, "Releasing").
 - Card output defaults to `out/` precisely because `dist/` is the compiled CLI.
 
 ## Running the core in the browser
