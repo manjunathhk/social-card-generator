@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.5.2] - 2026-09-26
+
+### Added
+
+- Sandbox highlighter: bundled the `jsonc` grammar (17 languages). A panel with `language: jsonc`, the right choice for JSON with comments, threw "not bundled in this sandbox" in the browser even though the CLI rendered it. The card-author skill's sandbox language list is updated to match.
+
 ## [2.5.1] - 2026-09-26
 
 ### Added

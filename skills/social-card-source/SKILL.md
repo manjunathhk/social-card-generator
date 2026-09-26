@@ -154,7 +154,7 @@ npx @manjunathhk/social-card-generator --check card.md
 
 If the npm package is not available, clone the repository and run `npm ci` then `npm run card -- --check card.md`. `--check` exits non-zero and names the failing field, such as `panels[1].notes[0]`. It cannot tell whether the code fits at the minimum font size; only a real render (the same command without `--check`) measures that.
 
-Without a shell, paste the source into the hosted sandbox at https://social-card.manjunathhk.in, which renders a live preview and shows the same errors. The sandbox bundles these languages only: `csharp`, `typescript`, `javascript`, `json`, `yaml`, `sql`, `shellscript`, `powershell`, `python`, `go`, `java`, `html`, `css`, `xml`, `docker`, `nginx`. Any other language, `jsonc` included, needs the CLI.
+Without a shell, paste the source into the hosted sandbox at https://social-card.manjunathhk.in, which renders a live preview and shows the same errors. The sandbox bundles these languages only: `csharp`, `typescript`, `javascript`, `json`, `jsonc`, `yaml`, `sql`, `shellscript`, `powershell`, `python`, `go`, `java`, `html`, `css`, `xml`, `docker`, `nginx`. Any other language needs the CLI.
 
 ## Authoritative limits
 
