@@ -83,8 +83,11 @@ test('SKILL.md layouts table matches LAYOUT_RULES', () => {
 
 test('SKILL.md themes and sandbox languages match the registries', () => {
   assert.deepEqual([...table('## Themes').keys()], THEME_NAMES);
-  const line = skill.split('\n').find((text) => text.includes('The sandbox bundles these languages only')) ?? '';
-  assert.deepEqual(codeNames(line.slice(line.indexOf('only'), line.indexOf('Any other'))), SANDBOX_LANGUAGES);
+  const marker = 'The sandbox bundles these languages only:';
+  const start = skill.indexOf(marker);
+  assert.notEqual(start, -1, `SKILL.md must list the sandbox languages after "${marker}"`);
+  const list = skill.slice(start + marker.length, skill.indexOf('.', start + marker.length));
+  assert.deepEqual(codeNames(list), SANDBOX_LANGUAGES);
 });
 
 test('SKILL.md examples are valid cards', () => {
