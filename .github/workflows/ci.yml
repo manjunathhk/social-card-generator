@@ -33,6 +33,17 @@ jobs:
         if: ${{ contains(github.event.pull_request.labels.*.name, 'no-version-bump') }}
         run: echo "::notice::Version check skipped — PR is labeled 'no-version-bump'."
 
+  actionlint:
+    if: github.event_name != 'pull_request' || !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check workflow files
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+        shell: bash
+
   verify:
     # A labeled/unlabeled PR event only exists to give version-check a
     # fresh look at the PR's labels — skip the expensive jobs for it.
@@ -77,13 +88,119 @@ jobs:
       - name: Smoke-test the container
         run: |
           docker run -d --name sandbox -p 8787:8787 -e CARD_AUTHOR="CI Author" social-card-sandbox:ci
-          for i in $(seq 1 20); do curl -sf http://localhost:8787/api/health && break; sleep 1; done
+          for _ in $(seq 1 20); do curl -sf http://localhost:8787/api/health && break; sleep 1; done
           curl -sf http://localhost:8787/api/health
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/)" = "200"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/sandbox.html)" = "404"
           curl -sf http://localhost:8787/api/branding | grep -q '"author":"CI Author"'
           docker logs sandbox
           docker rm -f sandbox
+
+  npm:
+    name: Publish package to npm
+    needs: [verify]
+    # After a verified push to main: publishes package.json's version unless
+    # it is already on npm, then creates the vX.Y.Z tag and GitHub Release
+    # (notes from that version's CHANGELOG.md section) unless they exist.
+    # Each part checks its own state, so a no-version-bump merge is a no-op
+    # and a re-run finishes whichever part failed. Authenticates with npm
+    # trusted publishing (GitHub OIDC): no token is stored, and npm attaches
+    # provenance. The package's trusted publisher on npmjs.com must name this
+    # repository and this workflow file (ci.yml).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+      - name: Check what this version still needs
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          published=$(npm view "$name@$version" version 2>/dev/null || true)
+          if [ "$published" = "$version" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$name@$version is already on npm."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+          if gh release view "v$version" > /dev/null 2>&1; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::GitHub Release v$version already exists."
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Extract release notes from CHANGELOG.md
+        if: steps.check.outputs.release == 'true'
+        run: |
+          version="${{ steps.check.outputs.version }}"
+          awk -v heading="## [$version]" 'index($0, heading) == 1 { found = 1; next } found && /^## \[/ { exit } found { print }' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no notes under ## [$version]."
+            exit 1
+          fi
+      - run: npm ci
+        if: steps.check.outputs.publish == 'true'
+      - name: Use an npm that supports trusted publishing (11.5.1 or newer)
+        if: steps.check.outputs.publish == 'true'
+        run: npm install -g npm@^11.5.1
+      - run: npm publish
+        if: steps.check.outputs.publish == 'true'
+      - name: Create the tag and GitHub Release
+        if: steps.check.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.check.outputs.version }}"
+          gh release create "v$version" --target "$GITHUB_SHA" --title "v$version" --notes-file release-notes.md
+
+  pages:
+    name: Deploy the sandbox to GitHub Pages
+    needs: [verify]
+    # Every verified push to main rebuilds the single-file sandbox and serves
+    # it as the site's index.html. Needs Settings > Pages > Source set to
+    # "GitHub Actions". Without a server, the page's api/branding request
+    # fails and the branding fields start blank, as when the file is opened
+    # locally.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run sandbox
+      - name: Stage the site
+        run: |
+          mkdir _site
+          cp out/sandbox.html _site/index.html
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site/
+      - id: deployment
+        uses: actions/deploy-pages@v5
 
   publish:
     name: Publish image to Docker Hub

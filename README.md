@@ -51,7 +51,7 @@ npm run card -- examples/nginx-rate-limit.md
 
 The card is written to `out/nginx-rate-limit.png`. On Linux, add system libraries with `npx playwright install --with-deps chromium` if the launch complains. To use a Chromium you already have, set `CARD_BROWSER_PATH=/path/to/chromium` instead of downloading one.
 
-Once published to npm the same tool runs without cloning:
+The same tool runs from npm without cloning. Rendering needs Chromium once, installed by the Playwright version the package pins (`npx -p @manjunathhk/social-card-generator playwright install chromium`), or set `CARD_BROWSER_PATH`; `--check` and `--schema` need no browser:
 
 ```sh
 npx @manjunathhk/social-card-generator my-card.md
@@ -281,7 +281,7 @@ The same core runs in a browser for quick experiments: a Markdown or JSON editor
 npm run sandbox        # writes out/sandbox.html
 ```
 
-Open `out/sandbox.html` directly in a browser. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and IBM Plex faces as the `denim` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
+Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site (by default https://manjunathhk.github.io/social-card-generator/) on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and IBM Plex faces as the `denim` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
 
 It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. History always lives in that browser's own storage (IndexedDB), whether the page is opened as a plain file or served — see the next section for why.
 
@@ -459,7 +459,6 @@ CI runs all of the above on every push and uploads the rendered gallery as an ar
 - Size presets: 1080 × 1080 square and 1200 × 630 Open Graph.
 - A `terminal` panel style for showing program output under code.
 - A text-only `list` layout for numbered rules and checklists.
-- Publish to npm.
 
 ## Prior art
 

@@ -152,7 +152,7 @@ With a shell, validate text limits, panel counts and line counts without launchi
 npx @manjunathhk/social-card-generator --check card.md
 ```
 
-If the npm package is not available, clone the repository and run `npm ci` then `npm run card -- --check card.md`. `--check` exits non-zero and names the failing field, such as `panels[1].notes[0]`. It cannot tell whether the code fits at the minimum font size; only a real render (the same command without `--check`) measures that.
+`--check` needs no browser. A full render does: run `npx -p @manjunathhk/social-card-generator playwright install chromium` once (a bare `npx playwright` may fetch a Playwright whose Chromium build does not match), or set `CARD_BROWSER_PATH` to an existing Chromium. `--check` exits non-zero and names the failing field, such as `panels[1].notes[0]`. It cannot tell whether the code fits at the minimum font size; only a real render (the same command without `--check`) measures that.
 
 Without a shell, paste the source into the hosted sandbox at https://social-card.manjunathhk.in, which renders a live preview and shows the same errors. The sandbox bundles these languages only: `csharp`, `typescript`, `javascript`, `json`, `jsonc`, `yaml`, `sql`, `shellscript`, `powershell`, `python`, `go`, `java`, `html`, `css`, `xml`, `docker`, `nginx`. Any other language needs the CLI.
 

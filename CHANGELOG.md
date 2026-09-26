@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.5.3] - 2026-09-26
+
+### Added
+
+- CI: an `npm` job publishes the package to npm after a verified push to `main`, from a clean checkout, whenever `package.json`'s version is not on npm yet. It uses npm trusted publishing (GitHub OIDC), so no token is stored, and `publishConfig` sets `access: public` and `provenance: true`, which also makes a manual `npm publish` fail outside CI. It then creates the `vX.Y.Z` tag and a GitHub Release with that version's CHANGELOG section as its notes, and fails before publishing if the section is missing.
+- CI: a `pages` job deploys the browser sandbox to GitHub Pages on every push to `main`.
+- CI: an `actionlint` job checks the workflow files on every PR and push.
+
+### Fixed
+
+- The npm package now ships only `dist/**/*.js` rather than the whole `dist/` folder. 2.5.2, published by hand, also contained two rendered draft cards (PNG and HTML) that happened to be in the local `dist/`.
+- README and the card-author skill no longer describe the package as unpublished, and say that rendering needs Chromium once, installed with the package's own Playwright (`npx -p @manjunathhk/social-card-generator playwright install chromium`), while `--check` and `--schema` do not. "Publish to npm" is off the roadmap.
+- CI's Docker smoke test no longer declares an unused loop variable (shellcheck SC2034, now enforced by `actionlint`).
+
 ## [2.5.2] - 2026-09-26
 
 ### Added
