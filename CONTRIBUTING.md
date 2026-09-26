@@ -34,7 +34,7 @@ There is no automated version _inference_ — nothing reads commit messages or d
 1. Bump `version` in `package.json` yourself in the same PR (semver: patch for fixes, minor for features, major for breaking changes) whenever the change warrants a release.
 2. Add a `CHANGELOG.md` entry for it.
 3. CI's `version-check` job fails the PR if `package.json`'s version is unchanged from `main`. If the PR genuinely ships nothing release-worthy (docs, CI config, test-only changes), apply the `no-version-bump` label instead of bumping — don't bump just to satisfy the check.
-4. Once the PR merges to `main`, the `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) reads `package.json`'s version and tags the Docker image with it (plus `:latest` and `:<git-sha>`, always). A merge under the `no-version-bump` label just republishes `:latest`/`:<git-sha>` under the previous version tag.
+4. Once the PR merges to `main`, the `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) reads `package.json`'s version and tags the Docker image with it (plus `:latest` and `:<git-sha>`, always). A merge under the `no-version-bump` label just republishes `:latest`/`:<git-sha>` under the previous version tag. The `npm` job in the same workflow publishes the package to npm when `package.json`'s version is not on npm yet, from a clean checkout, using npm trusted publishing (no token is stored). Never run `npm publish` by hand: a local `dist/` can hold files that are not in the repository.
 5. Optionally tag the release commit for a GitHub Release: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 ## Conventions

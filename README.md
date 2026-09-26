@@ -51,7 +51,7 @@ npm run card -- examples/nginx-rate-limit.md
 
 The card is written to `out/nginx-rate-limit.png`. On Linux, add system libraries with `npx playwright install --with-deps chromium` if the launch complains. To use a Chromium you already have, set `CARD_BROWSER_PATH=/path/to/chromium` instead of downloading one.
 
-Once published to npm the same tool runs without cloning:
+The same tool runs from npm without cloning. Rendering needs Chromium once, installed by the Playwright version the package pins (`npx -p @manjunathhk/social-card-generator playwright install chromium`), or set `CARD_BROWSER_PATH`; `--check` and `--schema` need no browser:
 
 ```sh
 npx @manjunathhk/social-card-generator my-card.md
@@ -459,7 +459,6 @@ CI runs all of the above on every push and uploads the rendered gallery as an ar
 - Size presets: 1080 × 1080 square and 1200 × 630 Open Graph.
 - A `terminal` panel style for showing program output under code.
 - A text-only `list` layout for numbered rules and checklists.
-- Publish to npm.
 
 ## Prior art
 

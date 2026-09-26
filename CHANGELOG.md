@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.5.3] - 2026-09-26
+
+### Added
+
+- CI: an `npm` job publishes the package to npm after a verified push to `main`, from a clean checkout, whenever `package.json`'s version is not on npm yet. It uses npm trusted publishing (GitHub OIDC), so no token is stored and each release carries a provenance attestation. `publishConfig.access` is `public`.
+
+### Fixed
+
+- The npm package now ships only `dist/**/*.js` rather than the whole `dist/` folder. 2.5.2, published by hand, also contained two rendered draft cards (PNG and HTML) that happened to be in the local `dist/`.
+- README and the card-author skill no longer describe the package as unpublished, and say that rendering needs Chromium once, installed with the package's own Playwright (`npx -p @manjunathhk/social-card-generator playwright install chromium`), while `--check` and `--schema` do not. "Publish to npm" is off the roadmap.
+
 ## [2.5.2] - 2026-09-26
 
 ### Added
