@@ -1,5 +1,6 @@
 import { bundledLanguagesInfo } from 'shiki';
 import {
+  DEFAULT_LAYOUT,
   LAYOUTS,
   LAYOUT_RULES,
   MAX_NOTES,
@@ -86,7 +87,7 @@ function readTags(input: unknown): string[] {
 }
 
 function readLayout(input: unknown): Layout {
-  if (input === undefined) return 'stack';
+  if (input === undefined) return DEFAULT_LAYOUT;
   if (typeof input !== 'string' || !(LAYOUTS as readonly string[]).includes(input)) {
     throw new Error(`"layout" must be one of: ${LAYOUTS.join(', ')}.`);
   }

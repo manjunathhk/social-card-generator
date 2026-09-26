@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/manjunathhk/social-card-generator/main/schema/card.schema.json",
+  "title": "Social card source",
+  "description": "A JSON card, or the YAML front matter plus panels of a Markdown card. Character and count limits are enforced here; per-panel line limits are listed as x-maxLines per layout. A card that passes this schema can still fail to fit at the minimum code font size, which only a real render detects.",
+  "type": "object",
+  "required": ["title", "subtitle", "panels"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional URL of this schema, for editor autocomplete. Ignored by the renderer."
+    },
+    "title": {
+      "type": "string",
+      "description": "First title line. At most 70 characters.",
+      "pattern": "\\S",
+      "maxLength": 70
+    },
+    "highlight": {
+      "type": "string",
+      "description": "Second title line, in the accent colour. At most 70 characters.",
+      "maxLength": 70
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "One or two sentences under the title. At most 150 characters.",
+      "pattern": "\\S",
+      "maxLength": 150
+    },
+    "tags": {
+      "type": "array",
+      "description": "Up to 3 short tags.",
+      "maxItems": 3,
+      "items": { "type": "string", "description": "A tag. At most 22 characters.", "pattern": "\\S", "maxLength": 22 },
+      "default": []
+    },
+    "insight": {
+      "type": "string",
+      "description": "The \"design note\" under the panels. At most 220 characters.",
+      "maxLength": 220
+    },
+    "issue": {
+      "type": "string",
+      "description": "Issue number shown on the card. At most 12 characters.",
+      "pattern": "\\S",
+      "maxLength": 12,
+      "default": "01"
+    },
+    "layout": {
+      "description": "Panel arrangement. \"stack\": 1 to 2 panels; at most 22 lines per panel with 1 panel, 14 lines per panel with 2 panels; code font 20 to 16 px. \"columns\": 2 panels; at most 18 code lines per panel; code font 18 to 13 px. \"grid\": 3 to 4 panels; at most 12 code lines per panel; code font 16 to 12 px.",
+      "enum": ["stack", "columns", "grid"],
+      "default": "stack"
+    },
+    "theme": {
+      "description": "Palette, typefaces and panel shape.",
+      "enum": ["print", "vesper", "denim", "denim-dark"],
+      "default": "print"
+    },
+    "panels": {
+      "type": "array",
+      "description": "Code panels, in order. How many depends on the layout.",
+      "items": { "$ref": "#/$defs/panel" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "layout": { "const": "stack" } } },
+      "then": {
+        "description": "\"stack\": 1 to 2 panels; at most 22 lines per panel with 1 panel, 14 lines per panel with 2 panels; code font 20 to 16 px.",
+        "x-maxLines": { "1": 22, "2": 14 },
+        "x-fontRange": { "max": 20, "min": 16 },
+        "properties": { "panels": { "minItems": 1, "maxItems": 2 } }
+      }
+    },
+    {
+      "if": { "required": ["layout"], "properties": { "layout": { "const": "columns" } } },
+      "then": {
+        "description": "\"columns\": 2 panels; at most 18 code lines per panel; code font 18 to 13 px.",
+        "x-maxLines": { "2": 18 },
+        "x-fontRange": { "max": 18, "min": 13 },
+        "properties": { "panels": { "minItems": 2, "maxItems": 2 } }
+      }
+    },
+    {
+      "if": { "required": ["layout"], "properties": { "layout": { "const": "grid" } } },
+      "then": {
+        "description": "\"grid\": 3 to 4 panels; at most 12 code lines per panel; code font 16 to 12 px.",
+        "x-maxLines": { "3": 12, "4": 12 },
+        "x-fontRange": { "max": 16, "min": 12 },
+        "properties": { "panels": { "minItems": 3, "maxItems": 4 } }
+      }
+    }
+  ],
+  "$defs": {
+    "panel": {
+      "type": "object",
+      "required": ["language", "code"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Panel header text. Defaults to the language name. At most 45 characters.",
+          "pattern": "\\S",
+          "maxLength": 45
+        },
+        "language": {
+          "type": "string",
+          "description": "A Shiki language id or alias, e.g. \"csharp\", \"cs\", \"ts\", \"yaml\", \"jsonc\".",
+          "pattern": "\\S"
+        },
+        "code": {
+          "type": "string",
+          "description": "The code. Line limit per panel depends on the layout (see x-maxLines). At most 4000 characters.",
+          "pattern": "\\S",
+          "maxLength": 4000
+        },
+        "highlightLines": {
+          "type": "array",
+          "description": "One-based line numbers to highlight; each must be within the code.",
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "underline": {
+          "type": "array",
+          "description": "Up to 6 exact single-line substrings of the code to underline.",
+          "maxItems": 6,
+          "items": { "type": "string", "minLength": 1, "pattern": "^[^\\n]*$" }
+        },
+        "verdict": { "description": "Tick or cross badge and header tint.", "enum": ["good", "bad"] },
+        "notes": {
+          "type": "array",
+          "description": "Up to 3 short bullet points under the code.",
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "description": "A note. At most 70 characters.",
+            "pattern": "\\S",
+            "maxLength": 70
+          }
+        }
+      }
+    }
+  }
+}

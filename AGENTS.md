@@ -24,6 +24,7 @@ npm test             # src/*.test.ts — parser, validation, template; no browse
 npm run test:render  # src/render/*.test.ts — needs Chromium
 npm run test:server  # server/*.test.ts — HTTP routes; no browser
 npm run samples      # only if the change affects rendering — regenerates sample/
+npm run schema       # only if the change touches src/schema.ts limits or themes; regenerates schema/card.schema.json
 ```
 
 CI (`.github/workflows/ci.yml`) runs the same steps on Ubuntu with Node 24, plus a Docker build/smoke-test job. If `npm run samples` changes any image under `sample/`, commit the new images — the README gallery is the visual regression record.
@@ -54,6 +55,7 @@ Before opening a PR to `main`, also:
 | `server/`                          | The optional self-hosted HTTP server (branding endpoint, health, metrics — no history storage; that's browser-only) — Node built-ins only, no `node_modules` at runtime    |
 | `web/sandbox/`                     | The single-file browser sandbox: `entry.ts` (browser build of the core), `index.template.html` (UI + inline page script), `browser-highlight.ts`                           |
 | `scripts/build-sandbox.ts`         | Bundles `web/sandbox/` into `out/sandbox.html`, injecting examples/fonts as virtual modules                                                                                |
+| `schema/card.schema.json`          | Generated JSON Schema for card source (`npm run schema`, from `src/card-schema.ts`); regenerate, don't hand-edit                                                           |
 | `examples/`                        | Source cards used by `npm run samples` and the sandbox's "Load from Example" picker                                                                                        |
 | `sample/`                          | Generated output (PNGs, carousel PDF) — the README gallery; regenerate, don't hand-edit                                                                                    |
 | `docs/TECHNIQUES.md`               | The real architecture reference — module map, fit loop, theme contract, Docker image, branding model                                                                       |

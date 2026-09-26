@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { loadBranding } from './branding.js';
+import { buildCardSchema } from './card-schema.js';
 import { formatFromPath, parseContent } from './content.js';
 import { capturePdf, capturePng, layoutDocument, openPage, withBrowser } from './renderer.js';
 import type { Card } from './schema.js';
@@ -26,6 +27,10 @@ Options
   --scale <1|2|3>   Device scale factor for PNGs (default: 1; use 2 for crisper text)
   --html            Also write the rendered HTML next to each PNG for debugging
   --env <file>      Branding env file (default: .env in the current directory)
+  --check           Parse and validate the inputs (text limits, panel counts, line counts)
+                    without launching Chromium. Whether the code fits at the minimum
+                    font size is only known from a real render.
+  --schema          Print the card source JSON Schema and exit
   --help            Show this help
   --version         Print the version
 
@@ -58,6 +63,8 @@ export async function main(argv: string[]): Promise<void> {
       scale: { type: 'string', default: '1' },
       html: { type: 'boolean', default: false },
       env: { type: 'string' },
+      check: { type: 'boolean', default: false },
+      schema: { type: 'boolean', default: false },
       help: { type: 'boolean', default: false },
       version: { type: 'boolean', default: false },
     },
@@ -67,8 +74,16 @@ export async function main(argv: string[]): Promise<void> {
     console.log(version);
     return;
   }
+  if (values.schema) {
+    console.log(JSON.stringify(buildCardSchema(), null, 2));
+    return;
+  }
   if (values.help || !positionals.length) {
     console.log(USAGE);
+    return;
+  }
+  if (values.check) {
+    await checkCards(await expandInputs(positionals));
     return;
   }
 
@@ -171,6 +186,19 @@ async function loadCards(files: string[]): Promise<LoadedCard[]> {
       }
     }),
   );
+}
+
+/** Validates every input and reports each failure, so one run lists everything to fix. */
+async function checkCards(files: string[]): Promise<void> {
+  for (const file of files) {
+    try {
+      const card = parseContent(await readFile(file, 'utf8'), formatFromPath(file));
+      console.log(`Valid ${file} (${card.layout}, ${card.panels.length} panel${card.panels.length === 1 ? '' : 's'})`);
+    } catch (error) {
+      console.error(`Invalid ${file}: ${(error as Error).message}`);
+      process.exitCode = 1;
+    }
+  }
 }
 
 /** Two inputs with the same base name would silently overwrite each other's PNG. */

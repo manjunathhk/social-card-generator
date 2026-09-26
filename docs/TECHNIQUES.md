@@ -46,20 +46,21 @@ flowchart LR
   H --> J["PDF print"]
 ```
 
-| Module              | Responsibility                                                                                                                              | Depends on                                    |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `src/schema.ts`     | The `Card` and `Panel` types, text limits, per-layout rules (panel counts, line limits, font range)                                         | nothing                                       |
-| `src/markdown.ts`   | Front matter plus fences, headings, highlight specs and note bullets, into a raw object                                                     | `yaml`                                        |
-| `src/validate.ts`   | Raw object into a `Card`; coercion, defaults, limits, language alias resolution                                                             | `schema`, `themes`, Shiki language list       |
-| `src/content.ts`    | Picks the parser by file extension and strips a BOM                                                                                         | `markdown`, `validate`                        |
-| `src/highlight.ts`  | One cached Shiki highlighter; line highlights and underline decorations                                                                     | `shiki`                                       |
-| `src/fonts.ts`      | `@font-face` rules with WOFF2 files inlined as base64                                                                                       | `@fontsource/*`, `@manjunathhk/design-tokens` |
-| `src/themes/`       | `base.ts` (structure and layout CSS), one file per theme (palette variables; `denim.ts` holds the light and dark pair), `index.ts` registry | `@manjunathhk/design-tokens` (`denim.ts`)     |
-| `src/template.ts`   | Cards into one HTML document                                                                                                                | all of the above                              |
-| `src/fit-script.ts` | The in-browser fit loop as a JavaScript string                                                                                              | `schema`                                      |
-| `src/renderer.ts`   | Playwright: launch, route blocking, layout, PNG, PDF                                                                                        | `playwright`, `fit-script`                    |
-| `src/branding.ts`   | `.env` loading and neutral defaults                                                                                                         | `node:process`                                |
-| `src/cli.ts`        | Argument parsing, input expansion, orchestration, output                                                                                    | everything                                    |
+| Module               | Responsibility                                                                                                                              | Depends on                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `src/schema.ts`      | The `Card` and `Panel` types, text limits, per-layout rules (panel counts, line limits, font range)                                         | nothing                                       |
+| `src/markdown.ts`    | Front matter plus fences, headings, highlight specs and note bullets, into a raw object                                                     | `yaml`                                        |
+| `src/card-schema.ts` | JSON Schema for card source, derived from `schema` limits and the theme registry; written to `schema/card.schema.json` by `npm run schema`  | `schema`, `themes`                            |
+| `src/validate.ts`    | Raw object into a `Card`; coercion, defaults, limits, language alias resolution                                                             | `schema`, `themes`, Shiki language list       |
+| `src/content.ts`     | Picks the parser by file extension and strips a BOM                                                                                         | `markdown`, `validate`                        |
+| `src/highlight.ts`   | One cached Shiki highlighter; line highlights and underline decorations                                                                     | `shiki`                                       |
+| `src/fonts.ts`       | `@font-face` rules with WOFF2 files inlined as base64                                                                                       | `@fontsource/*`, `@manjunathhk/design-tokens` |
+| `src/themes/`        | `base.ts` (structure and layout CSS), one file per theme (palette variables; `denim.ts` holds the light and dark pair), `index.ts` registry | `@manjunathhk/design-tokens` (`denim.ts`)     |
+| `src/template.ts`    | Cards into one HTML document                                                                                                                | all of the above                              |
+| `src/fit-script.ts`  | The in-browser fit loop as a JavaScript string                                                                                              | `schema`                                      |
+| `src/renderer.ts`    | Playwright: launch, route blocking, layout, PNG, PDF                                                                                        | `playwright`, `fit-script`                    |
+| `src/branding.ts`    | `.env` loading and neutral defaults                                                                                                         | `node:process`                                |
+| `src/cli.ts`         | Argument parsing, input expansion, orchestration, output                                                                                    | everything                                    |
 
 Data flows one way. Nothing after `validate.ts` re-checks input, and nothing before `template.ts` knows about HTML.
 
@@ -241,7 +242,7 @@ A UI action cannot make its values "part of the environment": a process's env va
 ## Adding a theme
 
 1. Create `src/themes/<name>.ts` exporting a `Theme`: `name`, `description`, `shikiTheme` (any Shiki bundled theme id; also import it in `web/sandbox/browser-highlight.ts`, or the sandbox build fails), `fonts` (the `@fontsource` WOFF2 files the theme's `--font-*` families need) and `css` defining every token in the contract under `.theme-<name>`. The sandbox's custom palette editor can draft the CSS for you.
-2. Register it in the array in `src/themes/index.ts`. `THEME_NAMES` and validation pick it up automatically.
+2. Register it in the array in `src/themes/index.ts`. `THEME_NAMES` and validation pick it up automatically. Run `npm run schema` so `schema/card.schema.json` lists it; a test fails while the committed file is stale.
 3. Add an example under `examples/` that sets `theme: <name>`, add it to `SAMPLES` in `scripts/samples.ts`, run `npm run samples`, and add the image to the README gallery.
 4. Add the name to the theme table in the README.
 
@@ -249,7 +250,7 @@ If the theme needs a structural tweak (hide the dot, show the traffic lights, ch
 
 ## Adding a layout
 
-1. Add the name to `LAYOUTS` in `src/schema.ts` and a `LAYOUT_RULES` entry: panel count range, lines per panel, the font range the fit loop may use, and a `tokens` table with the layout's sizes. Lower the font range as panels get narrower.
+1. Add the name to `LAYOUTS` in `src/schema.ts` and a `LAYOUT_RULES` entry: panel count range, lines per panel, the font range the fit loop may use, and a `tokens` table with the layout's sizes. Lower the font range as panels get narrower. Run `npm run schema` to regenerate `schema/card.schema.json`.
 2. If the panels are arranged differently from a vertical stack, add a `.layout-<name> .panels` rule to `src/themes/base.ts` (flex or grid). Sizes come from the tokens; keep colours and numbers out.
 3. Add an example, regenerate samples, and extend the layout table in the README.
 4. Add the example to the list in `src/render/render.test.ts` so CI proves it renders and fits.

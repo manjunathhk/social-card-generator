@@ -6,6 +6,7 @@
 
 export const LAYOUTS = ['stack', 'columns', 'grid'] as const;
 export type Layout = (typeof LAYOUTS)[number];
+export const DEFAULT_LAYOUT: Layout = 'stack';
 
 export type Verdict = 'good' | 'bad';
 
