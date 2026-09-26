@@ -37,6 +37,14 @@ There is no automated version _inference_ — nothing reads commit messages or d
 4. Once the PR merges to `main`, the `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) reads `package.json`'s version and tags the Docker image with it (plus `:latest` and `:<git-sha>`, always). A merge under the `no-version-bump` label just republishes `:latest`/`:<git-sha>` under the previous version tag. The `npm` job in the same workflow publishes the package to npm when `package.json`'s version is not on npm yet, from a clean checkout, using npm trusted publishing (no token is stored, provenance attached), then creates the `vX.Y.Z` tag and a GitHub Release whose notes are that version's `## [X.Y.Z]` section of `CHANGELOG.md`. The job fails before publishing if that section is missing or empty. Never run `npm publish` by hand: `publishConfig.provenance` makes it fail outside CI, and a local `dist/` can hold files that are not in the repository.
 5. Every push to `main` also redeploys the browser sandbox to GitHub Pages (the `pages` job), whether or not the version changed.
 
+### One-time setup for publishing
+
+These live outside the repository, so a fresh fork or a transferred repo needs them again. Each missing piece fails its job on `main`, not on the PR, except the Docker Hub secrets: without them the `publish` job skips pushing and stays green.
+
+- **npm trusted publisher.** On npmjs.com, the package's Settings → Trusted publishing: publisher GitHub Actions, user `manjunathhk`, repository `social-card-generator`, workflow `ci.yml` (the file name only), environment empty. The entry must also be allowed to run `npm publish`. Without that permission the job reaches npm but fails with `E403 OIDC permission denied for this action`; with a wrong repository or workflow name it fails with `E404`.
+- **GitHub Pages.** Repository Settings → Pages → Source: GitHub Actions. The custom domain `social-card.apps.manjunathhk.in` is set on that page too (no `CNAME` file, since the site deploys from Actions), with a Cloudflare CNAME to `manjunathhk.github.io` on DNS only: Cloudflare's proxy would block GitHub's certificate, and its free certificate does not cover a name two levels deep.
+- **Docker Hub.** The `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets; see README.md, "Publishing to Docker Hub".
+
 ## Conventions
 
 - **TypeScript, strict, no unused symbols.** The config enforces it.
