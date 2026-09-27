@@ -258,7 +258,7 @@ The same `out/sandbox.html` is served two ways, and they differ only in what sit
 **The Pages copy is deliberately unmeasured.** `/api/metrics` counts requests that reach the Node process. Pages runs none of this repository's code, and every card is rendered in the visitor's browser, so there is nothing on Pages for Prometheus to scrape. Prometheus is pull-only, so it can't receive numbers from a browser either. Even on the Docker server the counters see page loads and API calls, not cards made. Pages usage is not tracked for now; that is a choice, not a gap to fill. If it's ever wanted:
 
 - **Cloudflare's proxy doesn't work here.** Turning the Pages CNAME's orange cloud on would give request counts without touching the page, but it blocks GitHub's certificate, and Cloudflare's free certificate doesn't cover a name two levels deep (CONTRIBUTING.md, "One-time setup for publishing").
-- **A client-side analytics beacon** (Cloudflare Web Analytics or similar) works, but it breaks the sandbox's "the page makes no network request" property from [Running the core in the browser](#running-the-core-in-the-browser) and is a privacy change for every visitor.
+- **A client-side analytics beacon** (Cloudflare Web Analytics or similar) works, but it would be the sandbox's first request to a third party. Today its only request is the same-origin `api/branding` call, and every asset is inlined (see [Running the core in the browser](#running-the-core-in-the-browser)). It would also be a privacy change for every visitor.
 - **Pushing to Prometheus** from the browser needs an internet-facing collector (a Pushgateway or similar), which is a server again.
 
 ## Adding a theme
