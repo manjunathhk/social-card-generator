@@ -17,12 +17,13 @@ A developer reference for how the generator works and why it is built this way. 
 11. [Testing strategy](#testing-strategy)
 12. [Packaging: tsx in development, compiled JS in the binary](#packaging-tsx-in-development-compiled-js-in-the-binary)
 13. [Running the core in the browser](#running-the-core-in-the-browser)
-14. [History: a dumb store behind two backends](#history-a-dumb-store-behind-two-backends)
+14. [History: browser-only, on purpose](#history-browser-only-on-purpose)
 15. [The Docker image](#the-docker-image)
 16. [Branding: one server default, read-only from the UI](#branding-one-server-default-read-only-from-the-ui)
-17. [Adding a theme](#adding-a-theme)
-18. [Adding a layout](#adding-a-layout)
-19. [Gotchas](#gotchas)
+17. [Two hosts: GitHub Pages and the Docker server](#two-hosts-github-pages-and-the-docker-server)
+18. [Adding a theme](#adding-a-theme)
+19. [Adding a layout](#adding-a-layout)
+20. [Gotchas](#gotchas)
 
 ## The one idea
 
@@ -211,7 +212,7 @@ Both tiers use Node's built-in `node:test` runner. No test framework dependency.
 
 In the page, the preview is the real card element, not a screenshot: `renderCard` produces the markup, the page installs the base and theme CSS, and the same `FIT_SCRIPT` string runs against the document. The card is scaled for display with a CSS transform, which is removed for the instant the fit loop measures so that `getBoundingClientRect` and `clientHeight` agree. Export uses `html-to-image` to rasterise the card element at 1x or 2x; it is handed the embedded font CSS directly so it does not scan cross-origin stylesheets. The page-level rules in `base.ts` (`body`, `@page`) are stripped before the card CSS joins a host page, which is a sign they belong in the document wrapper rather than the shared stylesheet.
 
-The sandbox's own UI (toolbar, editor, controls) is styled from the same design system: the build inlines the package's `tokens.css`, which follows the OS light/dark preference and honours `data-theme` on `<html>`, and the IBM Plex faces travel in the same virtual font module as the card fonts. The page's CSS names its own roles (`--surface-2`, `--rule-strong`, …) and points each at a `--mk-*` token; the comment at the top of `index.template.html` lists the three roles that borrow the nearest token because the design system has none of their own. The page makes no network request.
+The sandbox's own UI (toolbar, editor, controls) is styled from the same design system: the build inlines the package's `tokens.css`, which follows the OS light/dark preference and honours `data-theme` on `<html>`, and the IBM Plex faces travel in the same virtual font module as the card fonts. The page's CSS names its own roles (`--surface-2`, `--rule-strong`, …) and points each at a `--mk-*` token; the comment at the top of `index.template.html` lists the three roles that borrow the nearest token because the design system has none of their own. The page loads no external assets. Its only request is the same-origin `api/branding` call, which comes to nothing when no server is behind it.
 
 A theme built in the sandbox's palette editor is expanded into the full variable contract with `color-mix` and can be copied out as a `src/themes/<name>.ts` module, so the path from experiment to committed theme is paste, rename, register.
 
@@ -237,7 +238,28 @@ The image has two stages, and the split matters more than usual here: the **buil
 
 Editing the Branding fields in the sandbox UI only ever writes to that browser's own `localStorage` (`scs:branding`). It's a personal override, invisible to every other visitor, and it disappears the moment that browser's storage is cleared. If you didn't set `CARD_*` env vars when the container was created, every visitor who wants their own branding has to fill in the form themselves; the server's default stays whatever it was (blank, if nothing was set) until the container is recreated with new env vars.
 
+On the GitHub Pages copy (see the next section) there is no `api/branding` to ask: the request 404s, the fields start blank, and from then on the saved `localStorage` value is the only branding a visitor has.
+
 A UI action cannot make its values "part of the environment": a process's env vars are fixed at the moment it starts, nothing outside can mutate them afterward, and even if something could, the change wouldn't survive a restart. The equivalent that _would_ work — a `POST /api/branding` that writes a `branding.json` to a volume, with `GET /api/branding` preferring that file over the env vars — was considered and deliberately not built. This server already has no authentication; adding a write path here would mean any visitor can silently overwrite the one default every other visitor sees, with no way to tell who changed it or revert it short of editing the volume by hand. That's a bigger step than the read-only default it would replace, so it's parked until someone actually wants shared, UI-editable branding defaults badly enough to also want the access-control question that comes with it. Note this is a different question from History's isolation, above — branding defaults are meant to be one shared, server-wide value; cards are not.
+
+## Two hosts: GitHub Pages and the Docker server
+
+The same `out/sandbox.html` is served two ways, and they differ only in what sits behind the page:
+
+|                              | GitHub Pages (`social-card.apps.manjunathhk.in`) | Docker server (`server/`)                       |
+| ---------------------------- | ------------------------------------------------ | ----------------------------------------------- |
+| Deployed by                  | CI's `pages` job, on every push to `main`        | CI's `publish` job builds the image; you run it |
+| `api/branding`               | None (404), so branding fields start blank       | `CARD_*` env vars fill any blank field          |
+| `api/metrics`                | None                                             | Prometheus text format                          |
+| History and branding you set | That browser's storage                           | That browser's storage                          |
+
+**Branding persists per browser, per origin.** The sandbox writes the Branding fields to `localStorage` (`scs:branding`) on every render and reads them back on load, whichever host served the page. A visitor on Pages types their branding once. `localStorage` is scoped to the origin, though: the Pages domain and a Docker deployment don't share it, and neither do two browsers or a private window. Nothing syncs it. If moving between browsers becomes a nuisance, a branding export/import (a JSON download and upload) is the proportionate fix, not a server write path (see the previous section for why).
+
+**The Pages copy is deliberately unmeasured.** `/api/metrics` counts requests that reach the Node process. Pages runs none of this repository's code, and every card is rendered in the visitor's browser, so there is nothing on Pages for Prometheus to scrape. Prometheus is pull-only, so it can't receive numbers from a browser either. Even on the Docker server the counters see page loads and API calls, not cards made. Pages usage is not tracked for now; that is a choice, not a gap to fill. If it's ever wanted:
+
+- **Cloudflare's proxy doesn't work here.** Turning the Pages CNAME's orange cloud on would give request counts without touching the page, but it blocks GitHub's certificate, and Cloudflare's free certificate doesn't cover a name two levels deep (CONTRIBUTING.md, "One-time setup for publishing").
+- **A client-side analytics beacon** (Cloudflare Web Analytics or similar) works, but it would be the sandbox's first request to a third party. Today its only request is the same-origin `api/branding` call, and every asset is inlined (see [Running the core in the browser](#running-the-core-in-the-browser)). It would also be a privacy change for every visitor.
+- **Pushing to Prometheus** from the browser needs an internet-facing collector (a Pushgateway or similar), which is a server again.
 
 ## Adding a theme
 

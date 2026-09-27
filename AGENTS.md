@@ -69,6 +69,7 @@ Before opening a PR to `main`, also:
 
 - The `#example` `<select>` blanks itself on `mousedown` and is re-set to the loaded example's name after `change`, so picking the same example twice in a row still reloads it (a plain `<select>` won't fire `change` for a no-op re-selection otherwise). The **New** button resets both `example.value` and the `loadedExample` tracking variable — if you add another "start fresh" action, do the same or the picker will misreport what's loaded.
 - Branding fields in the UI (`#b-author` etc.) are a per-browser override only; they never write back to the server's `CARD_*` env defaults. See [docs/TECHNIQUES.md](docs/TECHNIQUES.md#branding-one-server-default-read-only-from-the-ui) if that distinction matters to a change you're making.
+- The sandbox is served two ways: static on GitHub Pages (no `api/*`, no metrics) and from the Docker server. Usage of the Pages copy is deliberately not measured. Before answering a question about hosting, saved branding, or Prometheus, or proposing analytics, read [docs/TECHNIQUES.md](docs/TECHNIQUES.md#two-hosts-github-pages-and-the-docker-server).
 
 ## Adding a theme or layout
 
