@@ -373,6 +373,8 @@ location = /social-card { return 301 /social-card/; }
 
 `GET /api/metrics` exposes request counts and request-duration histograms in Prometheus text format (`text/plain; version=0.0.4`) — no dependency on `prom-client`, keeping the runtime image's zero-`node_modules` design (see the Dockerfile) intact. Route labels are a fixed, low-cardinality set assigned by the server, never a literal path with user input in it, so scraping never grows unbounded label cardinality.
 
+These metrics exist only where this server runs. The GitHub Pages copy of the sandbox has no server, so nothing there can be scraped, and its usage is deliberately not measured. See "Two hosts: GitHub Pages and the Docker server" in [docs/TECHNIQUES.md](docs/TECHNIQUES.md#two-hosts-github-pages-and-the-docker-server) for why, and for what it would take to change that.
+
 If Prometheus runs on the same host (typical for a single VPS), scrape the container directly over loopback — it's already bound to `127.0.0.1:8787` per above, so this never touches nginx or the public vhost at all:
 
 ```yaml
