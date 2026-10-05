@@ -60,7 +60,7 @@ async function fontCss(): Promise<string> {
 type SandboxExample = { label: string; content: string };
 
 /**
- * The dropdown label a card source declares for itself, e.g. "stack · print".
+ * The dropdown label a card source declares for itself, e.g. "stack · light".
  * Also checks every panel against SANDBOX_LANGUAGES: an example that only
  * the CLI's full Shiki bundle can render would throw at pick-time in the
  * sandbox dropdown instead of failing loudly here at build time.

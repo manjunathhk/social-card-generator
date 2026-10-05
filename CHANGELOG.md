@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.0.1] - 2026-10-05
+
+### Changed
+
+- `docs/images/guide/*` screenshots regenerated from the 3.0 sandbox (they still showed v2.4.0, IBM Plex and the retired themes).
+- The sandbox's "custom…" palette starts from the `light` theme's colours and the `github-light` code palette instead of the old `print` colours.
+- The two examples that were both labelled "stack · light, verdicts" in the picker are now distinguishable (the JSON one reads "stack · light, verdicts (JSON)"). A stale `print` example in a `build-sandbox.ts` comment is corrected.
+
 ## [3.0.0] - 2026-10-05
 
 Feedback from first readers: card text was unreadable at feed size on LinkedIn, and the card carried duplicated and default-filled chrome.
