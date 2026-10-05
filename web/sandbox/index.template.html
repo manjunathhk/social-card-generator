@@ -1,6 +1,7 @@
 <meta charset="utf-8">
 <title>Social Card Studio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>try { const t = localStorage.getItem('scs:app-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
 <style>/*__DESIGN_TOKENS__*/</style>
 <style>
 /*
@@ -54,7 +55,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .brand #version-tag { font: 14px var(--mono); color: var(--faint); }
 .top .links { margin-left: auto; display: flex; gap: 18px; font-size: 15px; }
 .top a { color: var(--muted); text-decoration: none; transition: color .15s; }
-.top a:hover { color: var(--accent); }
+.top a:hover, .top .links button:hover { color: var(--accent); }
+.top .links button { background: none; border: 0; padding: 0; cursor: pointer; color: var(--muted); font-size: inherit; transition: color .15s; }
 
 .work { flex: 1; display: grid; grid-template-columns: minmax(380px, 540px) minmax(0, 1fr); gap: 20px; padding: 22px; align-items: start; }
 @media (max-width: 900px) { .work { grid-template-columns: 1fr; } }
@@ -167,6 +169,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   <header class="top">
     <div class="brand"><h1>Social Card <span class="accent">Studio</span></h1><span id="version-tag">/*__VERSION__*/</span></div>
     <nav class="links">
+      <button type="button" id="app-theme" aria-label="Switch the app between light and dark"></button>
       <a href="https://github.com/manjunathhk/social-card-generator" target="_blank" rel="noopener">Repository</a>
       <a href="https://github.com/manjunathhk/social-card-generator/blob/main/docs/TECHNIQUES.md" target="_blank" rel="noopener">Techniques</a>
       <a href="https://github.com/manjunathhk/social-card-generator/blob/main/docs/PORTAL_NAVIGATION_GUIDE.md" target="_blank" rel="noopener">Guide</a>
@@ -300,6 +303,18 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
 
   // Persistence (per-browser convenience only).
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  // App light/dark toggle: an explicit choice sets data-theme on <html> (the
+  // tokens' own switch); with none saved the page follows the OS setting.
+  const appTheme = $('app-theme'), osDark = matchMedia('(prefers-color-scheme: dark)');
+  const effectiveTheme = () => document.documentElement.dataset.theme || (osDark.matches ? 'dark' : 'light');
+  const showAppTheme = () => { appTheme.textContent = effectiveTheme() === 'dark' ? 'Light mode' : 'Dark mode'; };
+  appTheme.addEventListener('click', () => {
+    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next; store.set('scs:app-theme', next); showAppTheme();
+  });
+  osDark.addEventListener('change', showAppTheme);
+  showAppTheme();
+
   const savedSource = store.get('scs:source');
   source.value = savedSource ?? NEW_CARD_TEMPLATE;
   try { const b = JSON.parse(store.get('scs:branding') || '{}'); for (const k in brandIds) if (b[k]) $(brandIds[k]).value = b[k]; } catch {}

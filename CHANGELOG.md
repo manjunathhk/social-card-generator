@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.1.0] - 2026-10-05
+
+### Added
+
+- The sandbox header has a Light mode / Dark mode button that switches the app chrome between light and dark by setting `data-theme` on `<html>`. It follows the OS setting until it is used, and the choice is remembered in the browser (`scs:app-theme`). It does not affect the card, which keeps its own Theme picker. (#36)
+
 ## [3.0.1] - 2026-10-05
 
 ### Changed
