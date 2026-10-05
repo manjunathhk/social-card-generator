@@ -5,8 +5,8 @@
   "tags": ["CSS", "Dark mode"],
   "issue": "06",
   "layout": "columns",
-  "theme": "denim-dark",
-  "sandboxLabel": "columns · denim-dark, notes + underlines",
+  "theme": "dark",
+  "sandboxLabel": "columns · dark, notes + underlines",
   "panels": [
     {
       "label": "tokens.css",

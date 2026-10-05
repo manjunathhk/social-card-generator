@@ -18,7 +18,7 @@ test('Markdown and JSON sources produce identical cards', async () => {
   const fromJson = parseContent(await example('rabbitmq-idempotency.json'), 'json');
   assert.deepEqual(fromMarkdown, fromJson);
   assert.equal(fromMarkdown.layout, 'stack');
-  assert.equal(fromMarkdown.theme, 'print');
+  assert.equal(fromMarkdown.theme, 'light');
 });
 
 test('strips a UTF-8 BOM before parsing JSON', () => {
@@ -168,8 +168,12 @@ test('validation: panel decorations', () => {
 });
 
 test('validation: themes must exist', () => {
-  assert.equal(validateCard({ ...minimal(), theme: 'vesper' }).theme, 'vesper');
-  assert.throws(() => validateCard({ ...minimal(), theme: 'neon' }), /"theme" must be one of/);
+  assert.equal(validateCard({ ...minimal(), theme: 'light' }).theme, 'light');
+  assert.equal(validateCard({ ...minimal(), theme: 'dark' }).theme, 'dark');
+  assert.throws(() => validateCard({ ...minimal(), theme: 'neon' }), /"theme" must be one of: light, dark/);
+  for (const retired of ['print', 'vesper', 'denim', 'denim-dark']) {
+    assert.throws(() => validateCard({ ...minimal(), theme: retired }), /"theme" must be one of/, retired);
+  }
 });
 
 test('every shipped example parses', async () => {

@@ -49,19 +49,19 @@ Before opening a PR to `main`, also:
 
 ## Where things live
 
-| Path                               | What's there                                                                                                                                                               |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/`                             | Core pipeline: schema, markdown/JSON parsing, validation, Shiki highlighting, themes, HTML template, Playwright renderer, CLI                                              |
-| `src/render/`                      | Browser-backed tests (the only tests allowed to launch Chromium)                                                                                                           |
-| `src/themes/`                      | One file per theme (palette; `denim.ts` holds the light/dark pair built from `@manjunathhk/design-tokens`) plus `base.ts` (structure/layout CSS) and `index.ts` (registry) |
-| `server/`                          | The optional self-hosted HTTP server (branding endpoint, health, metrics — no history storage; that's browser-only) — Node built-ins only, no `node_modules` at runtime    |
-| `web/sandbox/`                     | The single-file browser sandbox: `entry.ts` (browser build of the core), `index.template.html` (UI + inline page script), `browser-highlight.ts`                           |
-| `scripts/build-sandbox.ts`         | Bundles `web/sandbox/` into `out/sandbox.html`, injecting examples/fonts as virtual modules                                                                                |
-| `schema/card.schema.json`          | Generated JSON Schema for card source (`npm run schema`, from `src/card-schema.ts`); regenerate, don't hand-edit                                                           |
-| `examples/`                        | Source cards used by `npm run samples` and the sandbox's "Load from Example" picker                                                                                        |
-| `sample/`                          | Generated output (PNGs, carousel PDF) — the README gallery; regenerate, don't hand-edit                                                                                    |
-| `docs/TECHNIQUES.md`               | The real architecture reference — module map, fit loop, theme contract, Docker image, branding model                                                                       |
-| `Dockerfile`, `docker-compose.yml` | Multi-stage build for the server; `.github/workflows/ci.yml`'s `publish` job pushes it to Docker Hub from `main`                                                           |
+| Path                               | What's there                                                                                                                                                                           |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/`                             | Core pipeline: schema, markdown/JSON parsing, validation, Shiki highlighting, themes, HTML template, Playwright renderer, CLI                                                          |
+| `src/render/`                      | Browser-backed tests (the only tests allowed to launch Chromium)                                                                                                                       |
+| `src/themes/`                      | One file per theme (palette; `design-tokens.ts` holds the `light`/`dark` pair built from `@manjunathhk/design-tokens`) plus `base.ts` (structure/layout CSS) and `index.ts` (registry) |
+| `server/`                          | The optional self-hosted HTTP server (branding endpoint, health, metrics — no history storage; that's browser-only) — Node built-ins only, no `node_modules` at runtime                |
+| `web/sandbox/`                     | The single-file browser sandbox: `entry.ts` (browser build of the core), `index.template.html` (UI + inline page script), `browser-highlight.ts`                                       |
+| `scripts/build-sandbox.ts`         | Bundles `web/sandbox/` into `out/sandbox.html`, injecting examples/fonts as virtual modules                                                                                            |
+| `schema/card.schema.json`          | Generated JSON Schema for card source (`npm run schema`, from `src/card-schema.ts`); regenerate, don't hand-edit                                                                       |
+| `examples/`                        | Source cards used by `npm run samples` and the sandbox's "Load from Example" picker                                                                                                    |
+| `sample/`                          | Generated output (PNGs, carousel PDF) — the README gallery; regenerate, don't hand-edit                                                                                                |
+| `docs/TECHNIQUES.md`               | The real architecture reference — module map, fit loop, theme contract, Docker image, branding model                                                                                   |
+| `Dockerfile`, `docker-compose.yml` | Multi-stage build for the server; `.github/workflows/ci.yml`'s `publish` job pushes it to Docker Hub from `main`                                                                       |
 
 ## Sandbox UI specifics
 
@@ -82,7 +82,7 @@ This is a judgment call, not something CI runs — do it when asked directly ("r
 Check, in roughly this order:
 
 1. **Commands.** Every `npm run <script>` mentioned exists in `package.json`'s `scripts`; every CLI flag mentioned (`--out-dir`, `--pdf`, …) exists in `src/cli.ts`'s actual parsing/`--help` output.
-2. **Facts that drift from the code, not just prose.** Layout names and panel counts (`src/themes/`, layout registry), theme names, default values (`layout: stack`, `theme: print`), field limits (character counts in the "Card fields"/"Panel fields" tables) — read the validator/schema, don't trust the last write-up.
+2. **Facts that drift from the code, not just prose.** Layout names and panel counts (`src/themes/`, layout registry), theme names, default values (`layout: stack`, `theme: light`), field limits (character counts in the "Card fields"/"Panel fields" tables) — read the validator/schema, don't trust the last write-up.
 3. **File paths and links.** Every path in backticks (`src/render/`, `docs/TECHNIQUES.md#...`) resolves to something that exists; anchor links match actual headings.
 4. **Counts that go stale silently.** "16 languages", "Three layouts", table row counts — these are the first things a later PR breaks without touching the sentence that states them.
 5. **Screenshots.** If a UI change renamed, moved, or removed something a `docs/images/**` screenshot shows (button labels, panel layout, field names), flag it for regeneration rather than leaving a screenshot that contradicts the live UI.

@@ -17,7 +17,7 @@ subtitle: Blocking on async code under a synchronization context can deadlock th
 tags: [C#, Async]
 issue: '07'
 layout: stack
-theme: vesper
+theme: dark
 insight: Go async all the way down. If a caller must stay synchronous, fix the caller instead of blocking on the task.
 ---
 
@@ -84,17 +84,17 @@ JSON exposes every field, including `underline`. `$schema` is optional and gives
 
 ### Card fields
 
-| Field       | Required | Default | Limit                                    |
-| ----------- | -------- | ------- | ---------------------------------------- |
-| `title`     | yes      |         | 70 characters                            |
-| `highlight` | no       | empty   | 70 characters                            |
-| `subtitle`  | yes      |         | 150 characters                           |
-| `tags`      | no       | `[]`    | up to 3 tags, 22 characters each         |
-| `insight`   | no       | empty   | 220 characters                           |
-| `issue`     | no       | empty   | 12 characters; blank shows no number     |
-| `layout`    | no       | `stack` | `stack`, `columns`, `grid`               |
-| `theme`     | no       | `print` | `print`, `vesper`, `denim`, `denim-dark` |
-| `panels`    | yes      |         | count and lines per layout, see below    |
+| Field       | Required | Default | Limit                                 |
+| ----------- | -------- | ------- | ------------------------------------- |
+| `title`     | yes      |         | 70 characters                         |
+| `highlight` | no       | empty   | 70 characters                         |
+| `subtitle`  | yes      |         | 150 characters                        |
+| `tags`      | no       | `[]`    | up to 3 tags, 22 characters each      |
+| `insight`   | no       | empty   | 220 characters                        |
+| `issue`     | no       | empty   | 12 characters; blank shows no number  |
+| `layout`    | no       | `stack` | `stack`, `columns`, `grid`            |
+| `theme`     | no       | `light` | `light`, `dark`                       |
+| `panels`    | yes      |         | count and lines per layout, see below |
 
 `highlight` is a second title line in the accent colour. `insight` is the design note under the panels.
 
@@ -132,12 +132,12 @@ The renderer starts at the larger font and shrinks toward the smaller one until 
 
 ## Themes
 
-| Theme        | Look                                                |
-| ------------ | --------------------------------------------------- |
-| `print`      | Paper and ink, light code panels, blue accent       |
-| `vesper`     | Near-black, one peach accent                        |
-| `denim`      | Paper and Denim design tokens, light, drafting grid |
-| `denim-dark` | Paper and Denim design tokens, dark, drafting grid  |
+| Theme   | Look                                                |
+| ------- | --------------------------------------------------- |
+| `light` | Paper and Denim design tokens, light, drafting grid |
+| `dark`  | Paper and Denim design tokens, dark, drafting grid  |
+
+Only these two exist. `print`, `vesper`, `denim` and `denim-dark` are rejected.
 
 Any theme works with any layout.
 

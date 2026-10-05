@@ -21,13 +21,12 @@ test('document embeds fonts, blocks nothing external, and escapes card text', as
     panels: [{ language: 'csharp', code: 'var x = "<tag>";' }],
   });
   const html = await renderDocument([card], branding);
-  assert.match(html, /@font-face\{font-family:"Bricolage Grotesque";font-weight:700/);
-  assert.match(html, /@font-face\{font-family:"Commit Mono"/);
-  assert.ok(!html.includes('Geist'), "only the used theme's fonts are embedded");
+  assert.match(html, /@font-face\{font-family:"Inter";font-weight:400/);
+  assert.match(html, /@font-face\{font-family:"JetBrains Mono"/);
   assert.ok(!/https?:\/\//.test(html.replace(/<title>.*<\/title>/, '')), 'no external URLs');
   assert.ok(html.includes('<h1>Title &lt;b&gt;</h1>'));
   assert.ok(html.includes('A&amp;B'));
-  assert.ok(html.includes('class="card layout-stack theme-print panels-1"'));
+  assert.ok(html.includes('class="card layout-stack theme-light panels-1"'));
   assert.ok(html.includes('data-font-max="28" data-font-min="18"'));
   assert.match(html, /style="--h1:65px;--subtitle:26px;/);
   assert.ok(html.includes('Ada Lovelace'));
@@ -39,7 +38,7 @@ test('panel decorations render as classes, badges, notes and underlines', async 
     title: 'T',
     subtitle: 'S',
     layout: 'columns',
-    theme: 'vesper',
+    theme: 'dark',
     panels: [
       { label: 'Bad', language: 'csharp', code: 'var a = 1;', verdict: 'bad', notes: ['slow <x>'] },
       {
@@ -53,45 +52,44 @@ test('panel decorations render as classes, badges, notes and underlines', async 
     ],
   });
   const html = await renderDocument([card], branding);
-  assert.ok(html.includes('layout-columns theme-vesper panels-2'));
+  assert.ok(html.includes('layout-columns theme-dark panels-2'));
   assert.match(html, /style="--h1:58px;/);
-  assert.ok(html.includes('font-family:"Geist Mono"'));
+  assert.ok(html.includes('font-family:"JetBrains Mono"'));
   assert.ok(html.includes('<section class="panel verdict-bad" style="--weight:5">'));
   assert.ok(html.includes('<span class="badge">✓</span>'));
   assert.ok(html.includes('<li>slow &lt;x&gt;</li>'));
   assert.ok(html.includes('class="underline"'));
   assert.ok(html.includes('data-highlight="true"'));
-  assert.ok(html.includes('.theme-vesper {'), 'theme css included');
+  assert.ok(html.includes('.theme-dark {'), 'theme css included');
 });
 
 test('multi-card documents include every used theme once', async () => {
   const base = { title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] };
   const html = await renderDocument(
-    [validateCard(base), validateCard({ ...base, theme: 'vesper' }), validateCard(base)],
+    [validateCard(base), validateCard({ ...base, theme: 'dark' }), validateCard(base)],
     branding,
   );
   assert.equal(html.match(/<main class="card/g)?.length, 3);
-  assert.equal(html.match(/\.theme-print \{/g)?.length, 1);
-  assert.equal(html.match(/\.theme-vesper \{/g)?.length, 1);
+  assert.equal(html.match(/\.theme-light \{/g)?.length, 1);
+  assert.equal(html.match(/\.theme-dark \{/g)?.length, 1);
   assert.equal(html.match(/font-family:"Inter";font-weight:400/g)?.length, 1, 'shared font embedded once');
 });
 
-test('denim themes take their palette and Inter and JetBrains Mono faces from @manjunathhk/design-tokens', async () => {
+test('light and dark take their palette and Inter and JetBrains Mono faces from @manjunathhk/design-tokens', async () => {
   const base = { title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] };
   const html = await renderDocument(
-    [validateCard({ ...base, theme: 'denim' }), validateCard({ ...base, theme: 'denim-dark' })],
+    [validateCard({ ...base, theme: 'light' }), validateCard({ ...base, theme: 'dark' })],
     branding,
   );
-  assert.ok(html.includes('class="card layout-stack theme-denim panels-1"'));
-  assert.ok(html.includes('class="card layout-stack theme-denim-dark panels-1"'));
-  assert.match(html, new RegExp(`\\.theme-denim \\{\\s*--bg: ${light['color.bg']};`));
-  assert.match(html, new RegExp(`\\.theme-denim-dark \\{\\s*--bg: ${dark['color.bg']};`));
+  assert.ok(html.includes('class="card layout-stack theme-light panels-1"'));
+  assert.ok(html.includes('class="card layout-stack theme-dark panels-1"'));
+  assert.match(html, new RegExp(`\\.theme-light \\{\\s*--bg: ${light['color.bg']};`));
+  assert.match(html, new RegExp(`\\.theme-dark \\{\\s*--bg: ${dark['color.bg']};`));
   assert.equal(
     html.match(/font-family:"JetBrains Mono";font-weight:400/g)?.length,
     1,
     'font files shared by the two themes are embedded once',
   );
-  assert.ok(!html.includes('font-family:"Geist'), "only the used themes' fonts are embedded");
   assert.ok(!/https?:\/\//.test(html.replace(/<title>.*<\/title>/, '')), 'no external URLs');
 });
 

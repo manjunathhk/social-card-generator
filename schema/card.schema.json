@@ -49,11 +49,7 @@
       "enum": ["stack", "columns", "grid"],
       "default": "stack"
     },
-    "theme": {
-      "description": "Palette, typefaces and panel shape.",
-      "enum": ["print", "vesper", "denim", "denim-dark"],
-      "default": "print"
-    },
+    "theme": { "description": "Palette, typefaces and panel shape.", "enum": ["light", "dark"], "default": "light" },
     "panels": {
       "type": "array",
       "description": "Code panels, in order. How many depends on the layout.",

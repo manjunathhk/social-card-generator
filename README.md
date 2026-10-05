@@ -7,8 +7,8 @@
 Turn a Markdown file into a polished 1080 × 1350 technical social card, or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
 
 <p align="center">
-  <img src="sample/rabbitmq-idempotency.png" alt="Single-panel card in the print theme" width="420">
-  <img src="sample/nginx-rate-limit.png" alt="Side-by-side comparison card in the vesper theme" width="420">
+  <img src="sample/rabbitmq-idempotency.png" alt="Single-panel card in the light theme" width="420">
+  <img src="sample/nginx-rate-limit.png" alt="Side-by-side comparison card in the dark theme" width="420">
 </p>
 
 ## Why
@@ -18,7 +18,7 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 ## Features
 
 - **Three layouts.** `stack` (one or two panels), `columns` (side-by-side comparison), `grid` (up to four panels).
-- **Four themes.** `print`, a paper-and-ink journal page with light code panels; `vesper`, near-black minimalism with one peach accent; and `denim` / `denim-dark`, the Paper & Denim palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). Each theme owns its palette, typefaces and shape through a documented token contract.
+- **Two themes.** `light` and `dark`, the Paper & Denim palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). A theme owns its palette, typefaces and shape through a documented token contract, so you can add your own.
 - **Panel decorations.** Line highlights, token underlines, ✓ / ✕ verdict badges, and short bullet notes per panel.
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
 - **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
@@ -27,12 +27,12 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 
 ## Gallery
 
-| `stack` · print                                                          | `stack` · print, verdicts                                              | `stack` · vesper, notes                                                    |
+| `stack` · light                                                          | `stack` · light, verdicts                                              | `stack` · dark, notes                                                      |
 | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [![](sample/rabbitmq-idempotency.png)](examples/rabbitmq-idempotency.md) | [![](sample/ef-core-n-plus-one.png)](examples/ef-core-n-plus-one.json) | [![](sample/angular-inject.png)](examples/angular-inject.md)               |
-| `stack` · two languages                                                  | `columns` · vesper, notes + verdicts                                   | `grid` · vesper, underlines                                                |
+| `stack` · two languages                                                  | `columns` · dark, notes + verdicts                                     | `grid` · dark, underlines                                                  |
 | [![](sample/dto-validation.png)](examples/dto-validation.md)             | [![](sample/nginx-rate-limit.png)](examples/nginx-rate-limit.md)       | [![](sample/compose-healthchecks.png)](examples/compose-healthchecks.json) |
-| `stack` · denim, verdicts                                                | `columns` · denim-dark, notes + underlines                             |                                                                            |
+| `stack` · light, verdicts                                                | `columns` · dark, notes + underlines                                   |                                                                            |
 | [![](sample/semantic-tokens.png)](examples/semantic-tokens.md)           | [![](sample/theme-switch.png)](examples/theme-switch.json)             |                                                                            |
 
 All eight, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
@@ -69,7 +69,7 @@ subtitle: Without burst and nodelay, a page load with six assets rate-limits its
 tags: [NGINX, Rate limiting]
 issue: '05'
 layout: columns
-theme: vesper
+theme: dark
 insight: A tight rate without burst rejects the same client's own concurrent
   asset requests, not just abusive traffic. Zone size and burst are what
   make the limit usable.
@@ -114,7 +114,7 @@ The same fields are available as JSON, which exposes everything explicitly — i
   "tags": ["Docker", "Compose", "Healthchecks"],
   "issue": "06",
   "layout": "grid",
-  "theme": "vesper",
+  "theme": "dark",
   "insight": "condition: service_started only waits for the container to launch. service_healthy waits for the healthcheck to pass, which is what dependent services actually need.",
   "panels": [
     {
@@ -156,7 +156,7 @@ The same fields are available as JSON, which exposes everything explicitly — i
 | `insight`   | no       | empty   | 220 characters; the "design note" under the panels             |
 | `issue`     | no       | empty   | 12 characters; blank shows no issue number and no running head |
 | `layout`    | no       | `stack` | `stack`, `columns`, `grid`                                     |
-| `theme`     | no       | `print` | `print`, `vesper`, `denim`, `denim-dark`                       |
+| `theme`     | no       | `light` | `light`, `dark`                                                |
 | `panels`    | yes      |         | count depends on the layout                                    |
 
 ### Panel fields
@@ -173,16 +173,16 @@ The same fields are available as JSON, which exposes everything explicitly — i
 
 ### Themes
 
-| Theme        | Ground and ink                             | Code panels                              | Type                                    |
-| ------------ | ------------------------------------------ | ---------------------------------------- | --------------------------------------- |
-| `print`      | Flexoki paper and ink, blue accent         | Light, `vitesse-light`, hairline border  | Bricolage Grotesque, Inter, Commit Mono |
-| `vesper`     | Near-black, one peach accent               | `#161616`, `vesper`, no chrome           | Geist Sans, Geist Mono                  |
-| `denim`      | Paper & Denim tokens, light, drafting grid | Surface, `github-light`, hairline border | Inter, JetBrains Mono (from the tokens) |
-| `denim-dark` | Paper & Denim tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | Inter, JetBrains Mono (from the tokens) |
+| Theme   | Ground and ink                             | Code panels                              | Type                                    |
+| ------- | ------------------------------------------ | ---------------------------------------- | --------------------------------------- |
+| `light` | Paper & Denim tokens, light, drafting grid | Surface, `github-light`, hairline border | Inter, JetBrains Mono (from the tokens) |
+| `dark`  | Paper & Denim tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | Inter, JetBrains Mono (from the tokens) |
+
+`print`, `vesper`, `denim` and `denim-dark` were removed in 3.0.0; a card that names one is rejected with the list of valid themes.
 
 A theme sets colours, typefaces and panel shape through custom properties; layouts set sizes and spacing through their own tokens. The two never overlap, so any theme works with any layout. Only the fonts of the themes a document uses are embedded.
 
-The `denim` themes take every colour, font family, weight and radius from the [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens) npm package at build time, so a palette release reaches them with a dependency bump. The tokens are inlined rather than linked from `design.manjunathhk.in`, because a card is rendered with no network. A card is a fixed image, so light and dark are two themes rather than one that follows the viewer's OS.
+The `light` and `dark` themes take every colour, font family, weight and radius from the [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens) npm package at build time, so a palette release reaches them with a dependency bump. The tokens are inlined rather than linked from `design.manjunathhk.in`, because a card is rendered with no network. A card is a fixed image, so light and dark are two themes rather than one that follows the viewer's OS.
 
 ### Layouts
 
@@ -282,7 +282,7 @@ The same core runs in a browser for quick experiments: a Markdown or JSON editor
 npm run sandbox        # writes out/sandbox.html
 ```
 
-Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and typefaces as the `denim` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
+Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and typefaces as the `light` and `dark` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
 
 It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. History always lives in that browser's own storage (IndexedDB), whether the page is opened as a plain file or served — see the next section for why.
 
@@ -483,4 +483,4 @@ Snappify is the nearest match on carousels, but it's closed SaaS with no self-ho
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter, Bricolage Grotesque, Commit Mono, Geist Sans, Geist Mono, JetBrains Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter and JetBrains Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
