@@ -143,7 +143,7 @@ Any theme works with any layout.
 
 ## Branding is not part of the source
 
-Author, website, series, social handles and the issue prefix come from `CARD_*` environment variables (a `.env` file for the CLI, container env on a server) or from the Branding fields in the sandbox UI. Never put them in card source. Unknown keys are ignored, so an `author` field does nothing and hides the mistake.
+Author, website, series, social handles and the issue label come from `CARD_*` environment variables (a `.env` file for the CLI, container env on a server) or from the Branding fields in the sandbox UI. Never put them in card source. Unknown keys are ignored, so an `author` field does nothing and hides the mistake.
 
 ## Verify before handing over
 

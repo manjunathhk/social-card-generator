@@ -57,14 +57,14 @@ ${renderFooter(branding)}
 </main>`;
 }
 
-/** The running head exists only to carry the issue number, so no issue means no head. */
+/** The running head carries the issue label and number; with neither there is no head. */
 function renderMasthead(card: Card, branding: Branding): string {
-  if (!card.issue) return '';
-  const issueLabel = branding.issueLabel
-    ? `<span class="issue-label">${e(branding.issueLabel)}</span><span class="issue-sep">/</span>`
-    : '';
+  if (!card.issue && !branding.issueLabel) return '';
+  const label = branding.issueLabel ? `<span class="issue-label">${e(branding.issueLabel)}</span>` : '';
+  const separator = branding.issueLabel && card.issue ? '<span class="issue-sep">/</span>' : '';
+  const number = card.issue ? `<span class="issue-no">${e(card.issue)}</span>` : '';
   return `<header class="masthead">
-  <span class="issue">${issueLabel}<span class="issue-no">${e(card.issue)}</span></span>
+  <span class="issue">${label}${separator}${number}</span>
 </header>`;
 }
 

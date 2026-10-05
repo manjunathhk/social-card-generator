@@ -130,7 +130,7 @@ test('LinkedIn shows the logo and the handle whether given a URL, a path or a ba
   }
 });
 
-test('the running head carries the issue and only exists when there is one', async () => {
+test('the running head shows the issue label and number, and exists only when either is set', async () => {
   const panels = [{ language: 'csharp', code: 'x' }];
   const withIssue = await renderDocument(
     [validateCard({ title: 'T', subtitle: 'S', issue: '07', panels })],
@@ -143,12 +143,20 @@ test('the running head carries the issue and only exists when there is one', asy
   );
   assert.ok(!withIssue.includes('class="mark"'), 'no author initials in the head');
 
-  const withoutIssue = await renderDocument(
+  const labelOnly = await renderDocument(
     [validateCard({ title: 'T', subtitle: 'S', panels })],
-    brandingFromEnv({ CARD_AUTHOR: 'Ada', CARD_SERIES: 'Notes', CARD_ISSUE_LABEL: 'Note' }),
+    brandingFromEnv({ CARD_ISSUE_LABEL: 'Note' }),
   );
-  assert.ok(!withoutIssue.includes('<header class="masthead">'));
-  assert.ok(!withoutIssue.includes('issue-no'));
+  assert.ok(labelOnly.includes('<span class="issue"><span class="issue-label">Note</span></span>'));
+
+  const numberOnly = await renderDocument([validateCard({ title: 'T', subtitle: 'S', issue: '07', panels })], branding);
+  assert.ok(numberOnly.includes('<span class="issue"><span class="issue-no">07</span></span>'));
+
+  const neither = await renderDocument(
+    [validateCard({ title: 'T', subtitle: 'S', panels })],
+    brandingFromEnv({ CARD_AUTHOR: 'Ada', CARD_SERIES: 'Notes' }),
+  );
+  assert.ok(!neither.includes('<header class="masthead">'));
 });
 
 test('underline decorations cover every occurrence and skip overlaps', () => {

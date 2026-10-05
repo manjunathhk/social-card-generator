@@ -124,6 +124,8 @@ details.brandbox[open] summary::after { content: '−'; }
   box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .btn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, white); border-color: color-mix(in srgb, var(--accent) 88%, white); }
+.btn.outline { background: transparent; color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.btn.outline:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: var(--accent); }
 .btn:disabled { opacity: .5; cursor: default; box-shadow: none; transform: none; }
 @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 .hint { font-size: 14px; color: var(--faint); }
@@ -174,7 +176,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   <main class="work">
     <section class="pane" aria-label="Card source">
       <div class="toolbar">
-        <button class="btn" id="new-card" type="button">New</button>
+        <button class="btn primary" id="new-card" type="button">New</button>
       </div>
       <div class="toolbar">
         <select id="example" aria-label="Load from Example">
@@ -213,7 +215,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <label><span>Series</span><input id="b-series" type="text" placeholder="Field Notes"></label>
           <label><span>Footer mark</span><input id="b-footer" type="text" placeholder="blank hides it"></label>
           <label><span>Issue label</span><input id="b-issue" type="text" placeholder="Note"></label>
-          <label><span>LinkedIn</span><input id="b-linkedin" type="text" placeholder="linkedin.com/in/you"></label>
+          <label><span>LinkedIn</span><input id="b-linkedin" type="text" placeholder="You"></label>
           <label><span>Twitter / X</span><input id="b-twitter" type="text" placeholder="@you"></label>
         </div>
       </details>
@@ -232,7 +234,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
         </div>
         <div class="banner warn" id="overflow" hidden></div>
         <div class="actions">
-          <button class="btn primary" id="export-1">Export PNG 1×</button>
+          <button class="btn outline" id="export-1">Export PNG 1×</button>
           <button class="btn" id="export-2">Export PNG 2×</button>
           <button class="btn" id="copy">Copy image</button>
           <span class="hint" id="export-hint">Exports are rasterised by your browser; the CLI's Chromium render is the canonical output.</span>
@@ -498,8 +500,10 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   $('new-card').addEventListener('click', () => {
     source.value = NEW_CARD_TEMPLATE;
     store.set('scs:source', NEW_CARD_TEMPLATE);
-    layoutSel.value = ''; themeSel.value = ''; palette.hidden = true;
-    store.set('scs:layout', ''); store.set('scs:theme', '');
+    // A custom theme the user chose stays the app's theme; every other choice resets to "from source".
+    layoutSel.value = ''; store.set('scs:layout', '');
+    if (themeSel.value !== 'custom') { themeSel.value = ''; store.set('scs:theme', ''); }
+    palette.hidden = themeSel.value !== 'custom';
     example.value = ''; loadedExample = ''; // New starts a blank card, not "still editing that example"
     editingHint.hidden = true; editingHint.textContent = '';
     render();

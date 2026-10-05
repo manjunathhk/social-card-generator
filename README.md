@@ -249,18 +249,18 @@ The same shape describes a Markdown card's front matter plus its panels. Lines p
 
 Copy `.env.sample` to `.env` and fill in your details. Every field is optional: leave a variable blank or unset and the card simply omits it, instead of falling back to placeholder text like `example.com`.
 
-| Variable            | Default            | Purpose                                                     |
-| ------------------- | ------------------ | ----------------------------------------------------------- |
-| `CARD_AUTHOR`       | blank              | Footer author                                               |
-| `CARD_WEBSITE`      | blank              | Footer website                                              |
-| `CARD_SERIES`       | blank              | Series name, shown in the footer                            |
-| `CARD_FOOTER_MARK`  | blank              | Optional large mark bottom-right; blank hides it            |
-| `CARD_ISSUE_LABEL`  | blank              | Prefix before the card's `issue`, when it has one           |
-| `CARD_LINKEDIN`     | blank              | LinkedIn profile URL or handle, shown as logo and `/handle` |
-| `CARD_TWITTER`      | blank              | Twitter/X link/handle, added to the footer                  |
-| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                             |
+| Variable            | Default            | Purpose                                                                      |
+| ------------------- | ------------------ | ---------------------------------------------------------------------------- |
+| `CARD_AUTHOR`       | blank              | Footer author                                                                |
+| `CARD_WEBSITE`      | blank              | Footer website                                                               |
+| `CARD_SERIES`       | blank              | Series name, shown in the footer                                             |
+| `CARD_FOOTER_MARK`  | blank              | Optional large mark bottom-right; blank hides it                             |
+| `CARD_ISSUE_LABEL`  | blank              | Text at the top of the card, before the `issue` number when the card has one |
+| `CARD_LINKEDIN`     | blank              | LinkedIn profile URL or handle, shown as logo and `/handle`                  |
+| `CARD_TWITTER`      | blank              | Twitter/X link/handle, added to the footer                                   |
+| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                                              |
 
-The footer puts `CARD_AUTHOR` on the left. On the right, separated by `·`, come `CARD_SERIES`, `CARD_WEBSITE`, `CARD_LINKEDIN` (the LinkedIn logo and `/handle`; a profile URL, `in/handle`, `@handle` or the bare handle all work) and `CARD_TWITTER`, then `CARD_FOOTER_MARK` — each appears only when set. The only thing at the top is the running head with the card's `issue`, and it is omitted when the card has none.
+The footer puts `CARD_AUTHOR` on the left. On the right, separated by `·`, come `CARD_SERIES`, `CARD_WEBSITE`, `CARD_LINKEDIN` (the LinkedIn logo and `/handle`; a profile URL, `in/handle`, `@handle` or the bare handle all work) and `CARD_TWITTER`, then `CARD_FOOTER_MARK` — each appears only when set. The only thing at the top is the running head, with the issue label and the card's `issue`; it is omitted when there is neither.
 
 Shell variables override the file. The committed samples use `examples/branding.env`. When [running as a server](#running-it-as-a-server-docker), these same variables set on the container become the sandbox's default branding fields for every visitor — but that default is read-only from the browser. Editing the Branding fields in the sandbox UI only saves to that browser's own storage; it's a personal override, not a way to change what other visitors see or to update the container's environment. To change the shared default, recreate the container with new `CARD_*` values. See [docs/TECHNIQUES.md](docs/TECHNIQUES.md#branding-one-server-default-read-only-from-the-ui) for why a UI-editable shared default isn't implemented.
 
