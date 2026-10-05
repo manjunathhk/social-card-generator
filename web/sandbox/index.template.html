@@ -12,7 +12,7 @@
  * Colours and type come from the shared design system
  * (@manjunathhk/design-tokens): the build inlines its tokens.css above,
  * which follows the OS light/dark preference and honours data-theme on
- * <html>, and the IBM Plex faces arrive with the card fonts. The names
+ * <html>, and the design-system faces arrive with the card fonts. The names
  * below are this page's roles, each pointing at a --mk-* token. Three have
  * no token of their own and borrow the nearest one: --surface-3 (hover and
  * pill fills) uses border, --editor-bg uses surface, and --faint (label
@@ -196,7 +196,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <label><span>Accent</span><input id="p-accent" type="color" value="#205ea6"></label>
           <label><span>Panel</span><input id="p-panel" type="color" value="#f2f0e5"></label>
           <label><span>Code colours</span><select id="p-code"><option value="vitesse-light">vitesse-light (light panels)</option><option value="vesper">vesper (dark panels)</option><option value="github-light">github-light (light panels)</option><option value="github-dark">github-dark (dark panels)</option></select></label>
-          <label><span>Type</span><select id="p-type"><option value="print">Print faces</option><option value="vesper">Vesper faces</option><option value="denim">Denim faces (IBM Plex)</option></select></label>
+          <label><span>Type</span><select id="p-type"><option value="print">Print faces</option><option value="vesper">Vesper faces</option><option value="denim">Denim faces</option></select></label>
         </div>
         <div class="palette-actions">
           <button class="btn" id="p-copy">Copy as TypeScript theme</button>

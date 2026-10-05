@@ -1,6 +1,6 @@
 # Third-party font licenses
 
-The rendered cards embed subsets of the fonts below, taken from the corresponding `@fontsource` packages and, for IBM Plex, from `@manjunathhk/design-tokens`. Each is distributed under the SIL Open Font License 1.1; the licence text as shipped with each package follows.
+The rendered cards embed subsets of the fonts below, taken from the corresponding `@fontsource` packages and, for the `denim` themes, from `@manjunathhk/design-tokens` (Inter and JetBrains Mono). Each is distributed under the SIL Open Font License 1.1; the licence text as shipped with each package follows.
 
 ## Inter
 
@@ -488,16 +488,14 @@ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 ```
 
-## IBM Plex Sans, IBM Plex Sans Condensed, IBM Plex Mono
-
-The three families ship the same licence text.
+## JetBrains Mono
 
 ```
-Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
+Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono) JetBrainsMono-Italic[wght].ttf: Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
-
-This license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL
+This license is copied below, and is also available with a FAQ at:
+http://scripts.sil.org/OFL
 
 
 -----------------------------------------------------------
@@ -513,7 +511,7 @@ with others.
 
 The OFL allows the licensed fonts to be used, studied, modified and
 redistributed freely as long as they are not sold by themselves. The
-fonts, including any derivative works, can be bundled, embedded, 
+fonts, including any derivative works, can be bundled, embedded,
 redistributed and/or sold with any software provided that any reserved
 names are not used by derivative works. The fonts and derivatives,
 however, cannot be released under any other type of license. The

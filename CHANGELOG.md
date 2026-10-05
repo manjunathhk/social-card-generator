@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.6.0] - 2026-10-05
+
+### Changed
+
+- `@manjunathhk/design-tokens` is now `^1.2.0`, which replaced IBM Plex with Inter and JetBrains Mono. The `denim` and `denim-dark` themes and the sandbox UI therefore render in those typefaces, and the `denim` samples are regenerated.
+- The denim themes and the sandbox no longer list the package's font files. Their families come from the tokens' display, sans and mono stacks, and `fonts.ts` embeds every normal-style face of those families declared in the package's `fonts.css`, so a future typeface change in the design system needs only a dependency bump. The build fails with a message naming the family if the stylesheet has no face for one. Italic faces are not embedded.
+
+### Fixed
+
+- `npm run sandbox` failed with ENOENT on the removed `IBMPlex*.woff2` files after the design-tokens bump (#31).
+
 ## [2.5.3] - 2026-09-26
 
 ### Added

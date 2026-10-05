@@ -18,7 +18,7 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 ## Features
 
 - **Three layouts.** `stack` (one or two panels), `columns` (side-by-side comparison), `grid` (up to four panels).
-- **Four themes.** `print`, a paper-and-ink journal page with light code panels; `vesper`, near-black minimalism with one peach accent; and `denim` / `denim-dark`, the Paper & Denim palette and IBM Plex type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). Each theme owns its palette, typefaces and shape through a documented token contract.
+- **Four themes.** `print`, a paper-and-ink journal page with light code panels; `vesper`, near-black minimalism with one peach accent; and `denim` / `denim-dark`, the Paper & Denim palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). Each theme owns its palette, typefaces and shape through a documented token contract.
 - **Panel decorations.** Line highlights, token underlines, ✓ / ✕ verdict badges, and short bullet notes per panel.
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
 - **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
@@ -177,8 +177,8 @@ The same fields are available as JSON, which exposes everything explicitly — i
 | ------------ | ------------------------------------------ | ---------------------------------------- | --------------------------------------- |
 | `print`      | Flexoki paper and ink, blue accent         | Light, `vitesse-light`, hairline border  | Bricolage Grotesque, Inter, Commit Mono |
 | `vesper`     | Near-black, one peach accent               | `#161616`, `vesper`, no chrome           | Geist Sans, Geist Mono                  |
-| `denim`      | Paper & Denim tokens, light, drafting grid | Surface, `github-light`, hairline border | IBM Plex Sans Condensed, Sans, Mono     |
-| `denim-dark` | Paper & Denim tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | IBM Plex Sans Condensed, Sans, Mono     |
+| `denim`      | Paper & Denim tokens, light, drafting grid | Surface, `github-light`, hairline border | Inter, JetBrains Mono (from the tokens) |
+| `denim-dark` | Paper & Denim tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | Inter, JetBrains Mono (from the tokens) |
 
 A theme sets colours, typefaces and panel shape through custom properties; layouts set sizes and spacing through their own tokens. The two never overlap, so any theme works with any layout. Only the fonts of the themes a document uses are embedded.
 
@@ -281,7 +281,7 @@ The same core runs in a browser for quick experiments: a Markdown or JSON editor
 npm run sandbox        # writes out/sandbox.html
 ```
 
-Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and IBM Plex faces as the `denim` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
+Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and typefaces as the `denim` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
 
 It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. History always lives in that browser's own storage (IndexedDB), whether the page is opened as a plain file or served — see the next section for why.
 
@@ -482,4 +482,4 @@ Snappify is the nearest match on carousels, but it's closed SaaS with no self-ho
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter, Bricolage Grotesque, Commit Mono, Geist Sans, Geist Mono, IBM Plex Sans, IBM Plex Sans Condensed, IBM Plex Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter, Bricolage Grotesque, Commit Mono, Geist Sans, Geist Mono, JetBrains Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
