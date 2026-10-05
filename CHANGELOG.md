@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.1.1] - 2026-10-05
+
+### Changed
+
+- `@manjunathhk/design-tokens` updated to 1.3.0, whose light palette has a distinct accent colour. `sample/*` and `docs/images/guide/*` are regenerated (the guide screenshots now use the dark app theme).
+- The sandbox wordmark's "Studio" is back to the heading weight: the lighter weight added in 3.1.0 compensated for a light accent that matched the text colour, which 1.3.0 no longer does.
+
 ## [3.1.0] - 2026-10-05
 
 ### Added
