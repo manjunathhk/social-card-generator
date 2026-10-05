@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Social Card Generator</title>
+<title>Social Card Studio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>/*__DESIGN_TOKENS__*/</style>
 <style>
@@ -50,7 +50,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .brand { display: flex; align-items: baseline; gap: 10px; }
 .brand h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.2px; }
-.brand span { font: 14px var(--mono); color: var(--faint); }
+.brand h1 .accent { display: inline; color: var(--accent); }
+.brand #version-tag { font: 14px var(--mono); color: var(--faint); }
 .top .links { margin-left: auto; display: flex; gap: 18px; font-size: 15px; }
 .top a { color: var(--muted); text-decoration: none; transition: color .15s; }
 .top a:hover { color: var(--accent); }
@@ -162,7 +163,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
 
 <div class="app">
   <header class="top">
-    <div class="brand"><h1>Social Card Generator</h1><span id="version-tag">/*__VERSION__*/</span></div>
+    <div class="brand"><h1>Social Card <span class="accent">Studio</span></h1><span id="version-tag">/*__VERSION__*/</span></div>
     <nav class="links">
       <a href="https://github.com/manjunathhk/social-card-generator" target="_blank" rel="noopener">Repository</a>
       <a href="https://github.com/manjunathhk/social-card-generator/blob/main/docs/TECHNIQUES.md" target="_blank" rel="noopener">Techniques</a>

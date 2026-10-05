@@ -1,4 +1,4 @@
-# Social Card Generator
+# Social Card Studio
 
 [![CI](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -404,7 +404,7 @@ groups:
         expr: up{job="social-card-sandbox"} == 0
         for: 2m
         labels: { severity: critical }
-        annotations: { summary: 'Social Card Sandbox is unreachable.' }
+        annotations: { summary: 'Social Card Studio is unreachable.' }
 
       - alert: SocialCardHighErrorRate
         expr: |

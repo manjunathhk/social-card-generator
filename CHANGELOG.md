@@ -13,7 +13,7 @@ Feedback from first readers: card text was unreadable at feed size on LinkedIn, 
 - **Breaking: `issue` is optional with no default.** It used to default to `01`, so every card showed a number. Now a card shows an issue number, and the running head that holds it, only when its source sets `issue`.
 - The footer puts the author on the left and the series, website, LinkedIn, X handle and optional mark on the right. The series appears only in the footer (it was also in the running head).
 - LinkedIn renders as its logo and `/handle`. `CARD_LINKEDIN` accepts a profile URL, `in/handle`, `@handle` or the bare handle.
-- Sandbox: larger type throughout the page, and a new card no longer starts with `issue: '01'`.
+- The app is renamed "Social Card Studio" in the sandbox header and tab title ("Studio" in the accent colour), the README title, the server's startup message and the card-author skill. The repository, npm package and Docker image names are unchanged. Sandbox: larger type throughout the page, and a new card no longer starts with `issue: '01'`.
 
 ### Removed
 

@@ -1,6 +1,6 @@
 ---
 name: social-card-source
-description: Write valid Markdown or JSON source for the Social Card Generator (github.com/manjunathhk/social-card-generator), which renders 1080 x 1350 technical social cards and LinkedIn carousel PDFs from code snippets. Use when asked to write, fix or shorten a social card, code card, LinkedIn card or carousel page, or a .md/.json file for social-card.manjunathhk.in.
+description: Write valid Markdown or JSON source for Social Card Studio (github.com/manjunathhk/social-card-generator), which renders 1080 x 1350 technical social cards and LinkedIn carousel PDFs from code snippets. Use when asked to write, fix or shorten a social card, code card, LinkedIn card or carousel page, or a .md/.json file for social-card.manjunathhk.in.
 ---
 
 # Social card source

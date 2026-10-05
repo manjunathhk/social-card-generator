@@ -90,7 +90,7 @@ async function main() {
 
   const server = createServer(createRequestListener({ html }));
   server.listen(port, () => {
-    console.log(`Social Card Sandbox listening on http://localhost:${port}`);
+    console.log(`Social Card Studio listening on http://localhost:${port}`);
   });
 }
 
