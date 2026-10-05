@@ -135,6 +135,9 @@ details.brandbox[open] summary::after { content: '−'; }
 .btn:disabled { opacity: .5; cursor: default; box-shadow: none; transform: none; }
 @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 .hint { font-size: 14px; color: var(--faint); }
+.site-foot { margin-top: auto; padding: 20px 22px; text-align: center; font-size: 14px; color: var(--faint); }
+.site-foot a { color: var(--accent); text-decoration: none; transition: opacity .15s; }
+.site-foot a:hover { opacity: .75; }
 .notes { font-size: 15px; color: var(--muted); line-height: 1.55; }
 .notes code { font: 14px var(--mono); color: var(--ink); }
 
@@ -224,6 +227,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <label><span>Issue label</span><input id="b-issue" type="text" placeholder="Note"></label>
           <label><span>LinkedIn</span><input id="b-linkedin" type="text" placeholder="You"></label>
           <label><span>Twitter / X</span><input id="b-twitter" type="text" placeholder="@you"></label>
+          <label><span>Credit line</span><select id="b-credit"><option value="">Off</option><option value="true">“make yours: …” in footer</option></select></label>
         </div>
       </details>
       <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Themes: light, dark. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
@@ -257,6 +261,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
       </div>
     </section>
   </main>
+  <div class="site-foot">Crafted with <a href="https://www.typescriptlang.org" target="_blank" rel="noopener">TypeScript</a>, <a href="https://shiki.style" target="_blank" rel="noopener">Shiki</a> and <a href="https://playwright.dev" target="_blank" rel="noopener">Playwright</a></div>
 </div>
 
 <dialog id="preview">
@@ -272,9 +277,9 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   const $ = (id) => document.getElementById(id);
   const source = $('source'), example = $('example'), errorBox = $('error'), overflowBox = $('overflow');
   const stage = $('stage'), stagebox = $('stagebox'), host = $('card-host');
-  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', footer: 'b-footer', issue: 'b-issue', linkedin: 'b-linkedin', twitter: 'b-twitter' };
-  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL', linkedin: 'CARD_LINKEDIN', twitter: 'CARD_TWITTER' };
-  const brandingFields = { author: 'author', website: 'website', series: 'series', footer: 'footerMark', issue: 'issueLabel', linkedin: 'linkedin', twitter: 'twitter' };
+  const brandIds = { author: 'b-author', website: 'b-website', series: 'b-series', footer: 'b-footer', issue: 'b-issue', linkedin: 'b-linkedin', twitter: 'b-twitter', credit: 'b-credit' };
+  const envKeys = { author: 'CARD_AUTHOR', website: 'CARD_WEBSITE', series: 'CARD_SERIES', footer: 'CARD_FOOTER_MARK', issue: 'CARD_ISSUE_LABEL', linkedin: 'CARD_LINKEDIN', twitter: 'CARD_TWITTER', credit: 'CARD_CREDIT' };
+  const brandingFields = { author: 'author', website: 'website', series: 'series', footer: 'footerMark', issue: 'issueLabel', linkedin: 'linkedin', twitter: 'twitter', credit: 'credit' };
   const NEW_CARD_TEMPLATE = [
     '---', 'title: New card', 'subtitle: Replace this with your own subtitle.', "tags: []", '---', '',
     '## Example', '```typescript', 'const example = true;', '```', '',

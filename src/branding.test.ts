@@ -14,6 +14,7 @@ test('every field is blank when nothing is configured', () => {
   assert.equal(branding.issueLabel, '');
   assert.equal(branding.linkedin, '');
   assert.equal(branding.twitter, '');
+  assert.equal(branding.credit, false);
 });
 
 test('blank values stay blank', () => {

@@ -117,6 +117,7 @@ footer .author { font: 600 26px var(--font-sans); letter-spacing: -.3px; white-s
 .footer-row { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0 28px; }
 .footer-row > span { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .footer-items .series-name { color: var(--fg); font-weight: 500; }
+.footer-items .credit { font-size: 16px; opacity: .8; }
 .social-logo { width: 22px; height: 22px; flex: none; }
 .footer-mark { font: 700 28px var(--font-display); letter-spacing: -1px; }
 .footer-mark span { color: var(--accent); margin-left: 4px; font-size: 22px; }

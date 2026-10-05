@@ -99,6 +99,14 @@ test('footer mark is optional and escaped', async () => {
   assert.ok(html.includes('<div class="footer-mark">&lt;MK&gt;<span>↗</span></div>'));
 });
 
+test('credit line is opt-in', async () => {
+  const card = validateCard({ title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] });
+  const off = await renderDocument([card], brandingFromEnv({}));
+  assert.ok(!off.includes('class="credit"'));
+  const on = await renderDocument([card], brandingFromEnv({ CARD_CREDIT: 'true' }));
+  assert.ok(on.includes('<span class="credit">make yours: social-card.apps.manjunathhk.in</span>'));
+});
+
 test('footer puts the author left and series, website and socials right, each only when set', async () => {
   const card = validateCard({ title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] });
 
