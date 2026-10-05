@@ -13,7 +13,7 @@ Feedback from first readers: card text was unreadable at feed size on LinkedIn, 
 - **Breaking: lower line ceilings**, because the floors are higher: `stack` 18 lines with one panel and 9 with two (was 22 and 14), `columns` 16 (was 18), `grid` 10 (was 12). A card that was valid can now fail `--check`.
 - **Breaking: `issue` is optional with no default.** It used to default to `01`, so every card showed a number. Now a card shows an issue number only when its source sets `issue`. The running head holding the number and the `CARD_ISSUE_LABEL` text appears when either is set, and the label shows on its own when the card has no number.
 - The footer puts the author on the left and the series, website, LinkedIn, X handle and optional mark on the right. The series appears only in the footer (it was also in the running head).
-- LinkedIn renders as its logo and `/handle`. `CARD_LINKEDIN` accepts a profile URL, `in/handle`, `@handle` or the bare handle.
+- LinkedIn renders as its logo and `/handle`, and X as its logo and `@handle`. `CARD_LINKEDIN` and `CARD_TWITTER` accept a profile URL, a path, an `@handle` or the bare handle. The right of the footer is two lines, the series on its own and then the website and social handles, spaced apart rather than joined by dots, so a full footer no longer wraps in the middle of a list.
 - The app is renamed "Social Card Studio" in the sandbox header and tab title ("Studio" in the accent colour), the README title, the server's startup message and the card-author skill. The repository, npm package and Docker image names are unchanged. Sandbox: larger type throughout the page, and a new card no longer starts with `issue: '01'`.
 
 ### Removed

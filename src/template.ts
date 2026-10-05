@@ -119,19 +119,39 @@ function linkedinHandle(value: string): string {
   return `/${handle}`;
 }
 
-/** Author on the left; series, website, LinkedIn, X and the optional mark on the right. */
+/** X's mark (Simple Icons, CC0), drawn in the current text colour. */
+const X_LOGO =
+  '<svg class="social-logo" viewBox="0 0 24 24" aria-label="X" role="img"><path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>';
+
+/** "https://x.com/jane", "twitter.com/jane", "@jane" and "jane" all become "@jane". */
+function xHandle(value: string): string {
+  const handle = value
+    .replace(/^https?:\/\//i, '')
+    .replace(/^(www\.)?(x|twitter)\.com\//i, '')
+    .replace(/^[@/]+|\/+$/g, '');
+  return `@${handle}`;
+}
+
+/**
+ * Author on the left. On the right, the series on its own line, then the
+ * website and social handles on another. Each line is only drawn when it has
+ * something in it.
+ */
 function renderFooter(branding: Branding): string {
   const author = branding.author ? `<strong class="author">${e(branding.author)}</strong>` : '';
-  const items = [
-    branding.series ? `<span class="series-name">${e(branding.series)}</span>` : '',
+  const series = branding.series ? [`<span class="series-name">${e(branding.series)}</span>`] : [];
+  const links = [
     branding.website ? `<span>${e(branding.website)}</span>` : '',
     branding.linkedin ? `<span class="social">${LINKEDIN_LOGO}${e(linkedinHandle(branding.linkedin))}</span>` : '',
-    branding.twitter ? `<span>${e(branding.twitter)}</span>` : '',
+    branding.twitter ? `<span class="social">${X_LOGO}${e(xHandle(branding.twitter))}</span>` : '',
   ].filter(Boolean);
-  const links = items.length ? `<div class="footer-items">${items.join('')}</div>` : '';
+  const rows = [series, links]
+    .filter((row) => row.length)
+    .map((row) => `<div class="footer-row">${row.join('')}</div>`);
+  const lines = rows.length ? `<div class="footer-items">${rows.join('')}</div>` : '';
   const mark = branding.footerMark ? `<div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div>` : '';
   return `<footer>
   ${author}
-  <div class="footer-end">${links}${mark}</div>
+  <div class="footer-end">${lines}${mark}</div>
 </footer>`;
 }

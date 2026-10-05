@@ -24,7 +24,7 @@ body { background: #000; }
 
 .card {
   width: 1080px; height: 1350px; overflow: hidden;
-  padding: 48px 64px 44px;
+  padding: 40px 64px 44px;
   display: flex; flex-direction: column;
   background: var(--bg); color: var(--fg);
   font-family: var(--font-sans);
@@ -110,12 +110,12 @@ pre.shiki code { font: inherit; }
 .spacer { height: 24px; flex: none; }
 
 /* Colophon: author on the left, everything else on the right */
-footer { border-top: 1px solid var(--rule); padding-top: 22px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
 footer .author { font: 600 26px var(--font-sans); letter-spacing: -.3px; white-space: nowrap; }
 .footer-end { display: flex; align-items: center; justify-content: flex-end; gap: 24px; margin-left: auto; min-width: 0; }
-.footer-items { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 0; font: 400 20px/1.3 var(--font-mono); color: var(--muted); }
-.footer-items > span { display: inline-flex; align-items: center; gap: 8px; }
-.footer-items > span + span::before { content: '·'; color: var(--muted-2); padding: 0 12px; }
+.footer-items { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font: 400 20px/1.2 var(--font-mono); color: var(--muted); }
+.footer-row { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0 28px; }
+.footer-row > span { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .footer-items .series-name { color: var(--fg); font-weight: 500; }
 .social-logo { width: 22px; height: 22px; flex: none; }
 .footer-mark { font: 700 28px var(--font-display); letter-spacing: -1px; }

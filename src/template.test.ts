@@ -113,13 +113,26 @@ test('footer puts the author left and series, website and socials right, each on
     }),
   );
   assert.ok(full.includes('<strong class="author">Ada</strong>'));
-  assert.match(full, /<div class="footer-items"><span class="series-name">Notes<\/span><span>example\.com<\/span>/);
-  assert.match(full, /<span class="social"><svg class="social-logo".*<\/svg>\/&lt;x&gt;<\/span><span>@x<\/span>/);
+  assert.match(
+    full,
+    /<div class="footer-row"><span class="series-name">Notes<\/span><\/div><div class="footer-row"><span>example\.com<\/span><span class="social"><svg class="social-logo".*<\/svg>\/&lt;x&gt;<\/span><span class="social"><svg class="social-logo".*<\/svg>@x<\/span><\/div>/,
+  );
   assert.equal(full.match(/class="series-name"/g)?.length, 1, 'the series appears once, in the footer');
 
   const bare = await renderDocument([card], brandingFromEnv({}));
   assert.ok(!bare.includes('<strong class="author">'));
   assert.ok(!bare.includes('class="footer-items"'));
+
+  const socialOnly = await renderDocument([card], brandingFromEnv({ CARD_TWITTER: 'x' }));
+  assert.equal(socialOnly.match(/class="footer-row"/g)?.length, 1, 'a line with nothing in it is not drawn');
+});
+
+test('X shows the logo and the handle whether given a URL, a path or a bare name', async () => {
+  const card = validateCard({ title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] });
+  for (const value of ['https://x.com/ada', 'https://twitter.com/ada/', 'x.com/ada', '@ada', 'ada']) {
+    const html = await renderDocument([card], brandingFromEnv({ CARD_TWITTER: value }));
+    assert.match(html, /aria-label="X".*<\/svg>@ada<\/span>/, value);
+  }
 });
 
 test('LinkedIn shows the logo and the handle whether given a URL, a path or a bare name', async () => {
