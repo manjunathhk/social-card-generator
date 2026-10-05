@@ -1,14 +1,13 @@
 ---
 title: Same DI, less ceremony.
 highlight: inject() in Angular
-subtitle: Constructor injection still works; the inject() function removes the boilerplate around it.
+subtitle: Constructor injection still works; inject() drops the boilerplate.
 tags: [Angular, DI, Signals]
 issue: '03'
 theme: dark
 sandboxLabel: stack · dark, notes
-insight: inject() must run in an injection context — a constructor, a field
-  initializer, or a factory function — not inside a later callback or
-  setTimeout.
+insight: inject() only works in an injection context — a constructor, field
+  initializer, or factory — not a later callback.
 ---
 
 ## ❌ Constructor injection
