@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.2.0] - 2026-10-05
+
+### Added
+
+- Opt-in credit line: `CARD_CREDIT=true` (or the sandbox's Branding → "Credit line" dropdown) adds a small "make yours: social-card.apps.manjunathhk.in" row at the bottom of the card footer. It is off by default, so existing cards render unchanged.
+- The sandbox has a footer: "Crafted with TypeScript, Shiki and Playwright".
+
 ## [3.1.1] - 2026-10-05
 
 ### Changed

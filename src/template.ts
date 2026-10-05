@@ -132,10 +132,12 @@ function xHandle(value: string): string {
   return `@${handle}`;
 }
 
+const CREDIT_URL = 'social-card.apps.manjunathhk.in';
+
 /**
  * Author on the left. On the right, the series on its own line, then the
- * website and social handles on another. Each line is only drawn when it has
- * something in it.
+ * website and social handles on another, then the opt-in credit. Each line is
+ * only drawn when it has something in it.
  */
 function renderFooter(branding: Branding): string {
   const author = branding.author ? `<strong class="author">${e(branding.author)}</strong>` : '';
@@ -145,7 +147,8 @@ function renderFooter(branding: Branding): string {
     branding.linkedin ? `<span class="social">${LINKEDIN_LOGO}${e(linkedinHandle(branding.linkedin))}</span>` : '',
     branding.twitter ? `<span class="social">${X_LOGO}${e(xHandle(branding.twitter))}</span>` : '',
   ].filter(Boolean);
-  const rows = [series, links]
+  const credit = branding.credit ? [`<span class="credit">make yours: ${CREDIT_URL}</span>`] : [];
+  const rows = [series, links, credit]
     .filter((row) => row.length)
     .map((row) => `<div class="footer-row">${row.join('')}</div>`);
   const lines = rows.length ? `<div class="footer-items">${rows.join('')}</div>` : '';

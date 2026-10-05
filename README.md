@@ -249,16 +249,17 @@ The same shape describes a Markdown card's front matter plus its panels. Lines p
 
 Copy `.env.sample` to `.env` and fill in your details. Every field is optional: leave a variable blank or unset and the card simply omits it, instead of falling back to placeholder text like `example.com`.
 
-| Variable            | Default            | Purpose                                                                      |
-| ------------------- | ------------------ | ---------------------------------------------------------------------------- |
-| `CARD_AUTHOR`       | blank              | Footer author                                                                |
-| `CARD_WEBSITE`      | blank              | Footer website                                                               |
-| `CARD_SERIES`       | blank              | Series name, shown in the footer                                             |
-| `CARD_FOOTER_MARK`  | blank              | Optional large mark bottom-right; blank hides it                             |
-| `CARD_ISSUE_LABEL`  | blank              | Text at the top of the card, before the `issue` number when the card has one |
-| `CARD_LINKEDIN`     | blank              | LinkedIn profile URL or handle, shown as logo and `/handle`                  |
-| `CARD_TWITTER`      | blank              | X profile URL or handle, shown as logo and `@handle`                         |
-| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                                              |
+| Variable            | Default            | Purpose                                                                       |
+| ------------------- | ------------------ | ----------------------------------------------------------------------------- |
+| `CARD_AUTHOR`       | blank              | Footer author                                                                 |
+| `CARD_WEBSITE`      | blank              | Footer website                                                                |
+| `CARD_SERIES`       | blank              | Series name, shown in the footer                                              |
+| `CARD_FOOTER_MARK`  | blank              | Optional large mark bottom-right; blank hides it                              |
+| `CARD_ISSUE_LABEL`  | blank              | Text at the top of the card, before the `issue` number when the card has one  |
+| `CARD_LINKEDIN`     | blank              | LinkedIn profile URL or handle, shown as logo and `/handle`                   |
+| `CARD_TWITTER`      | blank              | X profile URL or handle, shown as logo and `@handle`                          |
+| `CARD_CREDIT`       | off                | `true` adds a small "make yours: social-card.apps.manjunathhk.in" footer line |
+| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                                               |
 
 The footer puts `CARD_AUTHOR` on the left. On the right are two lines, with items spaced apart (an item that does not fit moves to the next line whole): `CARD_SERIES` on its own line, then `CARD_WEBSITE`, `CARD_LINKEDIN` (the LinkedIn logo and `/handle`; a profile URL, `in/handle`, `@handle` or the bare handle all work) and `CARD_TWITTER` (the X logo and `@handle`, from a URL or a bare handle) together on the next, then `CARD_FOOTER_MARK`. Each item appears only when set, and a line with nothing in it is not drawn. The only thing at the top is the running head, with the issue label and the card's `issue`; it is omitted when there is neither.
 
