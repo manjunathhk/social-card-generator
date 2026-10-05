@@ -49,7 +49,7 @@ test('serves branding read from the environment, blank fields included', async (
       const body = await res.json();
       assert.equal(body.branding.author, 'Env Author');
       assert.equal(body.branding.website, '');
-      assert.equal(body.branding.monogram, 'EA');
+      assert.equal('monogram' in body.branding, false);
     });
   } finally {
     if (previous.author === undefined) delete process.env.CARD_AUTHOR;

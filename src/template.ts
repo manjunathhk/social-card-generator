@@ -57,14 +57,13 @@ ${renderFooter(branding)}
 </main>`;
 }
 
+/** The running head exists only to carry the issue number, so no issue means no head. */
 function renderMasthead(card: Card, branding: Branding): string {
-  const mark = branding.monogram ? `<span class="mark">${e(branding.monogram)}</span>` : '';
-  const seriesName = branding.series ? `<span class="series-name">${e(branding.series)}</span>` : '';
+  if (!card.issue) return '';
   const issueLabel = branding.issueLabel
     ? `<span class="issue-label">${e(branding.issueLabel)}</span><span class="issue-sep">/</span>`
     : '';
   return `<header class="masthead">
-  <div class="series">${mark}${seriesName}</div>
   <span class="issue">${issueLabel}<span class="issue-no">${e(card.issue)}</span></span>
 </header>`;
 }
@@ -87,7 +86,8 @@ async function renderPanel(panel: Panel, shikiTheme: Parameters<typeof highlight
     ? `<ul class="panel-notes">${panel.notes.map((note) => `<li>${e(note)}</li>`).join('')}</ul>`
     : '';
 
-  return `<section class="panel${verdictClass}">
+  const weight = panel.code.split('\n').length + 3 + panel.notes.length;
+  return `<section class="panel${verdictClass}" style="--weight:${weight}">
   <div class="panel-header">
     <span class="panel-title">${e(panel.label)}</span>
     <span class="panel-meta">${e(panel.language)}${badge}</span>
@@ -105,14 +105,33 @@ function renderInsight(card: Card): string {
 </section>`;
 }
 
+/** LinkedIn's "in" mark (Simple Icons, CC0), drawn in the current text colour. */
+const LINKEDIN_LOGO =
+  '<svg class="social-logo" viewBox="0 0 24 24" aria-label="LinkedIn" role="img"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>';
+
+/** "https://www.linkedin.com/in/jane/", "linkedin.com/in/jane", "@jane" and "jane" all become "/jane". */
+function linkedinHandle(value: string): string {
+  const handle = value
+    .replace(/^https?:\/\//i, '')
+    .replace(/^(www\.)?linkedin\.com\//i, '')
+    .replace(/^in\//i, '')
+    .replace(/^[@/]+|\/+$/g, '');
+  return `/${handle}`;
+}
+
+/** Author on the left; series, website, LinkedIn, X and the optional mark on the right. */
 function renderFooter(branding: Branding): string {
+  const author = branding.author ? `<strong class="author">${e(branding.author)}</strong>` : '';
+  const items = [
+    branding.series ? `<span class="series-name">${e(branding.series)}</span>` : '',
+    branding.website ? `<span>${e(branding.website)}</span>` : '',
+    branding.linkedin ? `<span class="social">${LINKEDIN_LOGO}${e(linkedinHandle(branding.linkedin))}</span>` : '',
+    branding.twitter ? `<span>${e(branding.twitter)}</span>` : '',
+  ].filter(Boolean);
+  const links = items.length ? `<div class="footer-items">${items.join('')}</div>` : '';
   const mark = branding.footerMark ? `<div class="footer-mark">${e(branding.footerMark)}<span>↗</span></div>` : '';
-  const name = [branding.series, branding.author].filter(Boolean);
-  const nameLine = name.length ? `<strong>${name.map(e).join(' <span>·</span> ')}</strong>` : '';
-  const contact = [branding.website, branding.linkedin, branding.twitter].filter(Boolean);
-  const contactLine = contact.length ? `<span class="contact-line">${contact.map(e).join(' · ')}</span>` : '';
   return `<footer>
-  <div>${nameLine}${contactLine}</div>
-  ${mark}
+  ${author}
+  <div class="footer-end">${links}${mark}</div>
 </footer>`;
 }

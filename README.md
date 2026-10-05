@@ -23,7 +23,7 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
 - **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
 - **Deterministic and offline.** Fonts are embedded, external requests are blocked, and the same source always yields the same pixels.
-- **Brandable.** Author, series, monogram and website come from a `.env` file, never from code.
+- **Brandable.** Author, series, website and social handles come from a `.env` file, never from code.
 
 ## Gallery
 
@@ -147,17 +147,17 @@ The same fields are available as JSON, which exposes everything explicitly — i
 
 ### Card fields
 
-| Field       | Required | Default | Limit                                                 |
-| ----------- | -------- | ------- | ----------------------------------------------------- |
-| `title`     | yes      |         | 70 characters                                         |
-| `subtitle`  | yes      |         | 150 characters                                        |
-| `highlight` | no       | empty   | 70 characters; second title line in the accent colour |
-| `tags`      | no       | `[]`    | up to 3, 22 characters each                           |
-| `insight`   | no       | empty   | 220 characters; the "design note" under the panels    |
-| `issue`     | no       | `01`    | 12 characters                                         |
-| `layout`    | no       | `stack` | `stack`, `columns`, `grid`                            |
-| `theme`     | no       | `print` | `print`, `vesper`, `denim`, `denim-dark`              |
-| `panels`    | yes      |         | count depends on the layout                           |
+| Field       | Required | Default | Limit                                                          |
+| ----------- | -------- | ------- | -------------------------------------------------------------- |
+| `title`     | yes      |         | 70 characters                                                  |
+| `subtitle`  | yes      |         | 150 characters                                                 |
+| `highlight` | no       | empty   | 70 characters; second title line in the accent colour          |
+| `tags`      | no       | `[]`    | up to 3, 22 characters each                                    |
+| `insight`   | no       | empty   | 220 characters; the "design note" under the panels             |
+| `issue`     | no       | empty   | 12 characters; blank shows no issue number and no running head |
+| `layout`    | no       | `stack` | `stack`, `columns`, `grid`                                     |
+| `theme`     | no       | `print` | `print`, `vesper`, `denim`, `denim-dark`                       |
+| `panels`    | yes      |         | count depends on the layout                                    |
 
 ### Panel fields
 
@@ -188,11 +188,13 @@ The `denim` themes take every colour, font family, weight and radius from the [`
 
 | Layout    | Panels | Max lines per panel | Code font range | Best for                              |
 | --------- | ------ | ------------------- | --------------- | ------------------------------------- |
-| `stack`   | 1–2    | 22 (one) / 14 (two) | 20 → 16 px      | A single snippet, or before / after   |
-| `columns` | 2      | 18                  | 18 → 13 px      | Side-by-side comparison with verdicts |
-| `grid`    | 3–4    | 12                  | 16 → 12 px      | Four short variants of the same idea  |
+| `stack`   | 1–2    | 18 (one) / 9 (two)  | 28 → 18 px      | A single snippet, or before / after   |
+| `columns` | 2      | 16                  | 22 → 15 px      | Side-by-side comparison with verdicts |
+| `grid`    | 3–4    | 10                  | 20 → 14 px      | Four short variants of the same idea  |
 
-Character limits are ceilings, not guarantees. The renderer measures the real layout and refuses to emit a card whose code or footer would be clipped; the error names the panel and what to shorten.
+Type is sized for a feed: LinkedIn shows the image only about 550 px wide on desktop and less on a phone, so labels, notes, the insight and the footer are at least 17 px on the 1080 px canvas and code never drops below the font floors above. Short snippets are rendered larger, up to the first number. The line ceilings are lower than earlier versions because the floors are higher.
+
+Character limits are ceilings, not guarantees: a card with a long subtitle, a long insight and notes has less room for code than its line count suggests. The renderer measures the real layout and refuses to emit a card whose code or footer would be clipped; the error names the panel and what to shorten.
 
 ## Command line
 
@@ -247,19 +249,18 @@ The same shape describes a Markdown card's front matter plus its panels. Lines p
 
 Copy `.env.sample` to `.env` and fill in your details. Every field is optional: leave a variable blank or unset and the card simply omits it, instead of falling back to placeholder text like `example.com`.
 
-| Variable            | Default                                | Purpose                                          |
-| ------------------- | -------------------------------------- | ------------------------------------------------ |
-| `CARD_AUTHOR`       | blank                                  | Footer author                                    |
-| `CARD_WEBSITE`      | blank                                  | Footer website                                   |
-| `CARD_SERIES`       | blank                                  | Masthead series name and footer prefix           |
-| `CARD_MONOGRAM`     | author's initials (blank if no author) | Small boxed mark in the masthead                 |
-| `CARD_FOOTER_MARK`  | blank                                  | Optional large mark bottom-right; blank hides it |
-| `CARD_ISSUE_LABEL`  | blank                                  | Prefix before the issue number                   |
-| `CARD_LINKEDIN`     | blank                                  | LinkedIn link/handle, added to the footer        |
-| `CARD_TWITTER`      | blank                                  | Twitter/X link/handle, added to the footer       |
-| `CARD_BROWSER_PATH` | Playwright's build                     | Use an existing Chromium binary                  |
+| Variable            | Default            | Purpose                                                     |
+| ------------------- | ------------------ | ----------------------------------------------------------- |
+| `CARD_AUTHOR`       | blank              | Footer author                                               |
+| `CARD_WEBSITE`      | blank              | Footer website                                              |
+| `CARD_SERIES`       | blank              | Series name, shown in the footer                            |
+| `CARD_FOOTER_MARK`  | blank              | Optional large mark bottom-right; blank hides it            |
+| `CARD_ISSUE_LABEL`  | blank              | Prefix before the card's `issue`, when it has one           |
+| `CARD_LINKEDIN`     | blank              | LinkedIn profile URL or handle, shown as logo and `/handle` |
+| `CARD_TWITTER`      | blank              | Twitter/X link/handle, added to the footer                  |
+| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                             |
 
-`CARD_WEBSITE`, `CARD_LINKEDIN` and `CARD_TWITTER` are rendered as one contact line in the footer, separated by `·`, in that order — each appears only when set.
+The footer puts `CARD_AUTHOR` on the left. On the right, separated by `·`, come `CARD_SERIES`, `CARD_WEBSITE`, `CARD_LINKEDIN` (the LinkedIn logo and `/handle`; a profile URL, `in/handle`, `@handle` or the bare handle all work) and `CARD_TWITTER`, then `CARD_FOOTER_MARK` — each appears only when set. The only thing at the top is the running head with the card's `issue`, and it is omitted when the card has none.
 
 Shell variables override the file. The committed samples use `examples/branding.env`. When [running as a server](#running-it-as-a-server-docker), these same variables set on the container become the sandbox's default branding fields for every visitor — but that default is read-only from the browser. Editing the Branding fields in the sandbox UI only saves to that browser's own storage; it's a personal override, not a way to change what other visitors see or to update the container's environment. To change the shared default, recreate the container with new `CARD_*` values. See [docs/TECHNIQUES.md](docs/TECHNIQUES.md#branding-one-server-default-read-only-from-the-ui) for why a UI-editable shared default isn't implemented.
 

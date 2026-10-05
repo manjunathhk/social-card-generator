@@ -17,7 +17,6 @@ services:
     #   CARD_AUTHOR: 'Your Name'
     #   CARD_WEBSITE: 'example.com'
     #   CARD_SERIES: 'Field Notes'
-    #   CARD_MONOGRAM: ''
     #   CARD_FOOTER_MARK: ''
     #   CARD_ISSUE_LABEL: 'Note'
     #   CARD_LINKEDIN: 'linkedin.com/in/you'

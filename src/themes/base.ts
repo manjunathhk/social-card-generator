@@ -35,23 +35,16 @@ body { background: #000; }
 
 /* Running head */
 .masthead {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: flex-end; align-items: center;
   padding-bottom: 18px; border-bottom: 1px solid var(--rule);
-  font: 500 13px/1 var(--font-mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted);
-}
-.series { display: flex; align-items: center; gap: 14px; }
-.mark {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 34px; height: 28px; padding: 0 8px; border-radius: 3px;
-  background: var(--fg); color: var(--bg);
-  font: 700 13px var(--font-sans); letter-spacing: .5px;
+  font: 500 20px/1 var(--font-mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted);
 }
 .issue { display: flex; align-items: center; gap: 10px; }
 .issue-sep { color: var(--muted-2); }
 
 /* Intro */
 .intro { padding: var(--intro-y) 0; }
-.eyebrow { font: 500 13px var(--font-mono); letter-spacing: 1.6px; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+.eyebrow { font: 500 20px var(--font-mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
 .eyebrow span { color: var(--muted-2); margin: 0 10px; }
 h1 {
   margin: 0; font: var(--h1-weight) var(--h1) / 1.05 var(--font-display);
@@ -67,6 +60,8 @@ h1 > span { display: block; color: var(--accent-title); }
   box-shadow: var(--panel-shadow); overflow: hidden;
   flex: 1; min-height: 0; display: flex; flex-direction: column;
 }
+/* A stack divides its height by content, so a short panel does not hold empty space the longer one needs. */
+.layout-stack .panel { flex: var(--weight) 1 0; }
 .panel-header {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
   padding: var(--header-y) var(--header-x); border-bottom: 1px solid var(--panel-rule);
@@ -77,8 +72,8 @@ h1 > span { display: block; color: var(--accent-title); }
 .panel-meta { display: flex; align-items: center; gap: 12px; white-space: nowrap; letter-spacing: 1px; text-transform: uppercase; }
 .badge {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%;
-  font: 700 12px var(--font-sans); color: var(--badge-fg);
+  width: 30px; height: 30px; border-radius: 50%;
+  font: 700 17px var(--font-sans); color: var(--badge-fg);
 }
 .verdict-good .badge { background: var(--good); }
 .verdict-bad .badge { background: var(--bad); }
@@ -110,15 +105,19 @@ pre.shiki code { font: inherit; }
 
 /* Insight */
 .insight { padding: var(--insight-y) 0 calc(var(--insight-y) - 2px); }
-.insight-label { font: 500 12px var(--font-mono); letter-spacing: 1.6px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.insight-label { font: 500 18px var(--font-mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
 .insight p { margin: 0; font-size: var(--insight-size); line-height: 1.45; letter-spacing: -.2px; max-width: 900px; overflow-wrap: anywhere; }
 .spacer { height: 24px; flex: none; }
 
-/* Colophon */
-footer { border-top: 1px solid var(--rule); padding-top: 22px; display: flex; align-items: center; justify-content: space-between; }
-footer strong { font: 600 16px var(--font-sans); letter-spacing: -.2px; }
-footer strong span { color: var(--muted-2); padding: 0 6px; font-weight: 400; }
-.contact-line { display: block; margin-top: 6px; font: 400 13px var(--font-mono); color: var(--muted); letter-spacing: .4px; }
+/* Colophon: author on the left, everything else on the right */
+footer { border-top: 1px solid var(--rule); padding-top: 22px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+footer .author { font: 600 26px var(--font-sans); letter-spacing: -.3px; white-space: nowrap; }
+.footer-end { display: flex; align-items: center; justify-content: flex-end; gap: 24px; margin-left: auto; min-width: 0; }
+.footer-items { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 0; font: 400 20px/1.3 var(--font-mono); color: var(--muted); }
+.footer-items > span { display: inline-flex; align-items: center; gap: 8px; }
+.footer-items > span + span::before { content: '·'; color: var(--muted-2); padding: 0 12px; }
+.footer-items .series-name { color: var(--fg); font-weight: 500; }
+.social-logo { width: 22px; height: 22px; flex: none; }
 .footer-mark { font: 700 28px var(--font-display); letter-spacing: -1px; }
 .footer-mark span { color: var(--accent); margin-left: 4px; font-size: 22px; }
 `;

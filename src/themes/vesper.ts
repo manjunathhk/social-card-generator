@@ -27,7 +27,7 @@ export const vesper: Theme = {
   --font-display: "Geist Sans"; --font-sans: "Geist Sans"; --font-mono: "Geist Mono";
   --h1-weight: 600; --h1-tracking: -2.6px; --panel-radius: 10px;
 }
-.theme-vesper .mark, .theme-vesper .issue-label, .theme-vesper .issue-sep, .theme-vesper .insight-label { display: none; }
+.theme-vesper .issue-label, .theme-vesper .issue-sep, .theme-vesper .insight-label { display: none; }
 .theme-vesper .masthead { align-items: baseline; padding-bottom: 14px; }
 .theme-vesper .issue-no { font: 300 36px/1 var(--font-sans); letter-spacing: -1px; color: var(--fg); }
 .theme-vesper .eyebrow { color: var(--muted); }

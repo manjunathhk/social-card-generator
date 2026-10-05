@@ -52,7 +52,10 @@ export function buildCardSchema(): JsonSchema {
         default: [],
       },
       insight: text('insight', 'The "design note" under the panels.'),
-      issue: { ...text('issue', 'Issue number shown on the card.', { required: true }), default: '01' },
+      issue: text(
+        'issue',
+        'Issue number shown in a running head at the top. Omit it and the card shows no issue number.',
+      ),
       layout: {
         description: `Panel arrangement. ${LAYOUTS.map(describeLayout).join(' ')}`,
         enum: [...LAYOUTS],

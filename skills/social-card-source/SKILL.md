@@ -91,7 +91,7 @@ JSON exposes every field, including `underline`. `$schema` is optional and gives
 | `subtitle`  | yes      |         | 150 characters                           |
 | `tags`      | no       | `[]`    | up to 3 tags, 22 characters each         |
 | `insight`   | no       | empty   | 220 characters                           |
-| `issue`     | no       | `01`    | 12 characters                            |
+| `issue`     | no       | empty   | 12 characters; blank shows no number     |
 | `layout`    | no       | `stack` | `stack`, `columns`, `grid`               |
 | `theme`     | no       | `print` | `print`, `vesper`, `denim`, `denim-dark` |
 | `panels`    | yes      |         | count and lines per layout, see below    |
@@ -114,18 +114,19 @@ JSON exposes every field, including `underline`. `$schema` is optional and gives
 
 ### Layouts
 
-| Layout    | Panels | Max lines per panel            | Code font   | Use for                           |
-| --------- | ------ | ------------------------------ | ----------- | --------------------------------- |
-| `stack`   | 1 to 2 | 22 with one panel, 14 with two | 20 to 16 px | one snippet, or before and after  |
-| `columns` | 2      | 18                             | 18 to 13 px | side-by-side comparison, verdicts |
-| `grid`    | 3 to 4 | 12                             | 16 to 12 px | three or four short variants      |
+| Layout    | Panels | Max lines per panel           | Code font   | Use for                           |
+| --------- | ------ | ----------------------------- | ----------- | --------------------------------- |
+| `stack`   | 1 to 2 | 18 with one panel, 9 with two | 28 to 18 px | one snippet, or before and after  |
+| `columns` | 2      | 16                            | 22 to 15 px | side-by-side comparison, verdicts |
+| `grid`    | 3 to 4 | 10                            | 20 to 14 px | three or four short variants      |
 
 The renderer starts at the larger font and shrinks toward the smaller one until the card fits. Code never wraps. A card within every limit can still fail if a panel's longest line is too wide, or its code too tall, at the minimum font; the error names the panel to shorten.
 
 ## Authoring lessons
 
-- Two-panel `stack` holds at most 14 lines per panel. Cut the code to the lines that make the point.
-- `columns` panels stretch to equal height, so aim for 10 to 16 lines in each. A 4-line panel next to a 16-line one leaves a large empty box.
+- Two-panel `stack` holds at most 9 lines per panel, and fewer with a long subtitle, a long insight or notes. Cut the code to the lines that make the point; a shorter snippet is also rendered larger, which is what stays readable in a LinkedIn feed.
+- Set `issue` only when the card is part of a numbered series. Without it the card has no running head and no number.
+- `columns` panels stretch to equal height, so aim for 8 to 14 lines in each. A 4-line panel next to a 16-line one leaves a large empty box.
 - Keep `columns` code lines under about 32 characters. Code never wraps, and a line wider than the half-width panel at the minimum font fails the card.
 - Use `jsonc`, not `json`, when a panel contains comments. Strict JSON has no comments, and the language id shows in every panel header.
 
@@ -142,7 +143,7 @@ Any theme works with any layout.
 
 ## Branding is not part of the source
 
-Author, website, series, monogram, social handles and the issue prefix come from `CARD_*` environment variables (a `.env` file for the CLI, container env on a server) or from the Branding fields in the sandbox UI. Never put them in card source. Unknown keys are ignored, so an `author` field does nothing and hides the mistake.
+Author, website, series, social handles and the issue prefix come from `CARD_*` environment variables (a `.env` file for the CLI, container env on a server) or from the Branding fields in the sandbox UI. Never put them in card source. Unknown keys are ignored, so an `author` field does nothing and hides the mistake.
 
 ## Verify before handing over
 

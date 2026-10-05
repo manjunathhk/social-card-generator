@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.0.0] - 2026-10-05
+
+Feedback from first readers: card text was unreadable at feed size on LinkedIn, and the card carried duplicated and default-filled chrome.
+
+### Changed
+
+- **Readable at feed size.** LinkedIn shows the 1080 × 1350 image about 550 px wide on desktop, less on a phone. Panel headers, tags, notes, the insight label and the footer grow to 17–26 px, the subtitle and insight to 24–26 px, and the code font range rises to `stack` 28 → 18 px, `columns` 22 → 15 px and `grid` 20 → 14 px (was 20 → 16, 18 → 13 and 16 → 12). Stack panels share the height by line count, so a short panel no longer holds empty space the longer one needs and short snippets render large.
+- **Breaking: lower line ceilings**, because the floors are higher: `stack` 18 lines with one panel and 9 with two (was 22 and 14), `columns` 16 (was 18), `grid` 10 (was 12). A card that was valid can now fail `--check`.
+- **Breaking: `issue` is optional with no default.** It used to default to `01`, so every card showed a number. Now a card shows an issue number, and the running head that holds it, only when its source sets `issue`.
+- The footer puts the author on the left and the series, website, LinkedIn, X handle and optional mark on the right. The series appears only in the footer (it was also in the running head).
+- LinkedIn renders as its logo and `/handle`. `CARD_LINKEDIN` accepts a profile URL, `in/handle`, `@handle` or the bare handle.
+- Sandbox: larger type throughout the page, and a new card no longer starts with `issue: '01'`.
+
+### Removed
+
+- **Breaking: the author-initials monogram.** `CARD_MONOGRAM`, the Monogram field in the sandbox and the `monogram` field of `/api/branding` are gone.
+
 ## [2.6.0] - 2026-10-05
 
 ### Changed

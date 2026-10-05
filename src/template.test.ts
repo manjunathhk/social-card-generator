@@ -28,8 +28,8 @@ test('document embeds fonts, blocks nothing external, and escapes card text', as
   assert.ok(html.includes('<h1>Title &lt;b&gt;</h1>'));
   assert.ok(html.includes('A&amp;B'));
   assert.ok(html.includes('class="card layout-stack theme-print panels-1"'));
-  assert.ok(html.includes('data-font-max="20" data-font-min="16"'));
-  assert.match(html, /style="--h1:65px;--subtitle:23px;/);
+  assert.ok(html.includes('data-font-max="28" data-font-min="18"'));
+  assert.match(html, /style="--h1:65px;--subtitle:26px;/);
   assert.ok(html.includes('Ada Lovelace'));
   assert.ok(!html.includes('<div class="footer-mark">'));
 });
@@ -56,7 +56,7 @@ test('panel decorations render as classes, badges, notes and underlines', async 
   assert.ok(html.includes('layout-columns theme-vesper panels-2'));
   assert.match(html, /style="--h1:58px;/);
   assert.ok(html.includes('font-family:"Geist Mono"'));
-  assert.ok(html.includes('<section class="panel verdict-bad">'));
+  assert.ok(html.includes('<section class="panel verdict-bad" style="--weight:5">'));
   assert.ok(html.includes('<span class="badge">✓</span>'));
   assert.ok(html.includes('<li>slow &lt;x&gt;</li>'));
   assert.ok(html.includes('class="underline"'));
@@ -101,17 +101,56 @@ test('footer mark is optional and escaped', async () => {
   assert.ok(html.includes('<div class="footer-mark">&lt;MK&gt;<span>↗</span></div>'));
 });
 
-test('social links join the contact line only when provided, and are escaped', async () => {
+test('footer puts the author left and series, website and socials right, each only when set', async () => {
   const card = validateCard({ title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] });
 
-  const withLinks = await renderDocument(
+  const full = await renderDocument(
     [card],
-    brandingFromEnv({ CARD_WEBSITE: 'example.com', CARD_LINKEDIN: 'in/<x>', CARD_TWITTER: '@x' }),
+    brandingFromEnv({
+      CARD_AUTHOR: 'Ada',
+      CARD_SERIES: 'Notes',
+      CARD_WEBSITE: 'example.com',
+      CARD_LINKEDIN: 'in/<x>',
+      CARD_TWITTER: '@x',
+    }),
   );
-  assert.ok(withLinks.includes('<span class="contact-line">example.com · in/&lt;x&gt; · @x</span>'));
+  assert.ok(full.includes('<strong class="author">Ada</strong>'));
+  assert.match(full, /<div class="footer-items"><span class="series-name">Notes<\/span><span>example\.com<\/span>/);
+  assert.match(full, /<span class="social"><svg class="social-logo".*<\/svg>\/&lt;x&gt;<\/span><span>@x<\/span>/);
+  assert.equal(full.match(/class="series-name"/g)?.length, 1, 'the series appears once, in the footer');
 
-  const noLinks = await renderDocument([card], brandingFromEnv({}));
-  assert.ok(!noLinks.includes('<span class="contact-line">'));
+  const bare = await renderDocument([card], brandingFromEnv({}));
+  assert.ok(!bare.includes('<strong class="author">'));
+  assert.ok(!bare.includes('class="footer-items"'));
+});
+
+test('LinkedIn shows the logo and the handle whether given a URL, a path or a bare name', async () => {
+  const card = validateCard({ title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] });
+  for (const value of ['https://www.linkedin.com/in/ada/', 'linkedin.com/in/ada', 'in/ada', '@ada', 'ada']) {
+    const html = await renderDocument([card], brandingFromEnv({ CARD_LINKEDIN: value }));
+    assert.match(html, /<\/svg>\/ada<\/span>/, value);
+  }
+});
+
+test('the running head carries the issue and only exists when there is one', async () => {
+  const panels = [{ language: 'csharp', code: 'x' }];
+  const withIssue = await renderDocument(
+    [validateCard({ title: 'T', subtitle: 'S', issue: '07', panels })],
+    brandingFromEnv({ CARD_AUTHOR: 'Ada', CARD_ISSUE_LABEL: 'Note' }),
+  );
+  assert.ok(
+    withIssue.includes(
+      '<span class="issue-label">Note</span><span class="issue-sep">/</span><span class="issue-no">07</span>',
+    ),
+  );
+  assert.ok(!withIssue.includes('class="mark"'), 'no author initials in the head');
+
+  const withoutIssue = await renderDocument(
+    [validateCard({ title: 'T', subtitle: 'S', panels })],
+    brandingFromEnv({ CARD_AUTHOR: 'Ada', CARD_SERIES: 'Notes', CARD_ISSUE_LABEL: 'Note' }),
+  );
+  assert.ok(!withoutIssue.includes('<header class="masthead">'));
+  assert.ok(!withoutIssue.includes('issue-no'));
 });
 
 test('underline decorations cover every occurrence and skip overlaps', () => {

@@ -136,7 +136,7 @@ type     --font-display --font-sans --font-mono --h1-weight --h1-tracking
 shape    --panel-radius
 ```
 
-A theme also lists the font files it needs (`fonts`) and names the Shiki theme for code tokens, and may add small overrides scoped under its class: `vesper` hides the monogram and the issue label and enlarges the issue numeral; `print` puts a heavy rule under the running head; `denim` draws the drafting grid on the card.
+A theme also lists the font files it needs (`fonts`) and names the Shiki theme for code tokens, and may add small overrides scoped under its class: `vesper` hides the issue label and enlarges the issue numeral; `print` puts a heavy rule under the running head; `denim` draws the drafting grid on the card.
 
 **Themes from the shared design system.** `denim` and `denim-dark` hold no colour of their own. `denim.ts` imports the resolved values from `@manjunathhk/design-tokens` (its `tokens.mjs`: `light`, `dark`, `shared`) and writes them into the contract when the module loads, so the card still receives plain values and nothing depends on `prefers-color-scheme`. A palette release reaches both themes with a dependency bump, and `npm run samples` shows the result. The contract has roles the design system doesn't name; `denim.ts` documents which token each one borrows. The package's type scale and spacing are not used: they are `clamp()`/`vw` values for responsive pages, and a card's sizes come from the layout tokens and the fit loop. Fonts follow the package too: `denim.ts` takes the family names from the tokens' display, sans and mono stacks and `fonts.ts` embeds their faces from the package's `fonts.css`, so a typeface change in the design system (1.2.0 moved from IBM Plex to Inter and JetBrains Mono) needs no edit here, only a re-run of `npm run samples`. The CDN at `design.manjunathhk.in` is not used anywhere: a rendered card must not touch the network.
 
@@ -148,7 +148,7 @@ Character limits cannot guarantee that code fits: a line of `WWWW` is twice as w
 
 `fit-script.ts` runs inside the page after fonts are ready. For each `.card`:
 
-1. Read the layout's font range from `data-font-max` and `data-font-min` on the card. `stack` runs 20 → 16 px, `columns` 18 → 13 px, `grid` 16 → 12 px.
+1. Read the layout's font range from `data-font-max` and `data-font-min` on the card. `stack` runs 28 → 18 px, `columns` 22 → 15 px, `grid` 20 → 14 px.
 2. For each `pre.shiki`, start at the maximum and step down by 0.5 px until `scrollWidth` fits the parent's inner width and the rendered height fits the parent's inner height, or the minimum is reached.
 3. Apply the smallest size found to every panel on that card. Two panels at different sizes look like a mistake even when both fit.
 4. Re-check every panel at that unified size, then check that the card itself does not scroll and the footer's bottom edge sits above the card's bottom margin.

@@ -33,6 +33,7 @@ export type Card = {
   subtitle: string;
   tags: string[];
   insight: string;
+  /** Optional; blank means the card shows no issue number and no running head. */
   issue: string;
   layout: Layout;
   theme: string;
@@ -76,85 +77,86 @@ export type LayoutRule = {
 
 const ONE_PANEL: LayoutTokens = {
   '--h1': '65px',
-  '--subtitle': '23px',
-  '--intro-y': '30px',
+  '--subtitle': '26px',
+  '--intro-y': '28px',
   '--panel-gap': '22px',
-  '--header-y': '18px',
+  '--header-y': '16px',
   '--header-x': '28px',
-  '--header-size': '14px',
+  '--header-size': '20px',
   '--code-y': '24px',
   '--code-x': '28px',
-  '--notes-size': '17px',
-  '--notes-y': '18px',
-  '--insight-y': '28px',
-  '--insight-size': '24px',
+  '--notes-size': '22px',
+  '--notes-y': '16px',
+  '--insight-y': '24px',
+  '--insight-size': '26px',
 };
 
 const TWO_PANELS: LayoutTokens = {
   ...ONE_PANEL,
   '--h1': '59px',
-  '--intro-y': '25px',
-  '--header-y': '16px',
-  '--code-y': '20px',
-  '--insight-y': '22px',
-  '--insight-size': '22px',
+  '--intro-y': '24px',
+  '--header-y': '14px',
+  '--code-y': '18px',
+  '--insight-y': '20px',
+  '--insight-size': '24px',
 };
 
 const COLUMNS: LayoutTokens = {
   ...ONE_PANEL,
   '--h1': '58px',
-  '--intro-y': '26px',
-  '--header-y': '15px',
+  '--subtitle': '25px',
+  '--intro-y': '24px',
+  '--header-y': '14px',
   '--header-x': '22px',
-  '--header-size': '13px',
+  '--header-size': '18px',
   '--code-y': '20px',
   '--code-x': '22px',
-  '--notes-size': '15px',
+  '--notes-size': '20px',
   '--notes-y': '14px',
-  '--insight-y': '22px',
-  '--insight-size': '22px',
+  '--insight-y': '20px',
+  '--insight-size': '26px',
 };
 
 const GRID: LayoutTokens = {
   ...ONE_PANEL,
   '--h1': '54px',
-  '--subtitle': '21px',
-  '--intro-y': '24px',
+  '--subtitle': '25px',
+  '--intro-y': '22px',
   '--panel-gap': '20px',
   '--header-y': '12px',
   '--header-x': '20px',
-  '--header-size': '12px',
+  '--header-size': '17px',
   '--code-y': '16px',
   '--code-x': '20px',
-  '--notes-size': '14px',
+  '--notes-size': '18px',
   '--notes-y': '10px',
-  '--insight-y': '22px',
-  '--insight-size': '22px',
+  '--insight-y': '20px',
+  '--insight-size': '25px',
 };
 
 export const LAYOUT_RULES: Record<Layout, LayoutRule> = {
   stack: {
     minPanels: 1,
     maxPanels: 2,
-    maxLines: (count) => (count > 1 ? 14 : 22),
-    fontMax: 20,
-    fontMin: 16,
+    maxLines: (count) => (count > 1 ? 9 : 18),
+    fontMax: 28,
+    fontMin: 18,
     tokens: (count) => (count > 1 ? TWO_PANELS : ONE_PANEL),
   },
   columns: {
     minPanels: 2,
     maxPanels: 2,
-    maxLines: () => 18,
-    fontMax: 18,
-    fontMin: 13,
+    maxLines: () => 16,
+    fontMax: 22,
+    fontMin: 15,
     tokens: () => COLUMNS,
   },
   grid: {
     minPanels: 3,
     maxPanels: 4,
-    maxLines: () => 12,
-    fontMax: 16,
-    fontMin: 12,
+    maxLines: () => 10,
+    fontMax: 20,
+    fontMin: 14,
     tokens: () => GRID,
   },
 };

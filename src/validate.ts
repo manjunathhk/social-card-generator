@@ -35,7 +35,7 @@ export function validateCard(raw: unknown): Card {
     subtitle: readText(value, 'subtitle', { required: true }),
     tags: readTags(value.tags),
     insight: readText(value, 'insight'),
-    issue: readText(value, 'issue', { required: true, fallback: '01' }),
+    issue: readText(value, 'issue'),
     layout,
     theme,
     panels,
