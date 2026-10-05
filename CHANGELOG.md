@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Added
 
 - The sandbox header has a sun/moon icon button that switches the app chrome between light and dark by setting `data-theme` on `<html>`. It follows the OS setting until it is used, and the choice is remembered in the browser (`scs:app-theme`). It does not affect the card, which keeps its own Theme picker. The "Studio" half of the wordmark is now set in a lighter weight: the design system's light palette uses one colour for accent and text, so the accent colour alone showed only in dark. (#36)
+- The Layout and Theme pickers no longer split across two lines on a phone: each label sits above its select and the two share the row. (#36)
 
 ## [3.0.1] - 2026-10-05
 

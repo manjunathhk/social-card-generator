@@ -64,6 +64,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .pane { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toolbar .pair { display: flex; align-items: center; gap: 10px; }
+.toolbar .pair select { min-width: 0; }
+@media (max-width: 600px) { .toolbar .pair { flex: 1 1 0; min-width: 0; flex-direction: column; align-items: stretch; gap: 4px; } }
 .toolbar label { font-size: 13px; color: var(--faint); text-transform: uppercase; letter-spacing: .7px; font-weight: 500; }
 select, input[type="text"] {
   background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 10px; min-width: 0;
@@ -190,10 +193,10 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
         <span class="pill" id="langs-pill" title="Languages bundled in this sandbox">15 languages</span>
       </div>
       <div class="toolbar">
-        <label for="layout-sel">Layout</label>
-        <select id="layout-sel"><option value="">from source</option><option value="stack">stack</option><option value="columns">columns</option><option value="grid">grid</option></select>
-        <label for="theme-sel">Theme</label>
-        <select id="theme-sel"><option value="">from source</option><option value="custom">custom…</option></select>
+        <span class="pair"><label for="layout-sel">Layout</label>
+        <select id="layout-sel"><option value="">from source</option><option value="stack">stack</option><option value="columns">columns</option><option value="grid">grid</option></select></span>
+        <span class="pair"><label for="theme-sel">Theme</label>
+        <select id="theme-sel"><option value="">from source</option><option value="custom">custom…</option></select></span>
       </div>
       <p class="hint" id="editing-hint" hidden></p>
       <div class="palette" id="palette" hidden>
