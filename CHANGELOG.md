@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.2.1] - 2026-10-05
+
+### Fixed
+
+- The "stack · dark, notes" sandbox example no longer overflows once the footer carries a full set of branding (series, links, credit line): its subtitle and insight are shorter, leaving the code panels room.
+
 ## [3.2.0] - 2026-10-05
 
 ### Added
