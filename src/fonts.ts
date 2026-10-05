@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import type { FontFile } from './themes/types.js';
+import type { FontFile, FontStylesheet } from './themes/types.js';
 
 const require = createRequire(import.meta.url);
 const cache = new Map<string, Promise<string>>();
@@ -24,24 +24,52 @@ function resolveFontFile(file: string): string {
   }
 }
 
+const toRule = (family: string, weight: string, data: Buffer): string =>
+  `@font-face{font-family:"${family}";font-weight:${weight};src:url(data:font/woff2;base64,${data.toString('base64')}) format("woff2")}`;
+
 function fontFaceRule(font: FontFile): Promise<string> {
   let rule = cache.get(font.file);
   if (!rule) {
-    rule = readFile(resolveFontFile(font.file)).then(
-      (data) =>
-        `@font-face{font-family:"${font.family}";font-weight:${font.weight};src:url(data:font/woff2;base64,${data.toString('base64')}) format("woff2")}`,
-    );
+    rule = readFile(resolveFontFile(font.file)).then((data) => toRule(font.family, String(font.weight), data));
     cache.set(font.file, rule);
   }
   return rule;
 }
 
+/** Reads `<property>: value` out of one `@font-face` block, with quotes stripped. */
+function declaration(block: string, property: string): string | undefined {
+  return block.match(new RegExp(String.raw`${property}\s*:\s*["']?([^;"']+)["']?\s*;`))?.[1]?.trim();
+}
+
+async function stylesheetRules({ stylesheet, families }: FontStylesheet): Promise<string[]> {
+  const cssPath = resolveFontFile(stylesheet);
+  const css = await readFile(cssPath, 'utf8');
+  const blocks = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1] ?? '');
+  const faces = blocks.flatMap((block) => {
+    const family = declaration(block, 'font-family');
+    const weight = declaration(block, 'font-weight') ?? '400';
+    const url = block.match(/url\(\s*["']?([^"')]+\.woff2)["']?\s*\)/)?.[1];
+    const style = declaration(block, 'font-style') ?? 'normal';
+    return family && url && style === 'normal' && families.includes(family) ? [{ family, weight, url }] : [];
+  });
+  for (const family of families) {
+    if (!faces.some((face) => face.family === family)) {
+      throw new Error(`${stylesheet} has no normal-style woff2 face for font family "${family}".`);
+    }
+  }
+  return Promise.all(
+    faces.map(async ({ family, weight, url }) => toRule(family, weight, await readFile(join(dirname(cssPath), url)))),
+  );
+}
+
 /**
  * Builds `@font-face` rules with the WOFF2 files inlined as base64 so the
  * rendered HTML is self-contained and the browser never needs the network.
- * Duplicate files (two themes sharing a face) are embedded once.
+ * Duplicate faces (two themes sharing one) are embedded once.
  */
-export async function fontFaceCss(fonts: FontFile[]): Promise<string> {
-  const unique = [...new Map(fonts.map((font) => [font.file, font])).values()];
-  return (await Promise.all(unique.map(fontFaceRule))).join('\n');
+export async function fontFaceCss(fonts: (FontFile | FontStylesheet)[]): Promise<string> {
+  const rules = await Promise.all(
+    fonts.map((font) => ('stylesheet' in font ? stylesheetRules(font) : fontFaceRule(font).then((rule) => [rule]))),
+  );
+  return [...new Set(rules.flat())].join('\n');
 }

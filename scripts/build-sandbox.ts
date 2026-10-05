@@ -23,7 +23,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fontFaceCss } from '../src/fonts.js';
 import { parseMarkdown } from '../src/markdown.js';
-import { plexFont } from '../src/themes/denim.js';
+import { DESIGN_TOKEN_FONTS } from '../src/themes/denim.js';
 import { THEMES } from '../src/themes/index.js';
 import { validateCard } from '../src/validate.js';
 import { SANDBOX_LANGUAGES, SANDBOX_SHIKI_THEMES } from '../web/sandbox/browser-highlight.js';
@@ -48,21 +48,12 @@ function checkShikiThemes(): void {
   }
 }
 
-/** The faces the sandbox's own UI uses: the design system's sans and mono. */
-const UI_FONTS = [
-  plexFont('IBM Plex Sans', 400, 'IBMPlexSans-Regular-Latin1'),
-  plexFont('IBM Plex Sans', 500, 'IBMPlexSans-Medium-Latin1'),
-  plexFont('IBM Plex Sans', 600, 'IBMPlexSans-SemiBold-Latin1'),
-  plexFont('IBM Plex Mono', 400, 'IBMPlexMono-Regular-Latin1'),
-  plexFont('IBM Plex Mono', 500, 'IBMPlexMono-Medium-Latin1'),
-];
-
 /**
  * Every theme's fonts plus the UI's, embedded once each, so the sandbox can
  * switch themes without reloading and never fetches a font.
  */
 async function fontCss(): Promise<string> {
-  const fonts = [...Object.values(THEMES).flatMap((theme) => theme.fonts), ...UI_FONTS];
+  const fonts = [...Object.values(THEMES).flatMap((theme) => theme.fonts), DESIGN_TOKEN_FONTS];
   return fontFaceCss(fonts);
 }
 

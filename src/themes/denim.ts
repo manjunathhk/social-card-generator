@@ -1,26 +1,28 @@
 import { dark, light, shared, type ColorTokens } from '@manjunathhk/design-tokens';
 import type { BundledTheme } from 'shiki';
-import type { FontFile, Theme } from './types.js';
+import type { FontStylesheet, Theme } from './types.js';
 
-/** One IBM Plex face shipped in the design-tokens package, by its file name without extension. */
-export const plexFont = (family: string, weight: number, file: string): FontFile => ({
-  family,
-  weight,
-  file: `@manjunathhk/design-tokens/dist/fonts/${file}.woff2`,
-});
+/** Primary family of a CSS font stack token, e.g. `Inter, system-ui, sans-serif` gives `Inter`. */
+const primaryFamily = (stack: string): string => (stack.split(',')[0] ?? '').trim().replace(/^['"]|['"]$/g, '');
 
-const FONTS: FontFile[] = [
-  plexFont('IBM Plex Sans Condensed', 600, 'IBMPlexSansCondensed-SemiBold-Latin1'),
-  plexFont('IBM Plex Sans Condensed', 700, 'IBMPlexSansCondensed-Bold-Latin1'),
-  plexFont('IBM Plex Sans', 400, 'IBMPlexSans-Regular-Latin1'),
-  plexFont('IBM Plex Sans', 600, 'IBMPlexSans-SemiBold-Latin1'),
-  plexFont('IBM Plex Mono', 400, 'IBMPlexMono-Regular-Latin1'),
-  plexFont('IBM Plex Mono', 500, 'IBMPlexMono-Medium-Latin1'),
-];
+/**
+ * The faces of the families the tokens name, read from the package's own
+ * `fonts.css`, so a typeface change in the design system needs no edit here.
+ */
+export const DESIGN_TOKEN_FONTS: FontStylesheet = {
+  stylesheet: '@manjunathhk/design-tokens/fonts.css',
+  families: [
+    ...new Set([
+      primaryFamily(shared['font.family.display']),
+      primaryFamily(shared['font.family.sans']),
+      primaryFamily(shared['font.family.mono']),
+    ]),
+  ],
+};
 
 /**
  * Denim: the shared personal design system (@manjunathhk/design-tokens,
- * palette "Paper & Denim", IBM Plex) applied to a card. Every value comes
+ * palette "Paper & Denim") applied to a card. Every value comes
  * from the package's resolved tokens, so a palette release reaches these
  * themes with a dependency bump. A card is a fixed image, so light and dark
  * are two themes rather than one following the viewer's OS.
@@ -36,7 +38,7 @@ function denim(name: string, description: string, color: ColorTokens, shikiTheme
     name,
     description,
     shikiTheme,
-    fonts: FONTS,
+    fonts: [DESIGN_TOKEN_FONTS],
     css: /* css */ `
 .theme-${name} {
   --bg: ${color['color.bg']}; --fg: ${color['color.text']}; --muted: ${color['color.text-muted']}; --muted-2: ${color['color.border-strong']};
@@ -58,14 +60,14 @@ function denim(name: string, description: string, color: ColorTokens, shikiTheme
 
 export const denimLight = denim(
   'denim',
-  'Paper and denim from the shared design tokens, IBM Plex type, light.',
+  'Paper and denim from the shared design tokens, type from the tokens, light.',
   light,
   'github-light',
 );
 
 export const denimDark = denim(
   'denim-dark',
-  'Paper and denim from the shared design tokens, IBM Plex type, dark.',
+  'Paper and denim from the shared design tokens, type from the tokens, dark.',
   dark,
   'github-dark',
 );

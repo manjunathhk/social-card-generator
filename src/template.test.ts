@@ -76,7 +76,7 @@ test('multi-card documents include every used theme once', async () => {
   assert.equal(html.match(/font-family:"Inter";font-weight:400/g)?.length, 1, 'shared font embedded once');
 });
 
-test('denim themes take their palette and IBM Plex faces from @manjunathhk/design-tokens', async () => {
+test('denim themes take their palette and Inter and JetBrains Mono faces from @manjunathhk/design-tokens', async () => {
   const base = { title: 'T', subtitle: 'S', panels: [{ language: 'csharp', code: 'x' }] };
   const html = await renderDocument(
     [validateCard({ ...base, theme: 'denim' }), validateCard({ ...base, theme: 'denim-dark' })],
@@ -87,11 +87,11 @@ test('denim themes take their palette and IBM Plex faces from @manjunathhk/desig
   assert.match(html, new RegExp(`\\.theme-denim \\{\\s*--bg: ${light['color.bg']};`));
   assert.match(html, new RegExp(`\\.theme-denim-dark \\{\\s*--bg: ${dark['color.bg']};`));
   assert.equal(
-    html.match(/font-family:"IBM Plex Mono";font-weight:400/g)?.length,
+    html.match(/font-family:"JetBrains Mono";font-weight:400/g)?.length,
     1,
     'font files shared by the two themes are embedded once',
   );
-  assert.ok(!html.includes('Inter'), "only the used themes' fonts are embedded");
+  assert.ok(!html.includes('font-family:"Geist'), "only the used themes' fonts are embedded");
   assert.ok(!/https?:\/\//.test(html.replace(/<title>.*<\/title>/, '')), 'no external URLs');
 });
 
