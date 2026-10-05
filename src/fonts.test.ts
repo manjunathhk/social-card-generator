@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { fontFaceCss } from './fonts.js';
-import { DESIGN_TOKEN_FONTS } from './themes/denim.js';
+import { DESIGN_TOKEN_FONTS } from './themes/design-tokens.js';
 
 test('design-token fonts are read from the package stylesheet, normal style only', async () => {
   const css = await fontFaceCss([DESIGN_TOKEN_FONTS]);

@@ -4,8 +4,8 @@ highlight: inject() in Angular
 subtitle: Constructor injection still works; the inject() function removes the boilerplate around it.
 tags: [Angular, DI, Signals]
 issue: '03'
-theme: vesper
-sandboxLabel: stack · vesper, notes
+theme: dark
+sandboxLabel: stack · dark, notes
 insight: inject() must run in an injection context — a constructor, a field
   initializer, or a factory function — not inside a later callback or
   setTimeout.

@@ -1,4 +1,4 @@
-# Social Card Generator
+# Social Card Studio
 
 [![CI](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/manjunathhk/social-card-generator/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -7,8 +7,8 @@
 Turn a Markdown file into a polished 1080 × 1350 technical social card, or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
 
 <p align="center">
-  <img src="sample/rabbitmq-idempotency.png" alt="Single-panel card in the print theme" width="420">
-  <img src="sample/nginx-rate-limit.png" alt="Side-by-side comparison card in the vesper theme" width="420">
+  <img src="sample/rabbitmq-idempotency.png" alt="Single-panel card in the light theme" width="420">
+  <img src="sample/nginx-rate-limit.png" alt="Side-by-side comparison card in the dark theme" width="420">
 </p>
 
 ## Why
@@ -18,21 +18,21 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 ## Features
 
 - **Three layouts.** `stack` (one or two panels), `columns` (side-by-side comparison), `grid` (up to four panels).
-- **Four themes.** `print`, a paper-and-ink journal page with light code panels; `vesper`, near-black minimalism with one peach accent; and `denim` / `denim-dark`, the Paper & Denim palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). Each theme owns its palette, typefaces and shape through a documented token contract.
+- **Two themes.** `light` and `dark`, the Paper & Denim palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). A theme owns its palette, typefaces and shape through a documented token contract, so you can add your own.
 - **Panel decorations.** Line highlights, token underlines, ✓ / ✕ verdict badges, and short bullet notes per panel.
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
 - **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
 - **Deterministic and offline.** Fonts are embedded, external requests are blocked, and the same source always yields the same pixels.
-- **Brandable.** Author, series, monogram and website come from a `.env` file, never from code.
+- **Brandable.** Author, series, website and social handles come from a `.env` file, never from code.
 
 ## Gallery
 
-| `stack` · print                                                          | `stack` · print, verdicts                                              | `stack` · vesper, notes                                                    |
+| `stack` · light                                                          | `stack` · light, verdicts                                              | `stack` · dark, notes                                                      |
 | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [![](sample/rabbitmq-idempotency.png)](examples/rabbitmq-idempotency.md) | [![](sample/ef-core-n-plus-one.png)](examples/ef-core-n-plus-one.json) | [![](sample/angular-inject.png)](examples/angular-inject.md)               |
-| `stack` · two languages                                                  | `columns` · vesper, notes + verdicts                                   | `grid` · vesper, underlines                                                |
+| `stack` · two languages                                                  | `columns` · dark, notes + verdicts                                     | `grid` · dark, underlines                                                  |
 | [![](sample/dto-validation.png)](examples/dto-validation.md)             | [![](sample/nginx-rate-limit.png)](examples/nginx-rate-limit.md)       | [![](sample/compose-healthchecks.png)](examples/compose-healthchecks.json) |
-| `stack` · denim, verdicts                                                | `columns` · denim-dark, notes + underlines                             |                                                                            |
+| `stack` · light, verdicts                                                | `columns` · dark, notes + underlines                                   |                                                                            |
 | [![](sample/semantic-tokens.png)](examples/semantic-tokens.md)           | [![](sample/theme-switch.png)](examples/theme-switch.json)             |                                                                            |
 
 All eight, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
@@ -69,7 +69,7 @@ subtitle: Without burst and nodelay, a page load with six assets rate-limits its
 tags: [NGINX, Rate limiting]
 issue: '05'
 layout: columns
-theme: vesper
+theme: dark
 insight: A tight rate without burst rejects the same client's own concurrent
   asset requests, not just abusive traffic. Zone size and burst are what
   make the limit usable.
@@ -114,7 +114,7 @@ The same fields are available as JSON, which exposes everything explicitly — i
   "tags": ["Docker", "Compose", "Healthchecks"],
   "issue": "06",
   "layout": "grid",
-  "theme": "vesper",
+  "theme": "dark",
   "insight": "condition: service_started only waits for the container to launch. service_healthy waits for the healthcheck to pass, which is what dependent services actually need.",
   "panels": [
     {
@@ -147,17 +147,17 @@ The same fields are available as JSON, which exposes everything explicitly — i
 
 ### Card fields
 
-| Field       | Required | Default | Limit                                                 |
-| ----------- | -------- | ------- | ----------------------------------------------------- |
-| `title`     | yes      |         | 70 characters                                         |
-| `subtitle`  | yes      |         | 150 characters                                        |
-| `highlight` | no       | empty   | 70 characters; second title line in the accent colour |
-| `tags`      | no       | `[]`    | up to 3, 22 characters each                           |
-| `insight`   | no       | empty   | 220 characters; the "design note" under the panels    |
-| `issue`     | no       | `01`    | 12 characters                                         |
-| `layout`    | no       | `stack` | `stack`, `columns`, `grid`                            |
-| `theme`     | no       | `print` | `print`, `vesper`, `denim`, `denim-dark`              |
-| `panels`    | yes      |         | count depends on the layout                           |
+| Field       | Required | Default | Limit                                                          |
+| ----------- | -------- | ------- | -------------------------------------------------------------- |
+| `title`     | yes      |         | 70 characters                                                  |
+| `subtitle`  | yes      |         | 150 characters                                                 |
+| `highlight` | no       | empty   | 70 characters; second title line in the accent colour          |
+| `tags`      | no       | `[]`    | up to 3, 22 characters each                                    |
+| `insight`   | no       | empty   | 220 characters; the "design note" under the panels             |
+| `issue`     | no       | empty   | 12 characters; blank shows no issue number and no running head |
+| `layout`    | no       | `stack` | `stack`, `columns`, `grid`                                     |
+| `theme`     | no       | `light` | `light`, `dark`                                                |
+| `panels`    | yes      |         | count depends on the layout                                    |
 
 ### Panel fields
 
@@ -173,26 +173,28 @@ The same fields are available as JSON, which exposes everything explicitly — i
 
 ### Themes
 
-| Theme        | Ground and ink                             | Code panels                              | Type                                    |
-| ------------ | ------------------------------------------ | ---------------------------------------- | --------------------------------------- |
-| `print`      | Flexoki paper and ink, blue accent         | Light, `vitesse-light`, hairline border  | Bricolage Grotesque, Inter, Commit Mono |
-| `vesper`     | Near-black, one peach accent               | `#161616`, `vesper`, no chrome           | Geist Sans, Geist Mono                  |
-| `denim`      | Paper & Denim tokens, light, drafting grid | Surface, `github-light`, hairline border | Inter, JetBrains Mono (from the tokens) |
-| `denim-dark` | Paper & Denim tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | Inter, JetBrains Mono (from the tokens) |
+| Theme   | Ground and ink                             | Code panels                              | Type                                    |
+| ------- | ------------------------------------------ | ---------------------------------------- | --------------------------------------- |
+| `light` | Paper & Denim tokens, light, drafting grid | Surface, `github-light`, hairline border | Inter, JetBrains Mono (from the tokens) |
+| `dark`  | Paper & Denim tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | Inter, JetBrains Mono (from the tokens) |
+
+`print`, `vesper`, `denim` and `denim-dark` were removed in 3.0.0; a card that names one is rejected with the list of valid themes.
 
 A theme sets colours, typefaces and panel shape through custom properties; layouts set sizes and spacing through their own tokens. The two never overlap, so any theme works with any layout. Only the fonts of the themes a document uses are embedded.
 
-The `denim` themes take every colour, font family, weight and radius from the [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens) npm package at build time, so a palette release reaches them with a dependency bump. The tokens are inlined rather than linked from `design.manjunathhk.in`, because a card is rendered with no network. A card is a fixed image, so light and dark are two themes rather than one that follows the viewer's OS.
+The `light` and `dark` themes take every colour, font family, weight and radius from the [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens) npm package at build time, so a palette release reaches them with a dependency bump. The tokens are inlined rather than linked from `design.manjunathhk.in`, because a card is rendered with no network. A card is a fixed image, so light and dark are two themes rather than one that follows the viewer's OS.
 
 ### Layouts
 
 | Layout    | Panels | Max lines per panel | Code font range | Best for                              |
 | --------- | ------ | ------------------- | --------------- | ------------------------------------- |
-| `stack`   | 1–2    | 22 (one) / 14 (two) | 20 → 16 px      | A single snippet, or before / after   |
-| `columns` | 2      | 18                  | 18 → 13 px      | Side-by-side comparison with verdicts |
-| `grid`    | 3–4    | 12                  | 16 → 12 px      | Four short variants of the same idea  |
+| `stack`   | 1–2    | 18 (one) / 9 (two)  | 28 → 18 px      | A single snippet, or before / after   |
+| `columns` | 2      | 16                  | 22 → 15 px      | Side-by-side comparison with verdicts |
+| `grid`    | 3–4    | 10                  | 20 → 14 px      | Four short variants of the same idea  |
 
-Character limits are ceilings, not guarantees. The renderer measures the real layout and refuses to emit a card whose code or footer would be clipped; the error names the panel and what to shorten.
+Type is sized for a feed: LinkedIn shows the image only about 550 px wide on desktop and less on a phone, so labels, notes, the insight and the footer are at least 17 px on the 1080 px canvas and code never drops below the font floors above. Short snippets are rendered larger, up to the first number. The line ceilings are lower than earlier versions because the floors are higher.
+
+Character limits are ceilings, not guarantees: a card with a long subtitle, a long insight and notes has less room for code than its line count suggests. The renderer measures the real layout and refuses to emit a card whose code or footer would be clipped; the error names the panel and what to shorten.
 
 ## Command line
 
@@ -247,19 +249,18 @@ The same shape describes a Markdown card's front matter plus its panels. Lines p
 
 Copy `.env.sample` to `.env` and fill in your details. Every field is optional: leave a variable blank or unset and the card simply omits it, instead of falling back to placeholder text like `example.com`.
 
-| Variable            | Default                                | Purpose                                          |
-| ------------------- | -------------------------------------- | ------------------------------------------------ |
-| `CARD_AUTHOR`       | blank                                  | Footer author                                    |
-| `CARD_WEBSITE`      | blank                                  | Footer website                                   |
-| `CARD_SERIES`       | blank                                  | Masthead series name and footer prefix           |
-| `CARD_MONOGRAM`     | author's initials (blank if no author) | Small boxed mark in the masthead                 |
-| `CARD_FOOTER_MARK`  | blank                                  | Optional large mark bottom-right; blank hides it |
-| `CARD_ISSUE_LABEL`  | blank                                  | Prefix before the issue number                   |
-| `CARD_LINKEDIN`     | blank                                  | LinkedIn link/handle, added to the footer        |
-| `CARD_TWITTER`      | blank                                  | Twitter/X link/handle, added to the footer       |
-| `CARD_BROWSER_PATH` | Playwright's build                     | Use an existing Chromium binary                  |
+| Variable            | Default            | Purpose                                                                      |
+| ------------------- | ------------------ | ---------------------------------------------------------------------------- |
+| `CARD_AUTHOR`       | blank              | Footer author                                                                |
+| `CARD_WEBSITE`      | blank              | Footer website                                                               |
+| `CARD_SERIES`       | blank              | Series name, shown in the footer                                             |
+| `CARD_FOOTER_MARK`  | blank              | Optional large mark bottom-right; blank hides it                             |
+| `CARD_ISSUE_LABEL`  | blank              | Text at the top of the card, before the `issue` number when the card has one |
+| `CARD_LINKEDIN`     | blank              | LinkedIn profile URL or handle, shown as logo and `/handle`                  |
+| `CARD_TWITTER`      | blank              | X profile URL or handle, shown as logo and `@handle`                         |
+| `CARD_BROWSER_PATH` | Playwright's build | Use an existing Chromium binary                                              |
 
-`CARD_WEBSITE`, `CARD_LINKEDIN` and `CARD_TWITTER` are rendered as one contact line in the footer, separated by `·`, in that order — each appears only when set.
+The footer puts `CARD_AUTHOR` on the left. On the right are two lines, with items spaced apart (an item that does not fit moves to the next line whole): `CARD_SERIES` on its own line, then `CARD_WEBSITE`, `CARD_LINKEDIN` (the LinkedIn logo and `/handle`; a profile URL, `in/handle`, `@handle` or the bare handle all work) and `CARD_TWITTER` (the X logo and `@handle`, from a URL or a bare handle) together on the next, then `CARD_FOOTER_MARK`. Each item appears only when set, and a line with nothing in it is not drawn. The only thing at the top is the running head, with the issue label and the card's `issue`; it is omitted when there is neither.
 
 Shell variables override the file. The committed samples use `examples/branding.env`. When [running as a server](#running-it-as-a-server-docker), these same variables set on the container become the sandbox's default branding fields for every visitor — but that default is read-only from the browser. Editing the Branding fields in the sandbox UI only saves to that browser's own storage; it's a personal override, not a way to change what other visitors see or to update the container's environment. To change the shared default, recreate the container with new `CARD_*` values. See [docs/TECHNIQUES.md](docs/TECHNIQUES.md#branding-one-server-default-read-only-from-the-ui) for why a UI-editable shared default isn't implemented.
 
@@ -281,7 +282,7 @@ The same core runs in a browser for quick experiments: a Markdown or JSON editor
 npm run sandbox        # writes out/sandbox.html
 ```
 
-Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and typefaces as the `denim` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
+Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and typefaces as the `light` and `dark` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
 
 It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. History always lives in that browser's own storage (IndexedDB), whether the page is opened as a plain file or served — see the next section for why.
 
@@ -403,7 +404,7 @@ groups:
         expr: up{job="social-card-sandbox"} == 0
         for: 2m
         labels: { severity: critical }
-        annotations: { summary: 'Social Card Sandbox is unreachable.' }
+        annotations: { summary: 'Social Card Studio is unreachable.' }
 
       - alert: SocialCardHighErrorRate
         expr: |
@@ -482,4 +483,4 @@ Snappify is the nearest match on carousels, but it's closed SaaS with no self-ho
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter, Bricolage Grotesque, Commit Mono, Geist Sans, Geist Mono, JetBrains Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. See [LICENSE](LICENSE). Embedded typefaces (Inter and JetBrains Mono) are under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

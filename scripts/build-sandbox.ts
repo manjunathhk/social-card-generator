@@ -23,7 +23,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fontFaceCss } from '../src/fonts.js';
 import { parseMarkdown } from '../src/markdown.js';
-import { DESIGN_TOKEN_FONTS } from '../src/themes/denim.js';
+import { DESIGN_TOKEN_FONTS } from '../src/themes/design-tokens.js';
 import { THEMES } from '../src/themes/index.js';
 import { validateCard } from '../src/validate.js';
 import { SANDBOX_LANGUAGES, SANDBOX_SHIKI_THEMES } from '../web/sandbox/browser-highlight.js';

@@ -56,7 +56,7 @@ test('fit loop shrinks long code and reports overflow instead of clipping', asyn
     panels: [
       {
         language: 'csharp',
-        code: Array(22)
+        code: Array(18)
           .fill(longLine + longLine)
           .join('\n'),
       },
@@ -66,10 +66,10 @@ test('fit loop shrinks long code and reports overflow instead of clipping', asyn
     const page = await openPage(browser, 1);
     const [fit] = await layoutDocument(page, await renderDocument([shrinks], branding));
     assert.ok(fit.ok);
-    assert.ok(fit.fontSize < 20 && fit.fontSize >= 16, `shrunk to ${fit.fontSize}`);
+    assert.ok(fit.fontSize < 28 && fit.fontSize >= 18, `shrunk to ${fit.fontSize}`);
     const [bad] = await layoutDocument(page, await renderDocument([overflows], branding));
     assert.equal(bad.ok, false);
-    assert.match(bad.reason ?? '', /does not fit at the minimum 16px/);
+    assert.match(bad.reason ?? '', /does not fit at the minimum 18px/);
   });
 });
 

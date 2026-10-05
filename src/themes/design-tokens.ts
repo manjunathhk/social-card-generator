@@ -21,10 +21,10 @@ export const DESIGN_TOKEN_FONTS: FontStylesheet = {
 };
 
 /**
- * Denim: the shared personal design system (@manjunathhk/design-tokens,
- * palette "Paper & Denim") applied to a card. Every value comes
- * from the package's resolved tokens, so a palette release reaches these
- * themes with a dependency bump. A card is a fixed image, so light and dark
+ * The `light` and `dark` themes: the shared personal design system
+ * (@manjunathhk/design-tokens, palette "Paper & Denim") applied to a card.
+ * Every value comes from the package's resolved tokens, so a palette release
+ * reaches these themes with a dependency bump. A card is a fixed image, so light and dark
  * are two themes rather than one following the viewer's OS.
  *
  * The card contract has roles the design system doesn't name; each maps to
@@ -33,7 +33,7 @@ export const DESIGN_TOKEN_FONTS: FontStylesheet = {
  * to danger, --badge-fg to on-accent. The drafting grid is the tokens'
  * .mk-grid-bg pattern, drawn on the card.
  */
-function denim(name: string, description: string, color: ColorTokens, shikiTheme: BundledTheme): Theme {
+function fromTokens(name: string, description: string, color: ColorTokens, shikiTheme: BundledTheme): Theme {
   return {
     name,
     description,
@@ -58,16 +58,16 @@ function denim(name: string, description: string, color: ColorTokens, shikiTheme
   };
 }
 
-export const denimLight = denim(
-  'denim',
-  'Paper and denim from the shared design tokens, type from the tokens, light.',
+export const lightTheme = fromTokens(
+  'light',
+  'Paper and denim from the shared design tokens, light.',
   light,
   'github-light',
 );
 
-export const denimDark = denim(
-  'denim-dark',
-  'Paper and denim from the shared design tokens, type from the tokens, dark.',
+export const darkTheme = fromTokens(
+  'dark',
+  'Paper and denim from the shared design tokens, dark.',
   dark,
   'github-dark',
 );

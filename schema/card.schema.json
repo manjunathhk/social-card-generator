@@ -41,21 +41,15 @@
     },
     "issue": {
       "type": "string",
-      "description": "Issue number shown on the card. At most 12 characters.",
-      "pattern": "\\S",
-      "maxLength": 12,
-      "default": "01"
+      "description": "Issue number shown in a running head at the top. Omit it and the card shows no issue number. At most 12 characters.",
+      "maxLength": 12
     },
     "layout": {
-      "description": "Panel arrangement. \"stack\": 1 to 2 panels; at most 22 lines per panel with 1 panel, 14 lines per panel with 2 panels; code font 20 to 16 px. \"columns\": 2 panels; at most 18 code lines per panel; code font 18 to 13 px. \"grid\": 3 to 4 panels; at most 12 code lines per panel; code font 16 to 12 px.",
+      "description": "Panel arrangement. \"stack\": 1 to 2 panels; at most 18 lines per panel with 1 panel, 9 lines per panel with 2 panels; code font 28 to 18 px. \"columns\": 2 panels; at most 16 code lines per panel; code font 22 to 15 px. \"grid\": 3 to 4 panels; at most 10 code lines per panel; code font 20 to 14 px.",
       "enum": ["stack", "columns", "grid"],
       "default": "stack"
     },
-    "theme": {
-      "description": "Palette, typefaces and panel shape.",
-      "enum": ["print", "vesper", "denim", "denim-dark"],
-      "default": "print"
-    },
+    "theme": { "description": "Palette, typefaces and panel shape.", "enum": ["light", "dark"], "default": "light" },
     "panels": {
       "type": "array",
       "description": "Code panels, in order. How many depends on the layout.",
@@ -66,27 +60,27 @@
     {
       "if": { "properties": { "layout": { "const": "stack" } } },
       "then": {
-        "description": "\"stack\": 1 to 2 panels; at most 22 lines per panel with 1 panel, 14 lines per panel with 2 panels; code font 20 to 16 px.",
-        "x-maxLines": { "1": 22, "2": 14 },
-        "x-fontRange": { "max": 20, "min": 16 },
+        "description": "\"stack\": 1 to 2 panels; at most 18 lines per panel with 1 panel, 9 lines per panel with 2 panels; code font 28 to 18 px.",
+        "x-maxLines": { "1": 18, "2": 9 },
+        "x-fontRange": { "max": 28, "min": 18 },
         "properties": { "panels": { "minItems": 1, "maxItems": 2 } }
       }
     },
     {
       "if": { "required": ["layout"], "properties": { "layout": { "const": "columns" } } },
       "then": {
-        "description": "\"columns\": 2 panels; at most 18 code lines per panel; code font 18 to 13 px.",
-        "x-maxLines": { "2": 18 },
-        "x-fontRange": { "max": 18, "min": 13 },
+        "description": "\"columns\": 2 panels; at most 16 code lines per panel; code font 22 to 15 px.",
+        "x-maxLines": { "2": 16 },
+        "x-fontRange": { "max": 22, "min": 15 },
         "properties": { "panels": { "minItems": 2, "maxItems": 2 } }
       }
     },
     {
       "if": { "required": ["layout"], "properties": { "layout": { "const": "grid" } } },
       "then": {
-        "description": "\"grid\": 3 to 4 panels; at most 12 code lines per panel; code font 16 to 12 px.",
-        "x-maxLines": { "3": 12, "4": 12 },
-        "x-fontRange": { "max": 16, "min": 12 },
+        "description": "\"grid\": 3 to 4 panels; at most 10 code lines per panel; code font 20 to 14 px.",
+        "x-maxLines": { "3": 10, "4": 10 },
+        "x-fontRange": { "max": 20, "min": 14 },
         "properties": { "panels": { "minItems": 3, "maxItems": 4 } }
       }
     }

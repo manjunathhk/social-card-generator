@@ -10,7 +10,7 @@ tags:
   - RabbitMQ
   - .NET
   - Idempotency
-sandboxLabel: stack · print
+sandboxLabel: stack · light
 ---
 
 ## OrderConsumer.cs / dedupe guard
