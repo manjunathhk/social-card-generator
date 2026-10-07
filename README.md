@@ -23,7 +23,7 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
 - **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
 - **Deterministic and offline.** Fonts are embedded, external requests are blocked, and the same source always yields the same pixels.
-- **Brandable.** Author, series, website and social handles come from a `.env` file, never from code.
+- **Brandable.** Author, series, website and social handles come from a `.env` file, never from code. An opt-in credit line (`CARD_CREDIT`) is off by default.
 
 ## Gallery
 
@@ -283,7 +283,7 @@ The same core runs in a browser for quick experiments: a Markdown or JSON editor
 npm run sandbox        # writes out/sandbox.html
 ```
 
-Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and typefaces as the `light` and `dark` themes, inlined at build time, and follows your OS light/dark setting. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
+Open `out/sandbox.html` directly in a browser, or use the copy CI deploys to this repository's GitHub Pages site, https://social-card.apps.manjunathhk.in/, on every push to `main`. That copy has no server behind it, so its branding fields start blank. It has no server, no build watcher and no network dependency: its own UI uses the same design tokens and typefaces as the `light` and `dark` themes, inlined at build time. The header's sun/moon button switches the app between light and dark (it follows your OS setting until you use it, and remembers your choice in that browser); it only affects the page, not the card, which keeps its own Theme picker. The PNGs it exports are rasterised by the browser and are close to the CLI's output but not byte-identical; PDF carousels and the full Shiki language list remain CLI features. The sandbox is a development aid and a prototype for a future hosted editor; see the section on running the core in the browser in [docs/TECHNIQUES.md](docs/TECHNIQUES.md).
 
 It also has a **New** button to start a blank card, and a **History** panel: every PNG you export is kept — source, layout, theme and branding included — so you can reopen it later and pick up editing where you left off. History is append-only: reopening and exporting again adds a new entry rather than overwriting the old one. History always lives in that browser's own storage (IndexedDB), whether the page is opened as a plain file or served — see the next section for why.
 
@@ -331,7 +331,7 @@ docker run -d --name social-card-sandbox -p 127.0.0.1:8787:8787 \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
-Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it — the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`, e.g. `:2.3.0`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it — the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
 
 #### Reverse-proxying with nginx
 
