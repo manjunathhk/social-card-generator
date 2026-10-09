@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.2.2] - 2026-10-09
+
+### Changed
+
+- `@manjunathhk/design-tokens` updated to 1.5.1. Its palette moves the neutrals from grey to warm stone in both modes: dark panels are lighter (`surface` `#292524` on `bg` `#0C0A09`) and the dark accent is `#FBBF24`; in light, `success` is green (`#15803D`, was grey), so "good" verdict badges and headers now read as green. Fonts and the token API used here are unchanged. `sample/*` and `docs/images/guide/*` are regenerated (the guide screenshots had also gone stale: they showed v3.1.1 without the 3.2.0 credit-line field).
+
 ## [3.2.1] - 2026-10-05
 
 ### Fixed
