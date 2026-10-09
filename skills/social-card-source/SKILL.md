@@ -132,10 +132,10 @@ The renderer starts at the larger font and shrinks toward the smaller one until 
 
 ## Themes
 
-| Theme   | Look                                                |
-| ------- | --------------------------------------------------- |
-| `light` | Paper and Denim design tokens, light, drafting grid |
-| `dark`  | Paper and Denim design tokens, dark, drafting grid  |
+| Theme   | Look                                       |
+| ------- | ------------------------------------------ |
+| `light` | Shared design tokens, light, drafting grid |
+| `dark`  | Shared design tokens, dark, drafting grid  |
 
 Only these two exist. `print`, `vesper`, `denim` and `denim-dark` are rejected.
 

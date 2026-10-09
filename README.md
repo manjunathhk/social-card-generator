@@ -18,7 +18,7 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 ## Features
 
 - **Three layouts.** `stack` (one or two panels), `columns` (side-by-side comparison), `grid` (up to four panels).
-- **Two themes.** `light` and `dark`, the Paper & Denim palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). A theme owns its palette, typefaces and shape through a documented token contract, so you can add your own.
+- **Two themes.** `light` and `dark`, the palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). A theme owns its palette, typefaces and shape through a documented token contract, so you can add your own.
 - **Panel decorations.** Line highlights, token underlines, ✓ / ✕ verdict badges, and short bullet notes per panel.
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
 - **Fit or fail.** Code shrinks within a per-layout range until it fits; if it still cannot fit, the run fails with the panel name and the reason.
@@ -175,8 +175,8 @@ The same fields are available as JSON, which exposes everything explicitly — i
 
 | Theme   | Ground and ink                             | Code panels                              | Type                                    |
 | ------- | ------------------------------------------ | ---------------------------------------- | --------------------------------------- |
-| `light` | Paper & Denim tokens, light, drafting grid | Surface, `github-light`, hairline border | Inter, JetBrains Mono (from the tokens) |
-| `dark`  | Paper & Denim tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | Inter, JetBrains Mono (from the tokens) |
+| `light` | Shared design tokens, light, drafting grid | Surface, `github-light`, hairline border | Inter, JetBrains Mono (from the tokens) |
+| `dark`  | Shared design tokens, dark, drafting grid  | Surface, `github-dark`, hairline border  | Inter, JetBrains Mono (from the tokens) |
 
 `print`, `vesper`, `denim` and `denim-dark` were removed in 3.0.0; a card that names one is rejected with the list of valid themes.
 
