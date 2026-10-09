@@ -152,7 +152,17 @@ const designTokens = await readFile(
   createRequire(import.meta.url).resolve('@manjunathhk/design-tokens/tokens.css'),
   'utf8',
 );
+// Inlined as a data: URI because neither host can serve a second file
+// (Pages publishes only this page; the server answers only / and api/*).
+const faviconSvg = await readFile(resolve(WEB, 'favicon.svg'), 'utf8');
+const favicon = `data:image/svg+xml,${encodeURIComponent(
+  faviconSvg
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\s+/g, ' ')
+    .trim(),
+)}`;
 const page = template
+  .replace('/*__FAVICON__*/', () => favicon)
   .replace('/*__DESIGN_TOKENS__*/', () => designTokens)
   .replace('/*__BUNDLE__*/', () => bundle)
   .replace('/*__VERSION__*/', `v${version}`);

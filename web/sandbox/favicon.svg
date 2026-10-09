@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    The sandbox favicon: a 4:5 card (the 1080 × 1350 shape) with three
+    indented code lines. scripts/build-sandbox.ts inlines it as a data: URI.
+    Colours are @manjunathhk/design-tokens values; the media query follows
+    the browser's colour scheme, which is what the tab strip is drawn in.
+    Light: card = color.accent, lines = color.on-accent.
+    Dark:  card = color.accent, lines = color.on-accent (dark values).
+  -->
+  <style>
+    .card { fill: #B45309; }
+    .line { fill: #FFFFFF; }
+    @media (prefers-color-scheme: dark) {
+      .card { fill: #FBBF24; }
+      .line { fill: #1C1917; }
+    }
+  </style>
+  <rect class="card" x="6" y="3.5" width="20" height="25" rx="3"/>
+  <rect class="line" x="10" y="10" width="12" height="2.6" rx="1.3"/>
+  <rect class="line" x="13" y="15" width="9" height="2.6" rx="1.3"/>
+  <rect class="line" x="10" y="20" width="7" height="2.6" rx="1.3"/>
+</svg>
