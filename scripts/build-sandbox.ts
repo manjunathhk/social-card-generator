@@ -148,10 +148,10 @@ const result = await build({
 
 const bundle = result.outputFiles[0].text;
 const template = await readFile(resolve(WEB, 'index.template.html'), 'utf8');
-const designTokens = await readFile(
-  createRequire(import.meta.url).resolve('@manjunathhk/design-tokens/tokens.css'),
-  'utf8',
-);
+const require = createRequire(import.meta.url);
+const designTokens = await readFile(require.resolve('@manjunathhk/design-tokens/tokens.css'), 'utf8');
+// The design system's theme switch: a classic script, inlined so it runs before first paint.
+const controls = await readFile(require.resolve('@manjunathhk/design-tokens/controls.js'), 'utf8');
 // Inlined as a data: URI because neither host can serve a second file
 // (Pages publishes only this page; the server answers only / and api/*).
 const faviconSvg = await readFile(resolve(WEB, 'favicon.svg'), 'utf8');
@@ -163,6 +163,7 @@ const favicon = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 const page = template
   .replace('/*__FAVICON__*/', () => favicon)
+  .replace('/*__CONTROLS__*/', () => controls)
   .replace('/*__DESIGN_TOKENS__*/', () => designTokens)
   .replace('/*__BUNDLE__*/', () => bundle)
   .replace('/*__VERSION__*/', `v${version}`);

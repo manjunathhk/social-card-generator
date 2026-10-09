@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.3.0] - 2026-10-09
+
+### Changed
+
+- `@manjunathhk/design-tokens` updated to 1.6.0. No token changed, so cards render exactly as before.
+- The sandbox header's sun/moon button is now a System / Light / Dark switch. It is the design system's `controls.js`, inlined in `<head>` at build time, so a saved choice applies before first paint and the page still makes no network request. System follows the OS again, which the old button could not return to once it had been used. The choice is now stored under `mk-theme` instead of `scs:app-theme`, so anyone who saved one picks it again once. `docs/images/guide/*` screenshots showing the header are updated. (#55)
+
 ## [3.2.3] - 2026-10-09
 
 ### Added
