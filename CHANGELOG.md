@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.2.3] - 2026-10-09
+
+### Added
+
+- The sandbox has a favicon: a small card with three code lines in the design-token accent, following the browser's light/dark scheme. It is inlined in the page as an SVG `data:` URI, so it works on both GitHub Pages and the Docker server, and browsers no longer request `/favicon.ico` (which the server answered with a 404).
+
 ## [3.2.2] - 2026-10-09
 
 ### Changed
