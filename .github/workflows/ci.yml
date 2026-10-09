@@ -91,6 +91,7 @@ jobs:
           for _ in $(seq 1 20); do curl -sf http://localhost:8787/api/health && break; sleep 1; done
           curl -sf http://localhost:8787/api/health
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/)" = "200"
+          curl -sf http://localhost:8787/ | grep -q '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/sandbox.html)" = "404"
           curl -sf http://localhost:8787/api/branding | grep -q '"author":"CI Author"'
           docker logs sandbox
