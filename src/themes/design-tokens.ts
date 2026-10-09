@@ -22,7 +22,7 @@ export const DESIGN_TOKEN_FONTS: FontStylesheet = {
 
 /**
  * The `light` and `dark` themes: the shared personal design system
- * (@manjunathhk/design-tokens, palette "Paper & Denim") applied to a card.
+ * (@manjunathhk/design-tokens) applied to a card.
  * Every value comes from the package's resolved tokens, so a palette release
  * reaches these themes with a dependency bump. A card is a fixed image, so light and dark
  * are two themes rather than one following the viewer's OS.
@@ -58,16 +58,6 @@ function fromTokens(name: string, description: string, color: ColorTokens, shiki
   };
 }
 
-export const lightTheme = fromTokens(
-  'light',
-  'Paper and denim from the shared design tokens, light.',
-  light,
-  'github-light',
-);
+export const lightTheme = fromTokens('light', 'The shared design tokens, light, drafting grid.', light, 'github-light');
 
-export const darkTheme = fromTokens(
-  'dark',
-  'Paper and denim from the shared design tokens, dark.',
-  dark,
-  'github-dark',
-);
+export const darkTheme = fromTokens('dark', 'The shared design tokens, dark, drafting grid.', dark, 'github-dark');
