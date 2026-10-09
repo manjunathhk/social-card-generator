@@ -1,6 +1,6 @@
 {
   "name": "@manjunathhk/social-card-generator",
-  "version": "3.2.3",
+  "version": "3.3.0",
   "description": "Render technical social cards (1080 × 1350 PNG or multi-page PDF carousels) from Markdown or JSON with Shiki syntax highlighting and Playwright.",
   "keywords": [
     "social-card",
@@ -53,7 +53,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@manjunathhk/design-tokens": "^1.5.1",
+    "@manjunathhk/design-tokens": "^1.6.0",
     "playwright": "1.63.0",
     "shiki": "4.4.3",
     "yaml": "2.9.0"
