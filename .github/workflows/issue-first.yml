@@ -1,0 +1,31 @@
+# Issue-first gate. Copy this file into each repo you want enforced.
+# Logic lives in manjunathhk/.github; this is only the caller.
+name: Issue-first
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+concurrency:
+  group: issue-first-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  issue:
+    if: github.event_name == 'issues'
+    uses: manjunathhk/.github/.github/workflows/issue-first-issue.yml@v1
+    permissions:
+      contents: read
+      issues: write
+
+  pr:
+    if: github.event_name == 'pull_request'
+    uses: manjunathhk/.github/.github/workflows/issue-first-pr.yml@v1
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read

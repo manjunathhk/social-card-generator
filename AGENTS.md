@@ -4,6 +4,17 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor, or otherwise) wor
 
 This file is for contributors. To write card source (not change the generator), use the card-author skill in [skills/social-card-source/SKILL.md](skills/social-card-source/SKILL.md).
 
+## Issue-first (required)
+
+No branch, code change, commit or PR without a GitHub issue that carries the `ready-for-dev` label.
+
+1. Find the issue for the task. If there is none, or it is labelled `needs-refinement`, stop coding: draft the issue (Summary + Acceptance Criteria, Given / When / Then preferred), show it to the user, and create it only once they confirm.
+2. Treat the issue's acceptance criteria as the contract. Extra scope goes in a new issue, not this PR.
+3. Branch `<type>/<issue-number>-<slug>` (e.g. `feat/42-png-export`); commits reference `(#42)`.
+4. The PR description starts with `Closes #<issue>`. The `Issue-first` workflow fails the PR otherwise.
+
+Full process: the account-level [CONTRIBUTING](https://github.com/manjunathhk/.github/blob/main/CONTRIBUTING.md) and [docs](https://github.com/manjunathhk/.github/blob/main/docs/issue-first.md).
+
 ## What this is
 
 A CLI (and optional self-hosted server) that renders a Markdown or JSON source file into a 1080 × 1350 PNG social card or a multi-page PDF carousel, using Shiki for syntax highlighting and Playwright/Chromium for layout and capture. The core idea: the card is an HTML page, rendered by a real browser, never a canvas/image library re-implementing text layout. See [docs/TECHNIQUES.md](docs/TECHNIQUES.md) for the full pipeline.
@@ -36,6 +47,7 @@ Before opening a PR to `main`, also:
 - **Bump `version` in `package.json`** (semver: patch for fixes, minor for features, major for breaking changes) and add a `CHANGELOG.md` entry — see CONTRIBUTING.md, "Releasing". CI's `version-check` job fails the PR if the version is unchanged from `main`; if this PR genuinely ships nothing release-worthy (docs/CI/test-only), apply the `no-version-bump` label instead of bumping.
 - **Skim the docs for staleness** if the change touches anything a doc describes — see "Reviewing docs for staleness" below.
 - Fill in `.github/pull_request_template.md`'s checklist rather than deleting it.
+- **Link the issue.** `Closes #<issue>` on the first line of the PR description; see "Issue-first" above.
 
 ## Conventions (see [CONTRIBUTING.md](CONTRIBUTING.md) for the full list)
 

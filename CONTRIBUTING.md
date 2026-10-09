@@ -9,6 +9,12 @@ npm ci
 npm run browser:install   # or export CARD_BROWSER_PATH=/path/to/chromium
 ```
 
+## Start with an issue
+
+Every change starts with a GitHub issue, opened from the Feature or Bug form. It needs a **Summary** and **Acceptance Criteria** (Given / When / Then preferred, free text accepted). A bot labels it `ready-for-dev` or `needs-refinement`; start work only on `ready-for-dev`.
+
+The PR must say `Closes #<issue>`. The `Issue-first` check fails a PR with no linked issue, or one linked to an incomplete issue. The full process is in the account-level [CONTRIBUTING](https://github.com/manjunathhk/.github/blob/main/CONTRIBUTING.md).
+
 ## Before you open a pull request
 
 ```sh
