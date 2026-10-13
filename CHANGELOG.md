@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.3.1] - 2026-10-13
+
+### Fixed
+
+- The sandbox's Branding fields no longer get squeezed and cut off on phones. At 600px and below each field takes a full row; above that the two columns stay equal width, where before the Credit Line select's natural width pushed its column wider and cut off Author, Series, Issue Label and Twitter. The custom palette's colour pickers keep their three columns. (#57)
+
 ## [3.3.0] - 2026-10-09
 
 ### Changed
