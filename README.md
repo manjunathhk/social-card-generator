@@ -275,6 +275,8 @@ npx skills add manjunathhk/social-card-generator
 
 The skill's limits tables are tested against `src/schema.ts`, and it points agents at the [schema](#schema) for the authoritative limits. Contributors changing the generator itself should read [AGENTS.md](AGENTS.md) instead.
 
+[`docs/routines/`](docs/routines/) holds the prompts of scheduled routines built on the skill, such as [the Tuesday/Friday card and LinkedIn post](docs/routines/tech-card-linkedin.md), with notes on what to change before reusing one.
+
 ## Browser sandbox
 
 The same core runs in a browser for quick experiments: a Markdown or JSON editor with live preview, layout and theme pickers, a custom palette editor that can be copied out as a theme file, and PNG export.
