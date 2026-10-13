@@ -1,6 +1,6 @@
 ---
 name: social-card-source
-description: Write valid Markdown or JSON source for Social Card Studio (github.com/manjunathhk/social-card-generator), which renders 1080 x 1350 technical social cards and LinkedIn carousel PDFs from code snippets. Use when asked to write, fix or shorten a social card, code card, LinkedIn card or carousel page, or a .md/.json file for social-card.manjunathhk.in.
+description: Write valid Markdown or JSON source for Social Card Studio (github.com/manjunathhk/social-card-generator), which renders 1080 x 1350 technical social cards and LinkedIn carousel PDFs from code snippets. Use when asked to write, fix or shorten a social card, code card, LinkedIn card or carousel page, or a .md/.json file for social-card.apps.manjunathhk.in.
 ---
 
 # Social card source
@@ -155,7 +155,7 @@ npx @manjunathhk/social-card-generator --check card.md
 
 `--check` needs no browser. A full render does: run `npx -p @manjunathhk/social-card-generator playwright install chromium` once (a bare `npx playwright` may fetch a Playwright whose Chromium build does not match), or set `CARD_BROWSER_PATH` to an existing Chromium. `--check` exits non-zero and names the failing field, such as `panels[1].notes[0]`. It cannot tell whether the code fits at the minimum font size; only a real render (the same command without `--check`) measures that.
 
-Without a shell, paste the source into the hosted sandbox at https://social-card.manjunathhk.in, which renders a live preview and shows the same errors. The sandbox bundles these languages only: `csharp`, `typescript`, `javascript`, `json`, `jsonc`, `yaml`, `sql`, `shellscript`, `powershell`, `python`, `go`, `java`, `html`, `css`, `xml`, `docker`, `nginx`. Any other language needs the CLI.
+Without a shell, paste the source into the hosted sandbox at https://social-card.apps.manjunathhk.in, which renders a live preview and shows the same errors. The sandbox bundles these languages only: `csharp`, `typescript`, `javascript`, `json`, `jsonc`, `yaml`, `sql`, `shellscript`, `powershell`, `python`, `go`, `java`, `html`, `css`, `xml`, `docker`, `nginx`. Any other language needs the CLI.
 
 ## Authoritative limits
 
