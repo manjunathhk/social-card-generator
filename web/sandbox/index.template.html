@@ -111,7 +111,8 @@ details.brandbox { border: 1px solid var(--rule); border-radius: 12px; backgroun
 details.brandbox summary { cursor: pointer; padding: 10px 14px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; }
 details.brandbox summary::after { content: '+'; color: var(--faint); font: 16px var(--mono); }
 details.brandbox[open] summary::after { content: '−'; }
-.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 4px 14px 14px; }
+.fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; padding: 4px 14px 14px; }
+@media (max-width: 600px) { .fields:not(.palette-fields) { grid-template-columns: 1fr; } }
 .fields label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--faint); }
 .fields label span { text-transform: uppercase; letter-spacing: .6px; }
 .fields input { width: 100%; }
