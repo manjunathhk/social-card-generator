@@ -1,0 +1,104 @@
+{
+  "kind": "diagram",
+  "title": "Cache-aside,",
+  "highlight": "evict on commit.",
+  "subtitle": "Reads fill Redis on a miss. Writes evict through an event, so the cache never outlives its row.",
+  "tags": ["Redis", "SQL Server", "Caching"],
+  "issue": "08",
+  "theme": "light",
+  "sandboxLabel": "diagram · light, same-side edge",
+  "insight": "Evict, never update the cached value. The next read refills from the source of truth, so two racing writers cannot leave a stale copy behind.",
+  "diagram": {
+    "legend": [
+      { "id": "http", "label": "HTTP", "tone": "info" },
+      { "id": "read", "label": "Cache path", "tone": "success" },
+      { "id": "event", "label": "Event", "tone": "accent" },
+      { "id": "evict", "label": "Eviction", "tone": "danger", "dashed": true }
+    ],
+    "nodes": [
+      {
+        "id": "client",
+        "col": 1,
+        "row": 1,
+        "eyebrow": "Reader",
+        "title": "Client",
+        "lines": ["GET /products/42"],
+        "mono": true
+      },
+      {
+        "id": "api",
+        "col": 2,
+        "row": 1,
+        "eyebrow": "API process",
+        "badge": ".NET",
+        "title": "Product API",
+        "lines": ["Cache, then DB"]
+      },
+      {
+        "id": "redis",
+        "col": 3,
+        "row": 1,
+        "eyebrow": "Cache",
+        "title": "Redis",
+        "lines": ["product:42"],
+        "mono": true,
+        "tone": "accent"
+      },
+      {
+        "id": "admin",
+        "col": 1,
+        "row": 2,
+        "eyebrow": "Writer",
+        "title": "Admin API",
+        "lines": ["PUT /products/42"],
+        "mono": true
+      },
+      {
+        "id": "db",
+        "col": 2,
+        "row": 2,
+        "eyebrow": "Source of truth",
+        "title": "SQL Server",
+        "lines": ["Products + outbox"],
+        "mono": true
+      },
+      {
+        "id": "mq",
+        "col": 3,
+        "row": 2,
+        "eyebrow": "Event",
+        "title": "RabbitMQ",
+        "lines": ["ProductChanged"],
+        "mono": true
+      },
+      {
+        "id": "ttl",
+        "col": 1,
+        "colSpan": 2,
+        "row": 3,
+        "tone": "muted",
+        "title": "TTL is the safety net",
+        "lines": ["If an eviction is lost, the key still expires in 10 minutes."]
+      },
+      {
+        "id": "evictor",
+        "col": 3,
+        "row": 3,
+        "badge": ".NET",
+        "title": "Evictor",
+        "lines": ["DEL product:{id}"],
+        "mono": true
+      }
+    ],
+    "edges": [
+      { "from": "client.right", "to": "api.left", "type": "http", "label": "GET" },
+      { "from": "api.right@0.3", "to": "redis.left@0.3", "type": "read", "label": "1 hit?" },
+      { "from": "api.bottom@0.3", "to": "db.top@0.3", "type": "read", "label": "2 miss: load", "labelSide": "left" },
+      { "from": "api.right@0.74", "to": "redis.left@0.74", "type": "read", "label": "3 fill", "labelSide": "below" },
+      { "from": "admin.right", "to": "db.left", "type": "http", "label": "PUT" },
+      { "from": "db.right", "to": "mq.left", "type": "event", "label": "commit" },
+      { "from": "mq.bottom", "to": "evictor.top", "type": "event", "label": "consume" },
+      { "from": "evictor.right", "to": "redis.right", "type": "evict" }
+    ]
+  }
+}

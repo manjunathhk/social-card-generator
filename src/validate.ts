@@ -1,5 +1,7 @@
 import { bundledLanguagesInfo } from 'shiki';
+import { readDiagram } from './diagram.js';
 import {
+  CARD_KINDS,
   DEFAULT_LAYOUT,
   LAYOUTS,
   LAYOUT_RULES,
@@ -8,6 +10,7 @@ import {
   MAX_UNDERLINES,
   TEXT_LIMITS,
   type Card,
+  type CardKind,
   type Layout,
   type Panel,
   type Verdict,
@@ -25,21 +28,40 @@ export function validateCard(raw: unknown): Card {
   const value = raw as Record<string, unknown>;
   rejectLegacyFields(value);
 
-  const layout = readLayout(value.layout);
-  const theme = readTheme(value.theme);
-  const panels = readPanels(value.panels, layout);
-
-  return {
+  const kind = readKind(value.kind);
+  const base = {
     title: readText(value, 'title', { required: true }),
     highlight: readText(value, 'highlight'),
     subtitle: readText(value, 'subtitle', { required: true }),
     tags: readTags(value.tags),
     insight: readText(value, 'insight'),
     issue: readText(value, 'issue'),
-    layout,
-    theme,
-    panels,
+    theme: readTheme(value.theme),
   };
+
+  if (kind === 'diagram') {
+    const codeOnly = ['layout', 'panels'].filter((key) => key in value);
+    if (codeOnly.length) {
+      throw new Error(
+        `${codeOnly.map((k) => `"${k}"`).join(' and ')} apply to code cards only; a diagram card describes its body in "diagram".`,
+      );
+    }
+    return { kind, ...base, diagram: readDiagram(value.diagram) };
+  }
+
+  if ('diagram' in value) {
+    throw new Error('"diagram" needs "kind": "diagram" on the card.');
+  }
+  const layout = readLayout(value.layout);
+  return { kind, ...base, layout, panels: readPanels(value.panels, layout) };
+}
+
+function readKind(input: unknown): CardKind {
+  if (input === undefined) return 'code';
+  if (typeof input !== 'string' || !(CARD_KINDS as readonly string[]).includes(input)) {
+    throw new Error(`"kind" must be one of: ${CARD_KINDS.join(', ')}.`);
+  }
+  return input as CardKind;
 }
 
 function rejectLegacyFields(value: Record<string, unknown>) {
