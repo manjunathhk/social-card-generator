@@ -1,0 +1,119 @@
+{
+  "kind": "diagram",
+  "title": "Scale the workers,",
+  "highlight": "keep the API.",
+  "subtitle": "Return 202 with a job ID. Let separate workers do the slow part.",
+  "tags": [".NET", "RabbitMQ", "Background work"],
+  "issue": "07",
+  "theme": "dark",
+  "sandboxLabel": "diagram · dark, bus edge + group",
+  "insight": "Watch queue age, not CPU. A growing backlog means you need more workers, not more copies of the API.",
+  "diagram": {
+    "legend": [
+      { "id": "http", "label": "HTTP", "tone": "info" },
+      { "id": "durable", "label": "Durable work", "tone": "accent" },
+      { "id": "committed", "label": "Committed result", "tone": "success" },
+      { "id": "failure", "label": "Failure", "tone": "danger", "dashed": true }
+    ],
+    "nodes": [
+      { "id": "client", "col": 1, "row": 1, "eyebrow": "Caller", "title": "Client", "lines": ["Polls until Done"] },
+      {
+        "id": "api",
+        "col": 2,
+        "row": 1,
+        "eyebrow": "API process",
+        "badge": ".NET",
+        "title": "Report API",
+        "lines": ["POST /reports", "GET /jobs/{id}"],
+        "mono": true
+      },
+      {
+        "id": "relay",
+        "col": 3,
+        "row": 1,
+        "eyebrow": "Background",
+        "badge": ".NET",
+        "title": "Outbox relay",
+        "lines": ["Committed rows only"]
+      },
+      {
+        "id": "db",
+        "col": 2,
+        "row": 2,
+        "eyebrow": "Source of truth",
+        "title": "PostgreSQL",
+        "lines": ["jobs + outbox"],
+        "mono": true,
+        "tone": "accent"
+      },
+      {
+        "id": "mq",
+        "col": 3,
+        "row": 2,
+        "eyebrow": "Durable queue",
+        "title": "RabbitMQ",
+        "lines": ["ReportRequested"],
+        "mono": true,
+        "tone": "accent"
+      },
+      { "id": "w1", "col": 1, "row": 3, "badge": ".NET", "title": "Worker", "lines": ["Run, commit, ACK"] },
+      { "id": "w2", "col": 2, "row": 3, "badge": ".NET", "title": "Worker", "lines": ["Run, commit, ACK"] },
+      { "id": "w3", "col": 3, "row": 3, "badge": ".NET", "title": "Worker", "lines": ["Run, commit, ACK"] },
+      {
+        "id": "note",
+        "col": 1,
+        "row": 4,
+        "tone": "muted",
+        "title": "Key every job",
+        "lines": ["A redelivery must be a no-op."]
+      },
+      {
+        "id": "dlq",
+        "col": 2,
+        "colSpan": 2,
+        "row": 4,
+        "eyebrow": "Recovery",
+        "title": "Dead-letter queue",
+        "lines": ["Inspect, fix, replay with the same job ID"],
+        "tone": "danger"
+      }
+    ],
+    "groups": [
+      { "id": "workers", "label": "Competing consumers · scale apart from the API", "col": 1, "row": 3, "colSpan": 3 }
+    ],
+    "edges": [
+      { "from": "client.right@0.3", "to": "api.left@0.3", "type": "http", "label": "POST" },
+      { "from": "api.left@0.74", "to": "client.right@0.74", "type": "http", "label": "202", "labelSide": "below" },
+      {
+        "from": "api.bottom@0.3",
+        "to": "db.top@0.3",
+        "type": "durable",
+        "label": "job + event",
+        "sublabel": "one transaction",
+        "labelSide": "left"
+      },
+      { "from": "db.right@0.2", "to": "relay.left@0.82", "type": "durable", "label": "unsent", "labelSide": "left" },
+      {
+        "from": "relay.bottom@0.35",
+        "to": "mq.top@0.35",
+        "type": "durable",
+        "label": "publish",
+        "sublabel": "await confirm"
+      },
+      {
+        "from": "mq.bottom",
+        "to": ["w1.top@0.72", "w2.top@0.72", "w3.top@0.72"],
+        "type": "durable",
+        "busOffset": 30
+      },
+      {
+        "from": "w1.top@0.4",
+        "to": "db.left@0.72",
+        "type": "committed",
+        "label": "save result",
+        "sublabel": "then ACK"
+      },
+      { "from": "w3.bottom", "to": "dlq.top@0.79", "type": "failure", "label": "after N retries", "labelSide": "left" }
+    ]
+  }
+}

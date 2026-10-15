@@ -1,3 +1,4 @@
+import { DIAGRAM_SCRIPT } from './diagram-script.js';
 import { CARD_HEIGHT } from './schema.js';
 
 /**
@@ -12,7 +13,9 @@ import { CARD_HEIGHT } from './schema.js';
  * For each card: shrink the code font from the layout's maximum toward its
  * minimum until every <pre> fits its box, then apply the smallest size found
  * to all panels of that card so they match. Report failure instead of
- * letting content clip.
+ * letting content clip. Diagram cards have no code: they are routed by
+ * DIAGRAM_SCRIPT instead, and report its reason, then share the card-level
+ * footer check.
  */
 export const FIT_SCRIPT = /* js */ `(() => {
   const CARD_HEIGHT = ${CARD_HEIGHT};
@@ -33,8 +36,23 @@ export const FIT_SCRIPT = /* js */ `(() => {
     return pre.scrollWidth <= width + TOLERANCE && pre.getBoundingClientRect().height <= height + TOLERANCE;
   };
 
+  ${DIAGRAM_SCRIPT}
+
+  const cardReason = (card) => {
+    const footer = card.querySelector('footer');
+    const cardTop = card.getBoundingClientRect().top;
+    const footerBottom = footer ? footer.getBoundingClientRect().bottom - cardTop : 0;
+    const cardOverflows = card.scrollHeight > card.clientHeight + TOLERANCE || footerBottom > CARD_HEIGHT - FOOTER_MARGIN;
+    return cardOverflows ? 'headline, subtitle, notes or insight push the footer off the card; shorten the prose' : undefined;
+  };
+
   const results = [];
   for (const card of document.querySelectorAll('.card')) {
+    if (card.dataset.kind === 'diagram') {
+      const reason = routeDiagram(card) ?? cardReason(card);
+      results.push({ ok: !reason, fontSize: 0, reason });
+      continue;
+    }
     const max = Number(card.dataset.fontMax);
     const min = Number(card.dataset.fontMin);
     const pres = [...card.querySelectorAll('pre.shiki')];
@@ -54,17 +72,13 @@ export const FIT_SCRIPT = /* js */ `(() => {
     for (const pre of pres) pre.style.fontSize = size + 'px';
 
     const overflowing = pres.find((pre) => !fits(pre, pre.parentElement));
-    const footer = card.querySelector('footer');
-    const cardTop = card.getBoundingClientRect().top;
-    const footerBottom = footer ? footer.getBoundingClientRect().bottom - cardTop : 0;
-    const cardOverflows = card.scrollHeight > card.clientHeight + TOLERANCE || footerBottom > CARD_HEIGHT - FOOTER_MARGIN;
 
     let reason;
     if (overflowing) {
       const label = overflowing.closest('.panel')?.querySelector('.panel-title')?.textContent?.trim();
       reason = 'code in panel "' + (label ?? '?') + '" does not fit at the minimum ' + min + 'px; shorten lines or remove lines';
-    } else if (cardOverflows) {
-      reason = 'headline, subtitle, notes or insight push the footer off the card; shorten the prose';
+    } else {
+      reason = cardReason(card);
     }
     results.push({ ok: !reason, fontSize: size, reason });
   }

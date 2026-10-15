@@ -1,5 +1,12 @@
 import {
+  CARD_KINDS,
   DEFAULT_LAYOUT,
+  DIAGRAM_COLUMNS,
+  DIAGRAM_LIMITS,
+  DIAGRAM_TEXT_LIMITS,
+  LABEL_SIDES,
+  SIDES,
+  TONES,
   LAYOUTS,
   LAYOUT_RULES,
   MAX_NOTES,
@@ -33,13 +40,18 @@ export function buildCardSchema(): JsonSchema {
     $id: SCHEMA_URL,
     title: 'Social card source',
     description:
-      'A JSON card, or the YAML front matter plus panels of a Markdown card. Character and count limits are enforced here; per-panel line limits are listed as x-maxLines per layout. A card that passes this schema can still fail to fit at the minimum code font size, which only a real render detects.',
+      'A JSON card, or the YAML front matter plus panels of a Markdown card. A code card (the default) has panels; a diagram card ("kind": "diagram", JSON only) has a diagram. Character and count limits are enforced here; per-panel line limits are listed as x-maxLines per layout. A card that passes this schema can still fail to fit (code at the minimum font size, a diagram taller than its space), which only a real render detects. Rules that span fields (anchors naming real nodes, edge types naming legend ids, nodes not sharing a cell, 8-character labels on left/right edges) are checked by the renderer, not here.',
     type: 'object',
-    required: ['title', 'subtitle', 'panels'],
+    required: ['title', 'subtitle'],
     properties: {
       $schema: {
         type: 'string',
         description: 'Optional URL of this schema, for editor autocomplete. Ignored by the renderer.',
+      },
+      kind: {
+        description: 'What the card body is: "code" panels, or a "diagram" of nodes and edges (JSON only).',
+        enum: [...CARD_KINDS],
+        default: 'code',
       },
       title: text('title', 'First title line.', { required: true }),
       highlight: text('highlight', 'Second title line, in the accent colour.'),
@@ -68,12 +80,14 @@ export function buildCardSchema(): JsonSchema {
       },
       panels: {
         type: 'array',
-        description: 'Code panels, in order. How many depends on the layout.',
+        description: 'Code panels, in order. How many depends on the layout. Code cards only.',
         items: { $ref: '#/$defs/panel' },
       },
+      diagram: { $ref: '#/$defs/diagram' },
     },
-    allOf: LAYOUTS.map(layoutCondition),
+    allOf: [kindCondition(), ...LAYOUTS.map(layoutCondition)],
     $defs: {
+      ...diagramDefs(),
       panel: {
         type: 'object',
         required: ['language', 'code'],
@@ -158,6 +172,139 @@ function layoutCondition(layout: Layout): JsonSchema {
       'x-maxLines': Object.fromEntries(panelCounts(layout).map((count) => [String(count), rule.maxLines(count)])),
       'x-fontRange': { max: rule.fontMax, min: rule.fontMin },
       properties: { panels: { minItems: rule.minPanels, maxItems: rule.maxPanels } },
+    },
+  };
+}
+
+/** A diagram card needs `diagram` and has no layout or panels; any other card needs `panels`. */
+function kindCondition(): JsonSchema {
+  return {
+    if: { required: ['kind'], properties: { kind: { const: 'diagram' } } },
+    then: { required: ['diagram'], not: { anyOf: [{ required: ['layout'] }, { required: ['panels'] }] } },
+    else: { required: ['panels'], not: { required: ['diagram'] } },
+  };
+}
+
+function diagramText(key: keyof typeof DIAGRAM_TEXT_LIMITS, description: string, required = false): JsonSchema {
+  const limit = DIAGRAM_TEXT_LIMITS[key];
+  return {
+    type: 'string',
+    description: `${description} At most ${limit} characters.`,
+    ...(required ? { pattern: NOT_BLANK } : {}),
+    maxLength: limit,
+  };
+}
+
+function placement(): JsonSchema {
+  return {
+    col: {
+      type: 'integer',
+      minimum: 1,
+      maximum: DIAGRAM_COLUMNS,
+      description: `Grid column, 1 to ${DIAGRAM_COLUMNS}.`,
+    },
+    row: {
+      type: 'integer',
+      minimum: 1,
+      maximum: DIAGRAM_LIMITS.rows,
+      description: `Grid row, 1 to ${DIAGRAM_LIMITS.rows}.`,
+    },
+    colSpan: { type: 'integer', minimum: 1, maximum: DIAGRAM_COLUMNS, default: 1 },
+    rowSpan: { type: 'integer', minimum: 1, maximum: DIAGRAM_LIMITS.rows, default: 1 },
+  };
+}
+
+function diagramDefs(): Record<string, JsonSchema> {
+  const id = {
+    type: 'string',
+    pattern: `^[A-Za-z][\\w-]*$`,
+    maxLength: DIAGRAM_TEXT_LIMITS.id,
+    description: 'Letters, digits, "-" or "_", starting with a letter.',
+  };
+  const ends = {
+    oneOf: [
+      { $ref: '#/$defs/anchor' },
+      { type: 'array', minItems: 1, maxItems: DIAGRAM_LIMITS.busEnds, items: { $ref: '#/$defs/anchor' } },
+    ],
+  };
+  return {
+    anchor: {
+      type: 'string',
+      description: `A point on a node: "node.side" or "node.side@0.3", where side is ${SIDES.join(', ')} and the fraction (default 0.5) runs left to right or top to bottom.`,
+      pattern: `^[A-Za-z][\\w-]*\\.(${SIDES.join('|')})(@(0(\\.\\d+)?|1(\\.0+)?|\\.\\d+))?$`,
+    },
+    diagram: {
+      type: 'object',
+      description: `Diagram cards only. Nodes on a ${DIAGRAM_COLUMNS}-column grid, edges between anchors, and a legend each edge type refers to.`,
+      required: ['legend', 'nodes', 'edges'],
+      properties: {
+        legend: {
+          type: 'array',
+          minItems: 1,
+          maxItems: DIAGRAM_LIMITS.legend,
+          items: { $ref: '#/$defs/legendEntry' },
+        },
+        nodes: { type: 'array', minItems: 1, maxItems: DIAGRAM_LIMITS.nodes, items: { $ref: '#/$defs/node' } },
+        groups: { type: 'array', maxItems: DIAGRAM_LIMITS.groups, items: { $ref: '#/$defs/group' }, default: [] },
+        edges: { type: 'array', maxItems: DIAGRAM_LIMITS.edges, items: { $ref: '#/$defs/edge' } },
+      },
+    },
+    legendEntry: {
+      type: 'object',
+      required: ['id', 'label', 'tone'],
+      properties: {
+        id,
+        label: diagramText('legendLabel', 'Legend text.', true),
+        tone: { enum: [...TONES], description: 'Colour role; the theme decides the colour.' },
+        dashed: { type: 'boolean', default: false },
+      },
+    },
+    node: {
+      type: 'object',
+      required: ['id', 'col', 'row', 'title'],
+      properties: {
+        id,
+        ...placement(),
+        eyebrow: diagramText('eyebrow', 'Small caps line above the title.'),
+        badge: diagramText('badge', 'Short tag before the title, e.g. ".NET".'),
+        title: diagramText('nodeTitle', 'Node title.', true),
+        lines: {
+          type: 'array',
+          maxItems: DIAGRAM_LIMITS.lines,
+          items: diagramText('line', 'A line under the title.', true),
+        },
+        mono: { type: 'boolean', default: false, description: 'Lines in the monospace face, for paths and names.' },
+        tone: {
+          enum: [...TONES],
+          description: 'accent, danger, info or success tint the border; muted is a dashed note.',
+        },
+      },
+    },
+    group: {
+      type: 'object',
+      required: ['id', 'label', 'col', 'row', 'colSpan'],
+      properties: { id, label: diagramText('groupLabel', 'Caption on the frame.', true), ...placement() },
+    },
+    edge: {
+      type: 'object',
+      required: ['from', 'to', 'type'],
+      properties: {
+        from: ends,
+        to: ends,
+        type: { ...id, description: 'A legend id.' },
+        label: diagramText(
+          'edgeLabel',
+          `Edge label. An edge between two left/right anchors sits in a column gutter and allows ${DIAGRAM_TEXT_LIMITS.gutterLabel} characters.`,
+        ),
+        sublabel: diagramText('sublabel', 'Smaller second line; needs a label.'),
+        labelSide: { enum: [...LABEL_SIDES] },
+        busOffset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: DIAGRAM_LIMITS.busOffset,
+          description: 'Bus edges only: px from the many-ended side to the bus line.',
+        },
+      },
     },
   };
 }

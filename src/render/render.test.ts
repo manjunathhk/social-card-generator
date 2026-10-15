@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { brandingFromEnv } from '../branding.js';
 import { formatFromPath, parseContent } from '../content.js';
+import { FIT_SCRIPT } from '../fit-script.js';
 import { capturePdf, capturePng, layoutDocument, openPage, withBrowser } from '../renderer.js';
 import { validateCard } from '../validate.js';
 import { renderDocument } from '../template.js';
@@ -84,5 +85,78 @@ test('several cards become a multi-page PDF', async () => {
     const pdf = await capturePdf(page);
     assert.equal(pdf.toString('ascii', 0, 5), '%PDF-');
     assert.equal(pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)?.length, 3);
+  });
+});
+
+test('diagram cards route their edges and render to a 1080 × 1350 PNG', async () => {
+  const cards = await Promise.all(['background-workers.json', 'cache-aside.json'].map(loadExample));
+  await withBrowser(browserOptions, async (browser) => {
+    const page = await openPage(browser, 1);
+    for (const card of cards) {
+      assert.equal(card.kind, 'diagram');
+      if (card.kind !== 'diagram') continue;
+      const [fit] = await layoutDocument(page, await renderDocument([card], branding));
+      assert.ok(fit.ok, `${card.title}: ${fit.reason}`);
+      assert.deepEqual(pngSize(await capturePng(page)), { width: 1080, height: 1350 });
+      const drawn = await page.evaluate(() => ({
+        edges: document.querySelectorAll('.dg-edge').length,
+        heads: document.querySelectorAll('.dg-head').length,
+        labels: [...document.querySelectorAll('.dg-label-main')].map((text) => text.textContent),
+        keys: document.querySelectorAll('.dg-key').length,
+      }));
+      const { edges, legend } = card.diagram;
+      assert.equal(drawn.edges, edges.length);
+      assert.equal(
+        drawn.heads,
+        edges.reduce((sum, edge) => sum + edge.to.length, 0),
+      );
+      assert.deepEqual(drawn.labels, edges.map((edge) => edge.label).filter(Boolean));
+      assert.equal(drawn.keys, legend.length);
+    }
+    // The sandbox re-runs the fit script on the same card; edges must not double up.
+    const last = cards.at(-1)!;
+    assert.equal(last.kind, 'diagram');
+    await page.evaluate(FIT_SCRIPT);
+    assert.equal(await page.locator('.dg-edge').count(), last.kind === 'diagram' ? last.diagram.edges.length : -1);
+  });
+});
+
+test('a diagram that does not fit fails instead of clipping (AC 7)', async () => {
+  const line = 'A long line of explanation that wraps onto several rows inside the node';
+  const nodes = Array.from({ length: 10 }, (_, index) => ({
+    id: `n${index}`,
+    col: (index % 3) + 1,
+    row: Math.floor(index / 3) + 1,
+    eyebrow: 'Eyebrow',
+    title: `Node ${index}`,
+    lines: [line.slice(0, 60), line.slice(0, 60), line.slice(0, 60)],
+  }));
+  const card = validateCard({
+    kind: 'diagram',
+    title: 'T',
+    subtitle: 'S',
+    diagram: { legend: [{ id: 'x', label: 'X', tone: 'info' }], nodes, edges: [] },
+  });
+  await withBrowser(browserOptions, async (browser) => {
+    const page = await openPage(browser, 1);
+    const [fit] = await layoutDocument(page, await renderDocument([card], branding));
+    assert.equal(fit.ok, false);
+    assert.match(fit.reason ?? '', /^diagram overflows by \d+px/);
+
+    const edgeLabel = (labelSide?: string) =>
+      validateCard({
+        kind: 'diagram',
+        title: 'T',
+        subtitle: 'S',
+        diagram: {
+          legend: [{ id: 'x', label: 'X', tone: 'info' }],
+          nodes: [nodes[2], { ...nodes[5], lines: [] }],
+          edges: [{ from: 'n2.bottom', to: 'n5.top', type: 'x', label: 'after five retries', labelSide }],
+        },
+      });
+    const [flipped] = await layoutDocument(page, await renderDocument([edgeLabel()], branding));
+    assert.ok(flipped.ok, `a default label flips inward: ${flipped.reason}`);
+    const [placed] = await layoutDocument(page, await renderDocument([edgeLabel('right')], branding));
+    assert.match(placed.reason ?? '', /the label of diagram\.edges\[0\] leaves the diagram; try labelSide "left"/);
   });
 });

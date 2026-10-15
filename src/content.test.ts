@@ -1,9 +1,18 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { formatFromPath, parseContent } from './content.js';
+import { formatFromPath, parseContent as parseAny } from './content.js';
 import { parseHighlightSpec, parseMarkdown } from './markdown.js';
-import { validateCard } from './validate.js';
+import type { Card, CodeCard } from './schema.js';
+import { validateCard as validateAny } from './validate.js';
+
+/** These tests cover code cards; diagram cards have their own file. */
+function codeCard(card: Card): CodeCard {
+  assert.equal(card.kind, 'code');
+  return card as CodeCard;
+}
+const parseContent = (text: string, format: Parameters<typeof parseAny>[1]) => codeCard(parseAny(text, format));
+const validateCard = (raw: unknown) => codeCard(validateAny(raw));
 
 const example = (name: string) => readFile(new URL(`../examples/${name}`, import.meta.url), 'utf8');
 

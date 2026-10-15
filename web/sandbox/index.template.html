@@ -241,7 +241,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <label><span>Credit line</span><select id="b-credit"><option value="">Off</option><option value="true">“make yours: …” in footer</option></select></label>
         </div>
       </details>
-      <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Themes: light, dark. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>.</p>
+      <p class="notes">Edit the source and the card re-renders. The Layout and Theme pickers override the front matter; “from source” uses whatever the file says. Themes: light, dark. Choose “custom…” to shape a palette and copy it out as a theme file for the repo. A ✅ or ❌ heading prefix sets the verdict, <code>{2,4-6}</code> after the language highlights lines, and bullets after a fence become notes. JSON sources are detected automatically and also accept <code>underline</code>. A JSON source with <code>"kind": "diagram"</code> draws an architecture diagram instead of code; the Layout picker does not apply to it.</p>
     </section>
 
     <section class="pane" aria-label="Preview and export">
@@ -391,7 +391,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
   --panel: ${p.panel}; --panel-border: ${mix(onPanel, darkPanel ? 8 : 12, p.panel)}; --panel-shadow: none;
   --panel-header-bg: ${darkPanel ? 'transparent' : mix(onPanel, 6, p.panel)}; --panel-header-fg: ${mix(onPanel, darkPanel ? 60 : 70, p.panel)}; --panel-rule: ${mix(onPanel, 14, p.panel)};
   --line-highlight: ${mix(p.accent, darkPanel ? 14 : 11, p.panel)}; --underline: #d9534f; --notes-fg: ${mix(onPanel, 84, p.panel)};
-  --good: ${darkPanel ? '#99ffe4' : '#66800b'}; --bad: ${darkPanel ? '#ff8080' : '#af3029'}; --badge-fg: ${darkPanel ? p.panel : p.bg};
+  --good: ${darkPanel ? '#99ffe4' : '#66800b'}; --bad: ${darkPanel ? '#ff8080' : '#af3029'}; --badge-fg: ${darkPanel ? p.panel : p.bg}; --info: ${darkPanel ? '#60a5fa' : '#1d4ed8'};
   ${typeCss} --panel-radius: 8px;
 }`;
   }
@@ -553,7 +553,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     let card;
     try {
       const raw = loadRaw(text, format);
-      if (layoutSel.value) raw.layout = layoutSel.value;
+      if (layoutSel.value && raw.kind !== 'diagram') raw.layout = layoutSel.value; // layouts arrange code panels only
       if (themeSel.value) raw.theme = themeSel.value;
       card = SC.validateCard(raw);
     }
@@ -568,8 +568,10 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     stage.style.transform = 'none';
     let fit;
     try { fit = (0, eval)(SC.FIT_SCRIPT)[0]; } finally { fitScale(); }
-    $('s-layout').textContent = card.layout; $('s-theme').textContent = card.theme; $('s-panels').textContent = card.panels.length;
-    $('s-font').textContent = fit.fontSize + 'px';
+    const diagram = card.kind === 'diagram';
+    $('s-layout').textContent = diagram ? 'diagram' : card.layout; $('s-theme').textContent = card.theme;
+    $('s-panels').textContent = diagram ? '—' : card.panels.length;
+    $('s-font').textContent = diagram ? '—' : fit.fontSize + 'px';
     const fitEl = $('s-fit');
     if (fit.ok) { fitEl.textContent = '✓ fits'; fitEl.className = 'fit-ok'; overflowBox.hidden = true; }
     else { fitEl.textContent = '✕ overflows'; fitEl.className = 'fit-bad'; overflowBox.textContent = 'The CLI would refuse this card: ' + fit.reason + '.'; overflowBox.hidden = false; }

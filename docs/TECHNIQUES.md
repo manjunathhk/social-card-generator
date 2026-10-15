@@ -12,18 +12,19 @@ A developer reference for how the generator works and why it is built this way. 
 6. [Self-contained HTML: embedded fonts, blocked network](#self-contained-html-embedded-fonts-blocked-network)
 7. [Layout, theme and decoration as separate axes](#layout-theme-and-decoration-as-separate-axes)
 8. [The fit loop: measure, don't guess](#the-fit-loop-measure-dont-guess)
-9. [PDF carousels from one document](#pdf-carousels-from-one-document)
-10. [Playwright details that matter](#playwright-details-that-matter)
-11. [Testing strategy](#testing-strategy)
-12. [Packaging: tsx in development, compiled JS in the binary](#packaging-tsx-in-development-compiled-js-in-the-binary)
-13. [Running the core in the browser](#running-the-core-in-the-browser)
-14. [History: browser-only, on purpose](#history-browser-only-on-purpose)
-15. [The Docker image](#the-docker-image)
-16. [Branding: one server default, read-only from the UI](#branding-one-server-default-read-only-from-the-ui)
-17. [Two hosts: GitHub Pages and the Docker server](#two-hosts-github-pages-and-the-docker-server)
-18. [Adding a theme](#adding-a-theme)
-19. [Adding a layout](#adding-a-layout)
-20. [Gotchas](#gotchas)
+9. [Diagram cards: CSS places, the browser routes](#diagram-cards-css-places-the-browser-routes)
+10. [PDF carousels from one document](#pdf-carousels-from-one-document)
+11. [Playwright details that matter](#playwright-details-that-matter)
+12. [Testing strategy](#testing-strategy)
+13. [Packaging: tsx in development, compiled JS in the binary](#packaging-tsx-in-development-compiled-js-in-the-binary)
+14. [Running the core in the browser](#running-the-core-in-the-browser)
+15. [History: browser-only, on purpose](#history-browser-only-on-purpose)
+16. [The Docker image](#the-docker-image)
+17. [Branding: one server default, read-only from the UI](#branding-one-server-default-read-only-from-the-ui)
+18. [Two hosts: GitHub Pages and the Docker server](#two-hosts-github-pages-and-the-docker-server)
+19. [Adding a theme](#adding-a-theme)
+20. [Adding a layout](#adding-a-layout)
+21. [Gotchas](#gotchas)
 
 ## The one idea
 
@@ -47,21 +48,23 @@ flowchart LR
   H --> J["PDF print"]
 ```
 
-| Module               | Responsibility                                                                                                                                          | Depends on                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `src/schema.ts`      | The `Card` and `Panel` types, text limits, per-layout rules (panel counts, line limits, font range)                                                     | nothing                                           |
-| `src/markdown.ts`    | Front matter plus fences, headings, highlight specs and note bullets, into a raw object                                                                 | `yaml`                                            |
-| `src/card-schema.ts` | JSON Schema for card source, derived from `schema` limits and the theme registry; written to `schema/card.schema.json` by `npm run schema`              | `schema`, `themes`                                |
-| `src/validate.ts`    | Raw object into a `Card`; coercion, defaults, limits, language alias resolution                                                                         | `schema`, `themes`, Shiki language list           |
-| `src/content.ts`     | Picks the parser by file extension and strips a BOM                                                                                                     | `markdown`, `validate`                            |
-| `src/highlight.ts`   | One cached Shiki highlighter; line highlights and underline decorations                                                                                 | `shiki`                                           |
-| `src/fonts.ts`       | `@font-face` rules with WOFF2 files inlined as base64                                                                                                   | `@fontsource/*`, `@manjunathhk/design-tokens`     |
-| `src/themes/`        | `base.ts` (structure and layout CSS), one file per theme (palette variables; `design-tokens.ts` holds the `light` and `dark` pair), `index.ts` registry | `@manjunathhk/design-tokens` (`design-tokens.ts`) |
-| `src/template.ts`    | Cards into one HTML document                                                                                                                            | all of the above                                  |
-| `src/fit-script.ts`  | The in-browser fit loop as a JavaScript string                                                                                                          | `schema`                                          |
-| `src/renderer.ts`    | Playwright: launch, route blocking, layout, PNG, PDF                                                                                                    | `playwright`, `fit-script`                        |
-| `src/branding.ts`    | `.env` loading and neutral defaults                                                                                                                     | `node:process`                                    |
-| `src/cli.ts`         | Argument parsing, input expansion, orchestration, output                                                                                                | everything                                        |
+| Module                  | Responsibility                                                                                                                                          | Depends on                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `src/schema.ts`         | The `Card` union (`CodeCard`, `DiagramCard`), `Panel` and diagram types, text limits, per-layout rules (panel counts, line limits, font range)          | nothing                                           |
+| `src/markdown.ts`       | Front matter plus fences, headings, highlight specs and note bullets, into a raw object                                                                 | `yaml`                                            |
+| `src/card-schema.ts`    | JSON Schema for card source, derived from `schema` limits and the theme registry; written to `schema/card.schema.json` by `npm run schema`              | `schema`, `themes`                                |
+| `src/validate.ts`       | Raw object into a `Card`; coercion, defaults, limits, language alias resolution                                                                         | `schema`, `themes`, Shiki language list           |
+| `src/diagram.ts`        | The `diagram` object of a diagram card into a `Diagram`: anchors, grid placement and overlap, bus rules, legend ids                                     | `schema`                                          |
+| `src/content.ts`        | Picks the parser by file extension and strips a BOM                                                                                                     | `markdown`, `validate`                            |
+| `src/highlight.ts`      | One cached Shiki highlighter; line highlights and underline decorations                                                                                 | `shiki`                                           |
+| `src/fonts.ts`          | `@font-face` rules with WOFF2 files inlined as base64                                                                                                   | `@fontsource/*`, `@manjunathhk/design-tokens`     |
+| `src/themes/`           | `base.ts` (structure and layout CSS), one file per theme (palette variables; `design-tokens.ts` holds the `light` and `dark` pair), `index.ts` registry | `@manjunathhk/design-tokens` (`design-tokens.ts`) |
+| `src/template.ts`       | Cards into one HTML document                                                                                                                            | all of the above                                  |
+| `src/fit-script.ts`     | The in-browser fit loop as a JavaScript string; routes diagram cards first                                                                              | `schema`, `diagram-script`                        |
+| `src/diagram-script.ts` | The in-browser edge router for diagram cards, as a JavaScript string                                                                                    | nothing                                           |
+| `src/renderer.ts`       | Playwright: launch, route blocking, layout, PNG, PDF                                                                                                    | `playwright`, `fit-script`                        |
+| `src/branding.ts`       | `.env` loading and neutral defaults                                                                                                                     | `node:process`                                    |
+| `src/cli.ts`            | Argument parsing, input expansion, orchestration, output                                                                                                | everything                                        |
 
 Data flows one way. Nothing after `validate.ts` re-checks input, and nothing before `template.ts` knows about HTML.
 
@@ -131,7 +134,7 @@ Two token sets meet in `base.ts`, and it contains almost no literal numbers of i
 ```
 palette  --bg --fg --muted --muted-2 --accent --accent-title --rule
          --panel --panel-border --panel-shadow --panel-header-bg --panel-header-fg --panel-rule
-         --line-highlight --underline --notes-fg --good --bad --badge-fg
+         --line-highlight --underline --notes-fg --good --bad --badge-fg --info
 type     --font-display --font-sans --font-mono --h1-weight --h1-tracking
 shape    --panel-radius
 ```
@@ -159,6 +162,22 @@ The CLI turns `ok: false` into a non-zero exit and never writes the file. A clip
 Why a step loop and not a binary search: the range has at most sixteen steps, each is one synchronous layout pass, and monotonicity is not guaranteed once text wrapping interacts with panel heights. Simple and correct beats fast here.
 
 **Why the script is a string.** Playwright serialises a function passed to `page.evaluate` with `Function.prototype.toString`. tsx (and esbuild generally) rewrites functions to preserve their names through a `__name(...)` helper that exists only in the Node bundle, so the serialised source throws `ReferenceError: __name is not defined` inside Chromium. Compiled output from `tsc` does not have this problem, which makes it a bug that appears only in development. Keeping the script as a JavaScript string removes the failure mode in both environments at the cost of type checking on forty lines.
+
+## Diagram cards: CSS places, the browser routes
+
+A diagram card (`"kind": "diagram"`) keeps the chrome of a code card (masthead, intro, insight, footer, theme, branding) and replaces the panels with a diagram. `Card` is a discriminated union, `CodeCard | DiagramCard`, so nothing that handles panels has to tolerate a card without them, and a code card's markup is byte-for-byte what it was before diagrams existed. It is not a layout: layouts arrange code panels, and a diagram has no panels, no Shiki and no fit loop.
+
+Three steps, each in the place that is best at it:
+
+1. **Validation** (`diagram.ts`) parses anchors (`"db.right@0.2"` into `{ node, side, at }`), checks every anchor names a node and every edge type names a legend entry, rejects two nodes in one cell, and caps labels on edges between two left/right anchors at 8 characters because they sit in a 92 px column gutter. Errors name the field (`diagram.edges[3].to`).
+2. **Placement is CSS.** `template.ts` writes nodes and groups as items of a three-column grid (`grid-column: 2 / span 1`), rows sized by content and spread with `align-content: space-evenly`, so a sparse diagram fills the stage instead of floating. The resolved edges (each with its legend tone) go in the stage's `data-edges` attribute, next to an empty `<svg>`.
+3. **Routing is in the browser.** `DIAGRAM_SCRIPT` measures the node boxes and draws each edge as an orthogonal path with at most two bends: vertical to vertical goes out, across at the midpoint, and in; left/right to left/right does the same sideways; mixed sides take one bend; two anchors on the same side step out 34 px and come back. Several anchors on one end make a bus: a trunk, a horizontal line, and one branch per end. Arrowheads are drawn as paths rather than SVG markers, so ids never collide between cards in one PDF and `html-to-image` exports them unchanged.
+
+There is no auto-layout and no obstacle avoidance. An auto-layout engine would be a large dependency, would move nodes when one label changed, and would still need overrides to look intentional. The anchors are the route, and the card author (usually an agent using the skill) chooses them.
+
+Colours never appear in the script. Each edge group gets a `tone-<tone>` class, `base.ts` maps the five tones to theme tokens (`info` to `--info`, `accent`, `success` to `--good`, `danger` to `--bad`, `muted`), and the theme supplies them. `--info` was added to the theme contract for this; `light` and `dark` take it from the design tokens' `color.info`.
+
+`FIT_SCRIPT` embeds `DIAGRAM_SCRIPT` and calls `routeDiagram(card)` for a card with `data-kind="diagram"` instead of the font loop. The router reports, in order: an edge label that leaves the stage (a default-placed label first flips to the other side; one the author placed is reported with the side to try), a node wider than its column, and a grid taller than its space ("diagram overflows by N px"). The card-level footer check then runs as for code cards. The router clears its `<svg>` first, because the sandbox runs `FIT_SCRIPT` again on every edit.
 
 ## PDF carousels from one document
 
@@ -278,6 +297,8 @@ If the theme needs a structural tweak (hide the dot, show the traffic lights, ch
 4. Add the example to the list in `src/render/render.test.ts` so CI proves it renders and fits.
 
 A layout that needs new markup (a caption row, an output pane) also touches `renderCard` in `template.ts`. Keep the markup generic and let the layout class decide visibility.
+
+A body that is not code panels at all is a card kind, not a layout; see [Diagram cards](#diagram-cards-css-places-the-browser-routes) for how `kind: diagram` was added alongside them.
 
 ## Gotchas
 

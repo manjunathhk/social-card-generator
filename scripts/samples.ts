@@ -22,6 +22,8 @@ const SAMPLES = [
   'angular-inject.md',
   'semantic-tokens.md',
   'theme-switch.json',
+  'background-workers.json',
+  'cache-aside.json',
 ];
 
 const root = fileURLToPath(new URL('..', import.meta.url));
