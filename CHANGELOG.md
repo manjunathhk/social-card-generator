@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.4.0] - 2026-10-30
+
+### Added
+
+- Diagram cards. A JSON card with `"kind": "diagram"` keeps the masthead, title, subtitle, insight, footer, theme and branding, and replaces the code panels with an architecture diagram: up to 10 nodes on a three-column grid (eyebrow, badge, title, up to 3 lines, optional tone), up to 14 orthogonal edges between named anchors such as `"db.right@0.2"`, bus edges for fan-out and fan-in, up to 2 dashed group frames, and a legend whose entries map to theme tones (`info`, `accent`, `success`, `danger`, `muted`). Edges are routed in the browser from the measured node boxes; there is no auto-layout. Validation names the field for unknown nodes or anchors, edge types missing from the legend, two nodes in one cell, and over-long labels on left/right edges (8 characters, since they sit in a column gutter). A diagram that overflows its space, or an explicitly placed edge label that leaves it, fails the render like code that cannot fit; a default-placed label flips sides instead. Markdown cannot declare a diagram card. New examples `background-workers.json` and `cache-aside.json` are in `sample/`, the sandbox picker and the carousel; the JSON Schema, README, `docs/TECHNIQUES.md` and the `social-card-source` skill document the format. (#62)
+- `--info` joins the theme contract, for the HTTP-style diagram tone. `light` and `dark` take it from the design tokens' `color.info`; the sandbox's custom palette sets it too.
+
+### Changed
+
+- Internally, a validated card is a union of `CodeCard` and `DiagramCard`, told apart by `kind` (default `code`). Existing code cards need no change and render exactly as before, pixel for pixel.
+
 ## [3.3.8] - 2026-10-30
 
 ### Fixed

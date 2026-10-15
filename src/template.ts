@@ -2,7 +2,18 @@ import type { Branding } from './branding.js';
 import { fontFaceCss } from './fonts.js';
 import { highlightPanel } from './highlight.js';
 import { escapeHtml as e } from './html.js';
-import { LAYOUT_RULES, type Card, type Panel } from './schema.js';
+import {
+  DIAGRAM_TOKENS,
+  LAYOUT_RULES,
+  type Card,
+  type CodeCard,
+  type Diagram,
+  type DiagramCard,
+  type DiagramGroup,
+  type DiagramNode,
+  type LayoutTokens,
+  type Panel,
+} from './schema.js';
 import { baseCss, getTheme } from './themes/index.js';
 
 /**
@@ -38,13 +49,16 @@ ${bodies.join('\n')}
 }
 
 export async function renderCard(card: Card, branding: Branding): Promise<string> {
+  if (card.kind === 'diagram') return renderDiagramCard(card, branding);
+  return renderCodeCard(card, branding);
+}
+
+async function renderCodeCard(card: CodeCard, branding: Branding): Promise<string> {
   const theme = getTheme(card.theme);
   const rule = LAYOUT_RULES[card.layout];
   const panels = await Promise.all(card.panels.map((panel) => renderPanel(panel, theme.shikiTheme)));
   const classes = ['card', `layout-${card.layout}`, `theme-${card.theme}`, `panels-${card.panels.length}`];
-  const tokens = Object.entries(rule.tokens(card.panels.length))
-    .map(([name, value]) => `${name}:${value}`)
-    .join(';');
+  const tokens = inlineTokens(rule.tokens(card.panels.length));
 
   return `<main class="${classes.join(' ')}" style="${tokens}" data-font-max="${rule.fontMax}" data-font-min="${rule.fontMin}">
 ${renderMasthead(card, branding)}
@@ -55,6 +69,69 @@ ${panels.join('\n')}
 ${renderInsight(card)}
 ${renderFooter(branding)}
 </main>`;
+}
+
+function inlineTokens(tokens: LayoutTokens): string {
+  return Object.entries(tokens)
+    .map(([name, value]) => `${name}:${value}`)
+    .join(';');
+}
+
+/**
+ * A diagram card: the same chrome as a code card around a grid of nodes. The
+ * grid is plain CSS; edges are drawn into the empty <svg> by DIAGRAM_SCRIPT
+ * once the browser has measured the nodes, from the anchors in `data-edges`.
+ */
+function renderDiagramCard(card: DiagramCard, branding: Branding): string {
+  const classes = ['card', 'kind-diagram', `theme-${card.theme}`];
+  return `<main class="${classes.join(' ')}" style="${inlineTokens(DIAGRAM_TOKENS)}" data-kind="diagram">
+${renderMasthead(card, branding)}
+${renderIntro(card)}
+${renderDiagram(card.diagram)}
+${renderInsight(card)}
+${renderFooter(branding)}
+</main>`;
+}
+
+function renderDiagram(diagram: Diagram): string {
+  const tones = new Map(diagram.legend.map((entry) => [entry.id, entry]));
+  const edges = diagram.edges.map((edge) => {
+    const entry = tones.get(edge.type)!;
+    return { ...edge, tone: entry.tone, dashed: entry.dashed };
+  });
+  const legend = diagram.legend.map(
+    (entry) =>
+      `<span class="dg-key tone-${entry.tone}${entry.dashed ? ' dashed' : ''}"><svg viewBox="0 0 34 8" aria-hidden="true"><line x1="1" y1="4" x2="33" y2="4"/></svg>${e(entry.label)}</span>`,
+  );
+  return `<section class="diagram">
+<div class="dg-stage" style="grid-template-rows:repeat(${diagram.rows}, auto)" data-edges="${e(JSON.stringify(edges))}">
+${diagram.groups.map(renderGroup).join('\n')}
+${diagram.nodes.map(renderNode).join('\n')}
+<svg class="dg-edges" aria-hidden="true"></svg>
+</div>
+<div class="dg-legend">${legend.join('')}</div>
+</section>`;
+}
+
+const gridArea = (box: DiagramNode | DiagramGroup) =>
+  `grid-column:${box.col} / span ${box.colSpan};grid-row:${box.row} / span ${box.rowSpan}`;
+
+function renderNode(node: DiagramNode): string {
+  const tone = node.tone ? ` tone-${node.tone}` : '';
+  const eyebrow = node.eyebrow ? `<div class="dg-eyebrow">${e(node.eyebrow)}</div>` : '';
+  const badge = node.badge ? `<span class="dg-badge">${e(node.badge)}</span>` : '';
+  const lines = node.lines.length
+    ? `<ul class="dg-lines${node.mono ? ' mono' : ''}">${node.lines.map((line) => `<li>${e(line)}</li>`).join('')}</ul>`
+    : '';
+  return `<div class="dg-node${tone}" data-node="${e(node.id)}" style="${gridArea(node)}">
+  ${eyebrow}
+  <div class="dg-title">${badge}<span>${e(node.title)}</span></div>
+  ${lines}
+</div>`;
+}
+
+function renderGroup(group: DiagramGroup): string {
+  return `<div class="dg-group" style="${gridArea(group)}"><span>${e(group.label)}</span></div>`;
 }
 
 /** The running head carries the issue label and number; with neither there is no head. */

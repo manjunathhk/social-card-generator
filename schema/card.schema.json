@@ -2,13 +2,18 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/manjunathhk/social-card-generator/main/schema/card.schema.json",
   "title": "Social card source",
-  "description": "A JSON card, or the YAML front matter plus panels of a Markdown card. Character and count limits are enforced here; per-panel line limits are listed as x-maxLines per layout. A card that passes this schema can still fail to fit at the minimum code font size, which only a real render detects.",
+  "description": "A JSON card, or the YAML front matter plus panels of a Markdown card. A code card (the default) has panels; a diagram card (\"kind\": \"diagram\", JSON only) has a diagram. Character and count limits are enforced here; per-panel line limits are listed as x-maxLines per layout. A card that passes this schema can still fail to fit (code at the minimum font size, a diagram taller than its space), which only a real render detects. Rules that span fields (anchors naming real nodes, edge types naming legend ids, nodes not sharing a cell, 8-character labels on left/right edges) are checked by the renderer, not here.",
   "type": "object",
-  "required": ["title", "subtitle", "panels"],
+  "required": ["title", "subtitle"],
   "properties": {
     "$schema": {
       "type": "string",
       "description": "Optional URL of this schema, for editor autocomplete. Ignored by the renderer."
+    },
+    "kind": {
+      "description": "What the card body is: \"code\" panels, or a \"diagram\" of nodes and edges (JSON only).",
+      "enum": ["code", "diagram"],
+      "default": "code"
     },
     "title": {
       "type": "string",
@@ -52,11 +57,17 @@
     "theme": { "description": "Palette, typefaces and panel shape.", "enum": ["light", "dark"], "default": "light" },
     "panels": {
       "type": "array",
-      "description": "Code panels, in order. How many depends on the layout.",
+      "description": "Code panels, in order. How many depends on the layout. Code cards only.",
       "items": { "$ref": "#/$defs/panel" }
-    }
+    },
+    "diagram": { "$ref": "#/$defs/diagram" }
   },
   "allOf": [
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "diagram" } } },
+      "then": { "required": ["diagram"], "not": { "anyOf": [{ "required": ["layout"] }, { "required": ["panels"] }] } },
+      "else": { "required": ["panels"], "not": { "required": ["diagram"] } }
+    },
     {
       "if": { "properties": { "layout": { "const": "stack" } } },
       "then": {
@@ -86,6 +97,154 @@
     }
   ],
   "$defs": {
+    "anchor": {
+      "type": "string",
+      "description": "A point on a node: \"node.side\" or \"node.side@0.3\", where side is top, bottom, left, right and the fraction (default 0.5) runs left to right or top to bottom.",
+      "pattern": "^[A-Za-z][\\w-]*\\.(top|bottom|left|right)(@(0(\\.\\d+)?|1(\\.0+)?|\\.\\d+))?$"
+    },
+    "diagram": {
+      "type": "object",
+      "description": "Diagram cards only. Nodes on a 3-column grid, edges between anchors, and a legend each edge type refers to.",
+      "required": ["legend", "nodes", "edges"],
+      "properties": {
+        "legend": { "type": "array", "minItems": 1, "maxItems": 5, "items": { "$ref": "#/$defs/legendEntry" } },
+        "nodes": { "type": "array", "minItems": 1, "maxItems": 10, "items": { "$ref": "#/$defs/node" } },
+        "groups": { "type": "array", "maxItems": 2, "items": { "$ref": "#/$defs/group" }, "default": [] },
+        "edges": { "type": "array", "maxItems": 14, "items": { "$ref": "#/$defs/edge" } }
+      }
+    },
+    "legendEntry": {
+      "type": "object",
+      "required": ["id", "label", "tone"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][\\w-]*$",
+          "maxLength": 24,
+          "description": "Letters, digits, \"-\" or \"_\", starting with a letter."
+        },
+        "label": {
+          "type": "string",
+          "description": "Legend text. At most 24 characters.",
+          "pattern": "\\S",
+          "maxLength": 24
+        },
+        "tone": {
+          "enum": ["info", "accent", "success", "danger", "muted"],
+          "description": "Colour role; the theme decides the colour."
+        },
+        "dashed": { "type": "boolean", "default": false }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "col", "row", "title"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][\\w-]*$",
+          "maxLength": 24,
+          "description": "Letters, digits, \"-\" or \"_\", starting with a letter."
+        },
+        "col": { "type": "integer", "minimum": 1, "maximum": 3, "description": "Grid column, 1 to 3." },
+        "row": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Grid row, 1 to 5." },
+        "colSpan": { "type": "integer", "minimum": 1, "maximum": 3, "default": 1 },
+        "rowSpan": { "type": "integer", "minimum": 1, "maximum": 5, "default": 1 },
+        "eyebrow": {
+          "type": "string",
+          "description": "Small caps line above the title. At most 22 characters.",
+          "maxLength": 22
+        },
+        "badge": {
+          "type": "string",
+          "description": "Short tag before the title, e.g. \".NET\". At most 8 characters.",
+          "maxLength": 8
+        },
+        "title": {
+          "type": "string",
+          "description": "Node title. At most 26 characters.",
+          "pattern": "\\S",
+          "maxLength": 26
+        },
+        "lines": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "description": "A line under the title. At most 60 characters.",
+            "pattern": "\\S",
+            "maxLength": 60
+          }
+        },
+        "mono": {
+          "type": "boolean",
+          "default": false,
+          "description": "Lines in the monospace face, for paths and names."
+        },
+        "tone": {
+          "enum": ["info", "accent", "success", "danger", "muted"],
+          "description": "accent, danger, info or success tint the border; muted is a dashed note."
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "required": ["id", "label", "col", "row", "colSpan"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][\\w-]*$",
+          "maxLength": 24,
+          "description": "Letters, digits, \"-\" or \"_\", starting with a letter."
+        },
+        "label": {
+          "type": "string",
+          "description": "Caption on the frame. At most 60 characters.",
+          "pattern": "\\S",
+          "maxLength": 60
+        },
+        "col": { "type": "integer", "minimum": 1, "maximum": 3, "description": "Grid column, 1 to 3." },
+        "row": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Grid row, 1 to 5." },
+        "colSpan": { "type": "integer", "minimum": 1, "maximum": 3, "default": 1 },
+        "rowSpan": { "type": "integer", "minimum": 1, "maximum": 5, "default": 1 }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "type"],
+      "properties": {
+        "from": {
+          "oneOf": [
+            { "$ref": "#/$defs/anchor" },
+            { "type": "array", "minItems": 1, "maxItems": 4, "items": { "$ref": "#/$defs/anchor" } }
+          ]
+        },
+        "to": {
+          "oneOf": [
+            { "$ref": "#/$defs/anchor" },
+            { "type": "array", "minItems": 1, "maxItems": 4, "items": { "$ref": "#/$defs/anchor" } }
+          ]
+        },
+        "type": { "type": "string", "pattern": "^[A-Za-z][\\w-]*$", "maxLength": 24, "description": "A legend id." },
+        "label": {
+          "type": "string",
+          "description": "Edge label. An edge between two left/right anchors sits in a column gutter and allows 8 characters. At most 20 characters.",
+          "maxLength": 20
+        },
+        "sublabel": {
+          "type": "string",
+          "description": "Smaller second line; needs a label. At most 24 characters.",
+          "maxLength": 24
+        },
+        "labelSide": { "enum": ["above", "below", "left", "right"] },
+        "busOffset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 160,
+          "description": "Bus edges only: px from the many-ended side to the bus line."
+        }
+      }
+    },
     "panel": {
       "type": "object",
       "required": ["language", "code"],

@@ -3,7 +3,21 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { SANDBOX_LANGUAGES } from '../web/sandbox/browser-highlight.js';
 import { parseContent } from './content.js';
-import { DEFAULT_LAYOUT, LAYOUTS, LAYOUT_RULES, MAX_NOTES, MAX_TAGS, MAX_UNDERLINES, TEXT_LIMITS } from './schema.js';
+import {
+  CARD_KINDS,
+  DEFAULT_LAYOUT,
+  DIAGRAM_COLUMNS,
+  DIAGRAM_LIMITS,
+  DIAGRAM_TEXT_LIMITS,
+  LAYOUTS,
+  LAYOUT_RULES,
+  MAX_NOTES,
+  MAX_TAGS,
+  MAX_UNDERLINES,
+  TEXT_LIMITS,
+  TONES,
+  type CodeCard,
+} from './schema.js';
 import { DEFAULT_THEME, THEME_NAMES } from './themes/index.js';
 
 /**
@@ -46,8 +60,9 @@ test('SKILL.md card fields table matches src/schema.ts', () => {
   const limit = (field: string) => numbers(rows.get(field)?.[2] ?? '');
   assert.deepEqual(
     [...rows.keys()],
-    ['title', 'highlight', 'subtitle', 'tags', 'insight', 'issue', 'layout', 'theme', 'panels'],
+    ['kind', 'title', 'highlight', 'subtitle', 'tags', 'insight', 'issue', 'layout', 'theme', 'panels', 'diagram'],
   );
+  assert.deepEqual(codeNames(rows.get('kind')![2]), [...CARD_KINDS]);
   for (const field of ['title', 'highlight', 'subtitle', 'insight', 'issue'] as const) {
     assert.deepEqual(limit(field), [TEXT_LIMITS[field]], field);
   }
@@ -81,6 +96,24 @@ test('SKILL.md layouts table matches LAYOUT_RULES', () => {
   }
 });
 
+test('SKILL.md diagram fields table matches src/schema.ts', () => {
+  const rows = table('### Diagram fields');
+  const limit = (field: string) => numbers(rows.get(field)?.[0] ?? '');
+  assert.deepEqual(limit('diagram.legend'), [1, DIAGRAM_LIMITS.legend, DIAGRAM_TEXT_LIMITS.legendLabel]);
+  assert.deepEqual(limit('diagram.nodes'), [1, DIAGRAM_LIMITS.nodes, DIAGRAM_COLUMNS, DIAGRAM_LIMITS.rows]);
+  assert.deepEqual(limit('diagram.groups'), [DIAGRAM_LIMITS.groups, DIAGRAM_TEXT_LIMITS.groupLabel]);
+  assert.deepEqual(limit('diagram.edges'), [DIAGRAM_LIMITS.edges]);
+  assert.deepEqual(limit('node title'), [DIAGRAM_TEXT_LIMITS.nodeTitle]);
+  assert.deepEqual(limit('node eyebrow'), [DIAGRAM_TEXT_LIMITS.eyebrow]);
+  assert.deepEqual(limit('node badge'), [DIAGRAM_TEXT_LIMITS.badge]);
+  assert.deepEqual(limit('node lines'), [DIAGRAM_LIMITS.lines, DIAGRAM_TEXT_LIMITS.line]);
+  assert.deepEqual(limit('edge label'), [DIAGRAM_TEXT_LIMITS.edgeLabel, DIAGRAM_TEXT_LIMITS.gutterLabel]);
+  assert.deepEqual(limit('edge sublabel'), [DIAGRAM_TEXT_LIMITS.sublabel]);
+  assert.deepEqual(limit('bus from or to'), [DIAGRAM_LIMITS.busEnds]);
+  const tones = skill.match(/\*\*Tones:\*\* ([^.]+)\./)?.[1] ?? '';
+  assert.deepEqual(codeNames(tones), [...TONES]);
+});
+
 test('SKILL.md themes and sandbox languages match the registries', () => {
   assert.deepEqual([...table('## Themes').keys()], THEME_NAMES);
   const marker = 'The sandbox bundles these languages only:';
@@ -92,10 +125,11 @@ test('SKILL.md themes and sandbox languages match the registries', () => {
 
 test('SKILL.md examples are valid cards', () => {
   const markdown = skill.match(/````markdown\n([\s\S]*?)\n````/)?.[1];
-  const json = skill.match(/```json\n([\s\S]*?)\n```/)?.[1];
-  assert.ok(markdown && json, 'SKILL.md needs a Markdown and a JSON example');
-  assert.equal(parseContent(markdown, 'markdown').panels.length, 2);
-  assert.equal(parseContent(json, 'json').panels.length, 1);
+  const [json, diagram] = [...skill.matchAll(/```json\n([\s\S]*?)\n```/g)].map((match) => match[1]);
+  assert.ok(markdown && json && diagram, 'SKILL.md needs a Markdown, a JSON and a diagram example');
+  assert.equal(parseContent(diagram, 'json').kind, 'diagram');
+  assert.equal((parseContent(markdown, 'markdown') as CodeCard).panels.length, 2);
+  assert.equal((parseContent(json, 'json') as CodeCard).panels.length, 1);
 });
 
 test('SKILL.md has no em dashes', () => {
