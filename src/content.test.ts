@@ -105,15 +105,7 @@ test('parseHighlightSpec expands ranges', () => {
 });
 
 test('Markdown: oversized highlight ranges fail quickly before expansion', () => {
-  const source = [
-    '---',
-    'title: T',
-    'subtitle: S',
-    '---',
-    '```ts {1-1000000000}',
-    'const a = 1;',
-    '```',
-  ].join('\n');
+  const source = ['---', 'title: T', 'subtitle: S', '---', '```ts {1-1000000000}', 'const a = 1;', '```'].join('\n');
   const started = performance.now();
   assert.throws(
     () => parseMarkdown(source),
