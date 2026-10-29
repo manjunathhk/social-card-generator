@@ -431,7 +431,7 @@ Route these through whatever Alertmanager you already have handling your other d
 
 #### Publishing to Docker Hub
 
-The `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds and pushes the image after `verify` and `docker` pass on `main`, or on a manual `workflow_dispatch` run. It needs two repo secrets, and silently skips publishing without them (CI still stays green):
+The `publish` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds and pushes the image after `verify` and `docker` pass on `main`, or on a manual `workflow_dispatch` run started from `main` (other branches cannot publish). It needs two repo secrets, and silently skips publishing without them (CI still stays green):
 
 | Setting (Settings → Secrets and variables → Actions) | Value                                                                                                 |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |

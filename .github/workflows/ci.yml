@@ -206,7 +206,7 @@ jobs:
   publish:
     name: Publish image to Docker Hub
     needs: [verify, docker]
-    # Runs after a verified push to main (or a manual trigger). version and
+    # Runs after a verified push to main (or a manual dispatch on main). Version and
     # CHANGELOG.md are hand-edited (see CONTRIBUTING.md, "Releasing") — this
     # job always publishes :latest/:<git-sha>, plus whatever version
     # package.json currently holds.
@@ -217,16 +217,14 @@ jobs:
     # DOCKERHUB_USERNAME/DOCKERHUB_TOKEN.
     if: >-
       always() && !cancelled() && !failure() &&
-      github.event_name != 'pull_request' &&
-      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
+    concurrency:
+      group: docker-publish
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Re-checks-out main so a version bump landed in the same push is
-          # included in the image; workflow_dispatch on another ref is left
-          # exactly as dispatched.
-          ref: ${{ github.event_name == 'push' && 'main' || github.ref }}
       - name: Check for Docker Hub credentials
         id: creds
         env:
