@@ -1,5 +1,5 @@
 import { parse as parseYaml } from 'yaml';
-import type { Verdict } from './schema.js';
+import { LAYOUT_RULES, type Verdict } from './schema.js';
 
 /**
  * Markdown card source:
@@ -35,6 +35,11 @@ const BULLET = /^[-*]\s+(.+?)\s*$/;
 const HEADING_LIKE = /^(#+)\s*(.*)$/;
 const GOOD_PREFIX = /^(?:✅|✔️|✔)\s*/u;
 const BAD_PREFIX = /^(?:❌|✖|✗)\s*/u;
+const MAX_HIGHLIGHT_LINE = Math.max(
+  ...Object.values(LAYOUT_RULES).flatMap((rule) =>
+    Array.from({ length: rule.maxPanels - rule.minPanels + 1 }, (_, index) => rule.maxLines(rule.minPanels + index)),
+  ),
+);
 
 export function parseMarkdown(text: string): Record<string, unknown> {
   const normalized = text.replace(/\r\n/g, '\n');
@@ -160,6 +165,11 @@ export function parseHighlightSpec(spec: string | undefined, lineNumber: number)
     const to = range[2] ? Number(range[2]) : from;
     if (to < from) {
       throw new Error(`Line ${lineNumber}: highlight range ${part.trim()} is reversed.`);
+    }
+    if (to > MAX_HIGHLIGHT_LINE) {
+      throw new Error(
+        `Line ${lineNumber}: highlight range ${part.trim()} exceeds the maximum ${MAX_HIGHLIGHT_LINE} lines per panel.`,
+      );
     }
     for (let n = from; n <= to; n += 1) numbers.push(n);
   }
