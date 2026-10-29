@@ -100,7 +100,18 @@ test('parseHighlightSpec expands ranges', () => {
   assert.deepEqual(parseHighlightSpec(undefined, 1), []);
   assert.deepEqual(parseHighlightSpec('{}', 1), []);
   assert.deepEqual(parseHighlightSpec('{2, 5-7}', 1), [2, 5, 6, 7]);
+  assert.deepEqual(parseHighlightSpec('{2,4-5}', 1), [2, 4, 5]);
   assert.throws(() => parseHighlightSpec('{5-2}', 9), /Line 9: .*reversed/);
+});
+
+test('Markdown: oversized highlight ranges fail quickly before expansion', () => {
+  const source = ['---', 'title: T', 'subtitle: S', '---', '```ts {1-1000000000}', 'const a = 1;', '```'].join('\n');
+  const started = performance.now();
+  assert.throws(
+    () => parseMarkdown(source),
+    /Line 5: highlight range 1-1000000000 exceeds the maximum \d+ lines per panel/,
+  );
+  assert.ok(performance.now() - started < 1000, 'oversized highlight ranges must fail quickly');
 });
 
 test('validation: numeric YAML scalars are accepted as text', () => {
