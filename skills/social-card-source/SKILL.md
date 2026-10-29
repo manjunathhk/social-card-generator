@@ -47,7 +47,7 @@ public async Task<string> Get()
 
 Rules the parser enforces:
 
-- The file starts with `---` YAML front matter holding the card fields. Quote values YAML would change: `issue: '07'` (unquoted `07` becomes the number 7) and any text containing `: ` or starting with `[`, `{`, `&`, `*` or `#`.
+- The file starts with `---` YAML front matter holding the card fields. Quote values YAML would change: zero-padded issue values such as `issue: "03"` (unquoted `03` becomes the number 3; the example above uses `issue: '07'`), and any text containing `: ` or starting with `[`, `{`, `&`, `*` or `#`.
 - Each panel is an optional `## Label` heading (exactly two `#`, then a space), then one fenced code block. Any other heading level is an error.
 - A `✅` heading prefix sets `verdict: good`, `❌` sets `verdict: bad`. The prefix is stripped from the label.
 - `{1,3-5}` after the fence language highlights those one-based lines.
