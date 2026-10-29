@@ -2,11 +2,17 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
-## [3.3.2] - 2026-10-29
+## [3.3.3] - 2026-10-29
 
 ### Fixed
 
 - Reject Markdown code-fence highlight ranges above the largest layout line limit before expanding them, preventing oversized ranges from exhausting memory or freezing the sandbox. (#65)
+
+## [3.3.2] - 2026-10-29
+
+### Fixed
+
+- Reject `--out` when a directory expands to multiple cards before parsing or rendering, preventing silent overwrites. A directory with one card still accepts `--out`. Clarify that output replacement after validation and fit checking is guaranteed per file, not across a batch. (#64)
 
 ## [3.3.1] - 2026-10-13
 

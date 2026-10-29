@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -41,4 +42,16 @@ test('--check exits non-zero and names the field of every invalid input', async 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /too-long\.json: panels\[0\]\.notes\[0\] must be 1–70 characters/);
   assert.match(result.stderr, /too-many\.json: Layout "columns" needs exactly 2 panels/);
+});
+
+test('--out rejects a directory with multiple cards before rendering', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'card-out-'));
+  await writeFile(join(dir, 'first.json'), '{}');
+  await writeFile(join(dir, 'second.json'), '{}');
+  const output = join(dir, 'single.png');
+
+  const result = cli(dir, '--out', output);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /--out works with exactly one input/);
+  assert.equal(existsSync(output), false);
 });
