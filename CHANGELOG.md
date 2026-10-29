@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.3.4] - 2026-10-29
+
+### Fixed
+
+- Reject a missing branding file explicitly passed with `--env <file>` instead of silently continuing without branding; keep the default `.env` optional. (#66)
+
 ## [3.3.3] - 2026-10-29
 
 ### Fixed
