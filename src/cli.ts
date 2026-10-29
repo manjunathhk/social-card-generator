@@ -37,7 +37,7 @@ Options
 Environment
   CARD_BROWSER_PATH  Path to a Chromium binary, if you do not want Playwright's managed download.
 
-Existing output files are replaced only after validation and the layout fit check pass.`;
+Each output file is written only after its card passes validation and the layout fit check.`;
 
 type Options = {
   outDir: string;
@@ -87,8 +87,8 @@ export async function main(argv: string[]): Promise<void> {
     return;
   }
 
-  const options = readOptions(values, positionals.length);
   const inputs = await expandInputs(positionals);
+  const options = readOptions(values, inputs.length);
   if (!options.out && !options.pdfOnly) rejectDuplicateStems(inputs);
   const branding = loadBranding(options.env);
   const cards = await loadCards(inputs);
