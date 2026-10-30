@@ -208,8 +208,8 @@ jobs:
     needs: [verify, docker]
     # Runs after a verified push to main (or a manual dispatch on main). Version and
     # CHANGELOG.md are hand-edited (see CONTRIBUTING.md, "Releasing") — this
-    # job always publishes :latest/:<git-sha>, plus whatever version
-    # package.json currently holds.
+    # job always publishes :latest/:<git-sha>, adding :<version> only when
+    # that version does not already exist in the registry.
     # The secrets context can't be referenced in *any* if: (job or step) —
     # only in env: and with: — so whether it actually publishes is decided
     # below via a step output derived from an env var. See README.md
@@ -249,16 +249,40 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Select tags without overwriting an existing version
+        id: tags
+        if: steps.creds.outputs.configured == 'true'
+        env:
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+          IMAGE_VERSION: ${{ steps.image.outputs.version }}
+        run: |
+          version_tag="$IMAGE_NAME:$IMAGE_VERSION"
+          if docker buildx imagetools inspect "$version_tag" > /dev/null 2> manifest-error.txt; then
+            echo "::notice::$version_tag already exists; preserving it."
+            publish_version=false
+          elif grep -Eq 'manifest unknown|: not found$' manifest-error.txt; then
+            publish_version=true
+          else
+            cat manifest-error.txt >&2
+            echo "::error::Cannot determine whether $version_tag exists; refusing to overwrite it."
+            exit 1
+          fi
+          {
+            echo 'tags<<EOF'
+            echo "$IMAGE_NAME:latest"
+            echo "$IMAGE_NAME:$GITHUB_SHA"
+            if [ "$publish_version" = true ]; then
+              echo "$version_tag"
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         if: steps.creds.outputs.configured == 'true'
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ steps.image.outputs.name }}:latest
-            ${{ steps.image.outputs.name }}:${{ steps.image.outputs.version }}
-            ${{ steps.image.outputs.name }}:${{ github.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
       - name: Note missing Docker Hub secrets
         if: steps.creds.outputs.configured != 'true'
         run: echo "::notice::DOCKERHUB_USERNAME/DOCKERHUB_TOKEN repo secrets are not set — skipping Docker Hub publish. See README.md, 'Publishing to Docker Hub'."
