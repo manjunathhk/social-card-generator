@@ -30,7 +30,8 @@ export const DESIGN_TOKEN_FONTS: FontStylesheet = {
  * The card contract has roles the design system doesn't name; each maps to
  * the nearest token: --muted-2 to border-strong (decorative separators),
  * --panel-header-bg to bg-subtle, --notes-fg to text-secondary, --underline
- * to danger, --badge-fg to on-accent. The drafting grid is the tokens'
+ * to danger, --badge-fg to on-accent. --info (the HTTP-style tone on
+ * diagram cards) is the tokens' info colour. The drafting grid is the tokens'
  * .mk-grid-bg pattern, drawn on the card.
  */
 function fromTokens(name: string, description: string, color: ColorTokens, shikiTheme: BundledTheme): Theme {
@@ -46,7 +47,7 @@ function fromTokens(name: string, description: string, color: ColorTokens, shiki
   --panel: ${color['color.surface']}; --panel-border: ${color['color.border']}; --panel-shadow: none;
   --panel-header-bg: ${color['color.bg-subtle']}; --panel-header-fg: ${color['color.text-muted']}; --panel-rule: ${color['color.border']};
   --line-highlight: ${color['color.accent-subtle']}; --underline: ${color['color.danger']}; --notes-fg: ${color['color.text-secondary']};
-  --good: ${color['color.success']}; --bad: ${color['color.danger']}; --badge-fg: ${color['color.on-accent']};
+  --good: ${color['color.success']}; --bad: ${color['color.danger']}; --badge-fg: ${color['color.on-accent']}; --info: ${color['color.info']};
   --font-display: ${shared['font.family.display']}; --font-sans: ${shared['font.family.sans']}; --font-mono: ${shared['font.family.mono']};
   --h1-weight: ${shared['font.weight.semibold']}; --h1-tracking: ${shared['font.letter-spacing.display']}; --panel-radius: ${shared['radius.md']};
   background-image:

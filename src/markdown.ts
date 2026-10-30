@@ -51,6 +51,9 @@ export function parseMarkdown(text: string): Record<string, unknown> {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     throw new Error('Front matter must be a YAML mapping of card fields.');
   }
+  if ((metadata as Record<string, unknown>).kind === 'diagram') {
+    throw new Error('Diagram cards are JSON only: write this card as a .json file with a "diagram" object.');
+  }
   const bodyStartLine = match[1].split('\n').length + 3;
   const panels = parsePanels(match[2].split('\n'), bodyStartLine);
   return { ...(metadata as Record<string, unknown>), panels };

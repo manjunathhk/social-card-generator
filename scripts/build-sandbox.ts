@@ -72,7 +72,7 @@ function sandboxLabel(name: string, content: string): string {
     throw new Error(`examples/${name} is missing a "sandboxLabel" field for the sandbox dropdown.`);
   }
   const card = validateCard(raw);
-  for (const panel of card.panels) {
+  for (const panel of card.kind === 'code' ? card.panels : []) {
     if (!SANDBOX_LANGUAGES.includes(panel.language)) {
       throw new Error(
         `examples/${name} uses language "${panel.language}", which isn't bundled in the sandbox ` +

@@ -107,7 +107,8 @@ export async function main(argv: string[]): Promise<void> {
         await mkdir(dirname(target), { recursive: true });
         await writeFile(target, png);
         if (options.html) await writeFile(target.replace(/\.png$/i, '.html'), html);
-        console.log(`Rendered ${target} (code ${fit.fontSize}px, scale ${options.scale}x)`);
+        const detail = loaded.card.kind === 'diagram' ? 'diagram' : `code ${fit.fontSize}px`;
+        console.log(`Rendered ${target} (${detail}, scale ${options.scale}x)`);
       }
     }
 
@@ -188,12 +189,20 @@ async function loadCards(files: string[]): Promise<LoadedCard[]> {
   );
 }
 
+function describeCard(card: Card): string {
+  if (card.kind === 'diagram') {
+    const { nodes, edges } = card.diagram;
+    return `diagram, ${nodes.length} node${nodes.length === 1 ? '' : 's'}, ${edges.length} edge${edges.length === 1 ? '' : 's'}`;
+  }
+  return `${card.layout}, ${card.panels.length} panel${card.panels.length === 1 ? '' : 's'}`;
+}
+
 /** Validates every input and reports each failure, so one run lists everything to fix. */
 async function checkCards(files: string[]): Promise<void> {
   for (const file of files) {
     try {
       const card = parseContent(await readFile(file, 'utf8'), formatFromPath(file));
-      console.log(`Valid ${file} (${card.layout}, ${card.panels.length} panel${card.panels.length === 1 ? '' : 's'})`);
+      console.log(`Valid ${file} (${describeCard(card)})`);
     } catch (error) {
       console.error(`Invalid ${file}: ${(error as Error).message}`);
       process.exitCode = 1;

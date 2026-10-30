@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node 24+](https://img.shields.io/badge/node-%3E%3D24-brightgreen.svg)](.nvmrc)
 
-Turn a Markdown file into a polished 1080 × 1350 technical social card, or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
+Turn a Markdown file into a polished 1080 × 1350 technical social card (or a JSON file into an architecture diagram card), or a whole folder of them into a LinkedIn carousel PDF. Syntax highlighting comes from [Shiki](https://shiki.style) (the same grammars VS Code uses); layout and capture come from headless Chromium via [Playwright](https://playwright.dev). Nothing touches the network at render time, and a card that would overflow fails loudly instead of clipping.
 
 <p align="center">
   <img src="sample/rabbitmq-idempotency.png" alt="Single-panel card in the light theme" width="420">
@@ -18,6 +18,7 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 ## Features
 
 - **Three layouts.** `stack` (one or two panels), `columns` (side-by-side comparison), `grid` (up to four panels).
+- **Diagram cards.** `"kind": "diagram"` swaps the code for nodes on a three-column grid, orthogonal edges between named anchors, bus edges for fan-out, dashed group frames, and a legend the card declares. JSON only.
 - **Two themes.** `light` and `dark`, the palette and type from [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens). A theme owns its palette, typefaces and shape through a documented token contract, so you can add your own.
 - **Panel decorations.** Line highlights, token underlines, ✓ / ✕ verdict badges, and short bullet notes per panel.
 - **Carousel PDF.** Several cards in one command become a multi-page PDF, the format LinkedIn uses for swipeable posts.
@@ -34,8 +35,10 @@ Posting code on LinkedIn or X means screenshots, and screenshots from an editor 
 | [![](sample/dto-validation.png)](examples/dto-validation.md)             | [![](sample/nginx-rate-limit.png)](examples/nginx-rate-limit.md)       | [![](sample/compose-healthchecks.png)](examples/compose-healthchecks.json) |
 | `stack` · light, verdicts                                                | `columns` · dark, notes + underlines                                   |                                                                            |
 | [![](sample/semantic-tokens.png)](examples/semantic-tokens.md)           | [![](sample/theme-switch.png)](examples/theme-switch.json)             |                                                                            |
+| `diagram` · dark, bus edge + group                                       | `diagram` · light, same-side edge                                      |                                                                            |
+| [![](sample/background-workers.png)](examples/background-workers.json)   | [![](sample/cache-aside.png)](examples/cache-aside.json)               |                                                                            |
 
-All eight, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
+All ten, in order, as one carousel: [sample/carousel.pdf](sample/carousel.pdf). Regenerate everything with `npm run samples`.
 
 ## Quick start
 
@@ -151,6 +154,7 @@ In YAML front matter, quote zero-padded issue values such as `issue: "03"`; with
 
 | Field       | Required | Default | Limit                                                          |
 | ----------- | -------- | ------- | -------------------------------------------------------------- |
+| `kind`      | no       | `code`  | `code` or `diagram` (JSON only)                                |
 | `title`     | yes      |         | 70 characters                                                  |
 | `subtitle`  | yes      |         | 150 characters                                                 |
 | `highlight` | no       | empty   | 70 characters; second title line in the accent colour          |
@@ -159,7 +163,10 @@ In YAML front matter, quote zero-padded issue values such as `issue: "03"`; with
 | `issue`     | no       | empty   | 12 characters; blank shows no issue number and no running head |
 | `layout`    | no       | `stack` | `stack`, `columns`, `grid`                                     |
 | `theme`     | no       | `light` | `light`, `dark`                                                |
-| `panels`    | yes      |         | count depends on the layout                                    |
+| `panels`    | code     |         | count depends on the layout                                    |
+| `diagram`   | diagram  |         | nodes, edges and legend; see [Diagram cards](#diagram-cards)   |
+
+A diagram card has no `layout` or `panels`; everything else above applies to both kinds.
 
 ### Panel fields
 
@@ -173,6 +180,43 @@ In YAML front matter, quote zero-padded issue values such as `issue: "03"`; with
 | `verdict`        | no       | `good` or `bad`; Markdown uses a ✅ / ❌ heading prefix                    |
 | `notes`          | no       | Up to 3 bullets of 70 characters; Markdown uses `- ` lines after the fence |
 
+### Diagram cards
+
+A diagram card keeps the masthead, title, subtitle, insight and footer, and replaces the panels with a diagram. Write it in JSON; Markdown cannot declare one. [`examples/background-workers.json`](examples/background-workers.json) uses every feature.
+
+```json
+{
+  "kind": "diagram",
+  "title": "Cache-aside,",
+  "highlight": "evict on commit.",
+  "subtitle": "Reads fill Redis on a miss. Writes evict through an event.",
+  "diagram": {
+    "legend": [
+      { "id": "http", "label": "HTTP", "tone": "info" },
+      { "id": "evict", "label": "Eviction", "tone": "danger", "dashed": true }
+    ],
+    "nodes": [
+      { "id": "api", "col": 1, "row": 1, "badge": ".NET", "title": "Product API" },
+      { "id": "redis", "col": 2, "row": 1, "title": "Redis", "lines": ["product:42"], "mono": true, "tone": "accent" },
+      { "id": "evictor", "col": 2, "row": 2, "title": "Evictor" }
+    ],
+    "edges": [
+      { "from": "api.right", "to": "redis.left", "type": "http", "label": "GET" },
+      { "from": "evictor.right", "to": "redis.right", "type": "evict" }
+    ]
+  }
+}
+```
+
+| Part     | Shape                                                                                                                                                                        |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `legend` | 1 to 5 entries. Each has an `id`, a `label`, a `tone` (`info`, `accent`, `success`, `danger`, `muted`) and optionally `dashed`. The theme maps tones to colours.             |
+| `nodes`  | 1 to 10, placed by `col` (1 to 3) and `row` (1 to 5) with optional `colSpan` / `rowSpan`; no two share a cell. `eyebrow`, `badge`, `title`, up to 3 `lines`, `mono`, `tone`. |
+| `groups` | Up to 2 dashed frames with a caption on the bottom edge, placed like nodes; they may overlap nodes.                                                                          |
+| `edges`  | Up to 14. `from` and `to` are anchors such as `"db.right@0.2"` (node, side, position along the side). `type` names a legend id. `label`, `sublabel`, `labelSide`.            |
+
+Edges are orthogonal with at most two bends, drawn in the browser from the measured node boxes; there is no auto-layout and no obstacle avoidance, so the anchors are the route. Several anchors on one end make a bus (fan-out or fan-in), and `busOffset` sets how far the bus sits from the many-ended side. A label on an edge between two left/right anchors sits in a column gutter, so it is limited to 8 characters. A diagram that overflows its space, or an explicitly placed label that leaves it, fails the render with the field to change, the same way code that cannot fit does.
+
 ### Themes
 
 | Theme   | Ground and ink                             | Code panels                              | Type                                    |
@@ -182,7 +226,7 @@ In YAML front matter, quote zero-padded issue values such as `issue: "03"`; with
 
 `print`, `vesper`, `denim` and `denim-dark` were removed in 3.0.0; a card that names one is rejected with the list of valid themes.
 
-A theme sets colours, typefaces and panel shape through custom properties; layouts set sizes and spacing through their own tokens. The two never overlap, so any theme works with any layout. Only the fonts of the themes a document uses are embedded.
+A theme sets colours, typefaces and panel shape through custom properties; layouts set sizes and spacing through their own tokens. The two never overlap, so any theme works with any layout. Only the fonts of the themes a document uses are embedded. Diagram tones use the same tokens: `info` is the tokens' info colour, `accent` the accent, `success` and `danger` the verdict colours, `muted` the muted text.
 
 The `light` and `dark` themes take every colour, font family, weight and radius from the [`@manjunathhk/design-tokens`](https://github.com/manjunathhk/design-tokens) npm package at build time, so a palette release reaches them with a dependency bump. The tokens are inlined rather than linked from `design.manjunathhk.in`, because a card is rendered with no network. A card is a fixed image, so light and dark are two themes rather than one that follows the viewer's OS.
 
@@ -245,7 +289,7 @@ Point a JSON card at it for editor autocomplete and inline errors:
 }
 ```
 
-The same shape describes a Markdown card's front matter plus its panels. Lines per panel and the code font range have no JSON Schema keyword, so each layout lists them as `x-maxLines` and `x-fontRange` and in its description.
+The same shape describes a Markdown card's front matter plus its panels, and a diagram card's `diagram` object. Rules that span fields (an anchor naming a real node, an edge type naming a legend id, two nodes in one cell) are checked by the validator, not the schema. Lines per panel and the code font range have no JSON Schema keyword, so each layout lists them as `x-maxLines` and `x-fontRange` and in its description.
 
 ## Branding
 

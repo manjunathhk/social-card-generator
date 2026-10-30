@@ -11,7 +11,7 @@
  *     palette  --bg --fg --muted --muted-2 --accent --accent-title --rule
  *              --panel --panel-border --panel-shadow --panel-header-bg
  *              --panel-header-fg --panel-rule --line-highlight --underline
- *              --notes-fg --good --bad --badge-fg
+ *              --notes-fg --good --bad --badge-fg --info
  *     type     --font-display --font-sans --font-mono --h1-weight --h1-tracking
  *     shape    --panel-radius
  * - Nothing else is a literal here except the card's fixed geometry.
@@ -102,6 +102,52 @@ pre.shiki code { font: inherit; }
 .layout-columns .panels { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr); }
 .layout-grid .panels { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); }
 .layout-grid .panel:nth-child(3):last-child { grid-column: 1 / -1; }
+
+/*
+ * Diagram cards (kind: diagram). Nodes sit on a three-column grid whose rows
+ * spread out to fill the space panels would take; DIAGRAM_SCRIPT draws the
+ * edges into .dg-edges. Every colour is a tone, mapped to theme tokens here.
+ */
+.diagram { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }
+.dg-stage {
+  position: relative; flex: 1; min-height: 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 92px; row-gap: 70px;
+  align-content: space-evenly;
+}
+.tone-info { --tone: var(--info); }
+.tone-accent { --tone: var(--accent); }
+.tone-success { --tone: var(--good); }
+.tone-danger { --tone: var(--bad); }
+.tone-muted { --tone: var(--muted); }
+.dg-node {
+  position: relative; z-index: 2; min-width: 0;
+  display: flex; flex-direction: column; gap: 6px; padding: 12px 18px 14px;
+  background: var(--panel); border: 1px solid var(--panel-border); border-radius: var(--panel-radius);
+}
+.dg-node.tone-accent, .dg-node.tone-danger, .dg-node.tone-info, .dg-node.tone-success { border-color: color-mix(in srgb, var(--tone) 60%, var(--panel-border)); }
+.dg-node.tone-muted { background: transparent; border-style: dashed; border-color: var(--muted-2); }
+.dg-eyebrow { font: 500 14px var(--font-mono); letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.dg-title { display: flex; align-items: center; gap: 10px; font: 600 25px/1.15 var(--font-display); letter-spacing: -.3px; overflow-wrap: anywhere; }
+.dg-badge { flex: none; padding: 4px 7px; border-radius: 5px; font: 600 13px var(--font-mono); background: var(--line-highlight); color: var(--accent); }
+.dg-lines { list-style: none; margin: 2px 0 0; padding: 0; font-size: 18px; line-height: 1.35; color: var(--notes-fg); overflow-wrap: anywhere; }
+.dg-lines.mono { font: 17px/1.45 var(--font-mono); color: var(--accent); }
+.dg-group {
+  position: relative; z-index: 1; margin: -16px -18px -44px; padding: 10px 16px;
+  display: flex; align-items: flex-end;
+  border: 1.5px dashed var(--muted-2); border-radius: 14px;
+  font: 500 15px var(--font-mono); letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted);
+}
+.dg-edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 3; pointer-events: none; }
+.dg-line { fill: none; stroke: var(--tone); stroke-width: 2.5; stroke-linejoin: round; }
+.dashed .dg-line, .dg-key.dashed line { stroke-dasharray: 7 6; }
+.dg-head { fill: var(--tone); }
+.dg-label-main { font: 500 18px var(--font-mono); fill: var(--tone); }
+.dg-label-sub { font: 400 15px var(--font-sans); fill: var(--muted); }
+.dg-plate { fill: var(--bg); }
+.dg-legend { display: flex; flex-wrap: wrap; gap: 6px 28px; font: 400 17px var(--font-mono); color: var(--muted); }
+.dg-key { display: inline-flex; align-items: center; gap: 8px; }
+.dg-key svg { width: 34px; height: 8px; }
+.dg-key line { stroke: var(--tone); stroke-width: 2.5; }
 
 /* Insight */
 .insight { padding: var(--insight-y) 0 calc(var(--insight-y) - 2px); }
