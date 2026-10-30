@@ -73,7 +73,7 @@ Before opening a PR to `main`, also:
 | `examples/`                        | Source cards used by `npm run samples` and the sandbox's "Load from Example" picker                                                                                                    |
 | `sample/`                          | Generated output (PNGs, carousel PDF) — the README gallery; regenerate, don't hand-edit                                                                                                |
 | `docs/TECHNIQUES.md`               | The real architecture reference — module map, fit loop, theme contract, Docker image, branding model                                                                                   |
-| `docs/routines/`                   | Prompts of scheduled Claude routines that use the card-author skill; each file is the master copy of its routine's prompt                                                              |
+| `docs/routines/`                   | Prompts of scheduled agent routines (card-author skill routines, the `ready-for-dev` coding agent); each file is the master copy of its routine's prompt                               |
 | `Dockerfile`, `docker-compose.yml` | Multi-stage build for the server; `.github/workflows/ci.yml`'s `publish` job pushes it to Docker Hub from `main`                                                                       |
 
 ## Sandbox UI specifics
