@@ -337,7 +337,7 @@ docker run -d --name social-card-sandbox -p 127.0.0.1:8787:8787 \
   --restart unless-stopped manjunathhk/social-card-generator:latest
 ```
 
-Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it — the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push whose commits warrant a release (see below) also gets `:<version>` (the bumped `version` field in `package.json`). Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
+Bind the published port to `127.0.0.1` (not `0.0.0.0`/bare `8787:8787`) once a reverse proxy is in front of it ; the app has no auth by design (see above), so the loopback bind is what actually keeps port 8787 from being reachable from the public internet directly, bypassing the proxy and whatever TLS/access rules live there. Every push publishes `:latest` and the exact commit `:<git-sha>`; a push also gets `:<version>` from `package.json` only if that tag does not already exist on Docker Hub. Existing version tags are preserved, including on `no-version-bump` merges. Pin to `:<version>` or `:<git-sha>` instead of `:latest` if you want deploys to be explicit.
 
 #### Reverse-proxying with nginx
 
@@ -435,7 +435,7 @@ groups:
 
 Route these through whatever Alertmanager you already have handling your other domains — nothing here is specific to this app beyond the `job` label matching the scrape config above.
 
-`version` in `package.json` and `CHANGELOG.md` are hand-edited, not cut by CI. See [CONTRIBUTING.md](CONTRIBUTING.md) ("Releasing") for the manual bump process — the `publish` job below just reads whatever version `package.json` currently holds and tags the image with it.
+`version` in `package.json` and `CHANGELOG.md` are hand-edited, not cut by CI. See [CONTRIBUTING.md](CONTRIBUTING.md) ("Releasing") for the manual bump process ; the `publish` job below reads `package.json` and creates its version tag only if absent. Version tags are immutable; registry check errors stop publishing instead of risking an overwrite.
 
 #### Publishing to Docker Hub
 

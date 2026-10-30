@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.3.6] - 2026-10-30
+
+### Fixed
+
+- Preserve existing Docker Hub version tags while continuing to publish latest and commit tags; stop publishing if the registry check is inconclusive. (#68)
+
 ## [3.3.5] - 2026-10-30
 
 ### Fixed
