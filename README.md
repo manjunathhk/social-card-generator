@@ -147,6 +147,8 @@ The same fields are available as JSON, which exposes everything explicitly — i
 
 ### Card fields
 
+In YAML front matter, quote zero-padded issue values such as `issue: "03"`; without quotes, YAML converts them to numbers and drops the leading zero.
+
 | Field       | Required | Default | Limit                                                          |
 | ----------- | -------- | ------- | -------------------------------------------------------------- |
 | `title`     | yes      |         | 70 characters                                                  |
@@ -249,6 +251,8 @@ The same shape describes a Markdown card's front matter plus its panels. Lines p
 
 Copy `.env.sample` to `.env` and fill in your details. Every field is optional: leave a variable blank or unset and the card simply omits it, instead of falling back to placeholder text like `example.com`.
 
+The default `.env` file is optional. If you pass `--env <file>` explicitly, the file must exist; a missing file causes an error instead of silently dropping branding.
+
 | Variable            | Default            | Purpose                                                                       |
 | ------------------- | ------------------ | ----------------------------------------------------------------------------- |
 | `CARD_AUTHOR`       | blank              | Footer author                                                                 |
@@ -302,13 +306,13 @@ Or without Compose:
 
 ```sh
 docker build -t social-card-sandbox .
-docker run -p 8787:8787 social-card-sandbox
+docker run -p 127.0.0.1:8787:8787 social-card-sandbox
 ```
 
 Pass the [branding variables](#branding) as environment variables when creating the container, and they become the sandbox's default branding fields for every visitor (still editable per-browser, and still all optional):
 
 ```sh
-docker run -p 8787:8787 \
+docker run -p 127.0.0.1:8787:8787 \
   -e CARD_AUTHOR="Your Name" -e CARD_WEBSITE="example.com" -e CARD_SERIES="Field Notes" \
   social-card-sandbox
 ```
@@ -347,6 +351,8 @@ server {
   ssl_certificate     /etc/letsencrypt/live/social-card.example.com/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/social-card.example.com/privkey.pem;
 
+  location = /api/metrics { deny all; }
+
   location / {
     proxy_pass http://127.0.0.1:8787/;
     proxy_set_header Host $host;
@@ -360,9 +366,11 @@ server { listen 80; server_name social-card.example.com; return 301 https://$hos
 
 (`certbot --nginx -d social-card.example.com` provisions and renews the certificate.)
 
-Every API call the sandbox makes (`api/health`, `api/branding`, `api/cards`, …) uses a path relative to the page's own URL rather than a domain-root-absolute one, so this also works reverse-proxied under a path instead of a subdomain (`example.com/social-card/`) if you're already committed to one:
+The sandbox's API calls (such as `api/branding`) use paths relative to the page's own URL rather than domain-root-absolute paths, so this also works reverse-proxied under a path instead of a subdomain (`example.com/social-card/`) if you're already committed to one. The server also serves `api/health` and `api/metrics`; the nginx examples below block public metrics access:
 
 ```nginx
+location = /social-card/api/metrics { deny all; }
+
 location /social-card/ {
   # trailing slash on proxy_pass strips the /social-card/ prefix before
   # forwarding, so the container still sees plain / and /api/... requests
@@ -389,7 +397,7 @@ scrape_configs:
     metrics_path: /api/metrics
 ```
 
-If Prometheus runs elsewhere (a different host, or a container on its own Docker network), either put this container on that network and target it by container name, or add a `location /api/metrics` block scoped to Prometheus's IP — never leave it open on the public vhost next to the app it's monitoring.
+If Prometheus runs elsewhere (a different host, or a container on its own Docker network), either put this container on that network and target it by container name, or replace the `deny all` metrics location with an IP-restricted rule for Prometheus — never leave it open on the public vhost next to the app it's monitoring.
 
 Then build Grafana panels from, e.g.:
 

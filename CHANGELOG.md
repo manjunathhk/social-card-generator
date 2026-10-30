@@ -2,11 +2,17 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
-## [3.3.4] - 2026-10-30
+## [3.3.5] - 2026-10-30
 
 ### Fixed
 
 - Publish Docker images from the verified workflow commit rather than moving `main`; restrict manual Docker publishing to `main` and serialize publish jobs to prevent overlapping pushes. (#67)
+
+## [3.3.4] - 2026-10-29
+
+### Fixed
+
+- Reject a missing branding file explicitly passed with `--env <file>` instead of silently continuing without branding; keep the default `.env` optional. (#66)
 
 ## [3.3.3] - 2026-10-29
 
