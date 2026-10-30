@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.3.9] - 2026-10-30
+
+### Security
+
+- Add baseline anti-framing, no-referrer and MIME-sniffing protection headers to the Docker-hosted sandbox page, and `nosniff` to JSON API responses. (#71)
+
 ## [3.3.8] - 2026-10-30
 
 ### Fixed
