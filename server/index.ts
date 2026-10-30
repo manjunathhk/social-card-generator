@@ -89,6 +89,25 @@ async function main() {
   const html = await readFile(htmlPath, 'utf8');
 
   const server = createServer(createRequestListener({ html }));
+  let shuttingDown = false;
+  const shutdown = () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    server.close((error) => {
+      clearTimeout(timeout);
+      if (error) {
+        console.error('Failed to shut down server:', error);
+        process.exitCode = 1;
+      }
+    });
+    const timeout = setTimeout(() => {
+      console.error('Forcing server shutdown after 2 seconds.');
+      server.closeAllConnections();
+      process.exit(0);
+    }, 2000);
+  };
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
   server.listen(port, () => {
     console.log(`Social Card Studio listening on http://localhost:${port}`);
   });

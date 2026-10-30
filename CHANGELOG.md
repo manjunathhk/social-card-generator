@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.3.8] - 2026-10-30
+
+### Fixed
+
+- Run the Docker server as the unprivileged `node` user and shut down cleanly on SIGTERM or SIGINT, with a two-second fallback for hung connections; verify shutdown timing and exit status in CI. (#70)
+
 ## [3.3.7] - 2026-10-30
 
 ### Security
