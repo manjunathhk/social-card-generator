@@ -11,9 +11,13 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   version-check:
     name: Version bump check
+    timeout-minutes: 5
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
@@ -34,17 +38,19 @@ jobs:
         run: echo "::notice::Version check skipped — PR is labeled 'no-version-bump'."
 
   actionlint:
+    timeout-minutes: 10
     if: github.event_name != 'pull_request' || !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Check workflow files
         run: |
-          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
           ./actionlint -color
         shell: bash
 
   verify:
+    timeout-minutes: 40
     # A labeled/unlabeled PR event only exists to give version-check a
     # fresh look at the PR's labels — skip the expensive jobs for it.
     if: github.event_name != 'pull_request' || !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action)
@@ -73,6 +79,7 @@ jobs:
           path: sample/
 
   docker:
+    timeout-minutes: 30
     if: github.event_name != 'pull_request' || !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action)
     runs-on: ubuntu-latest
     steps:
@@ -99,6 +106,7 @@ jobs:
 
   npm:
     name: Publish package to npm
+    timeout-minutes: 20
     needs: [verify]
     # After a verified push to main: publishes package.json's version unless
     # it is already on npm, then creates the vX.Y.Z tag and GitHub Release
@@ -149,11 +157,11 @@ jobs:
             echo "::error::CHANGELOG.md has no notes under ## [$version]."
             exit 1
           fi
-      - run: npm ci
+      - run: npm ci --ignore-scripts
         if: steps.check.outputs.publish == 'true'
-      - name: Use an npm that supports trusted publishing (11.5.1 or newer)
+      - name: Use npm 11.5.1 for trusted publishing
         if: steps.check.outputs.publish == 'true'
-        run: npm install -g npm@^11.5.1
+        run: npm install -g npm@11.5.1
       - run: npm publish
         if: steps.check.outputs.publish == 'true'
       - name: Create the tag and GitHub Release
@@ -166,6 +174,7 @@ jobs:
 
   pages:
     name: Deploy the sandbox to GitHub Pages
+    timeout-minutes: 20
     needs: [verify]
     # Every verified push to main rebuilds the single-file sandbox and serves
     # it as the site's index.html. Needs Settings > Pages > Source set to
@@ -205,6 +214,7 @@ jobs:
 
   publish:
     name: Publish image to Docker Hub
+    timeout-minutes: 45
     needs: [verify, docker]
     # Runs after a verified push to main (or a manual dispatch on main). Version and
     # CHANGELOG.md are hand-edited (see CONTRIBUTING.md, "Releasing") — this
