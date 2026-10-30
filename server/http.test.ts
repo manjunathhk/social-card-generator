@@ -27,12 +27,17 @@ test('serves the sandbox at / with no .html in the path, and answers health chec
     const page = await fetch(base + '/');
     assert.equal(page.status, 200);
     assert.match(page.headers.get('content-type') ?? '', /text\/html/);
+    assert.equal(page.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(page.headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(page.headers.get('x-frame-options'), 'DENY');
+    assert.equal(page.headers.get('content-security-policy'), "frame-ancestors 'none'");
     assert.equal(await page.text(), HTML);
 
     const missing = await fetch(base + '/sandbox.html');
     assert.equal(missing.status, 404);
 
     const health = await fetch(base + '/api/health');
+    assert.equal(health.headers.get('x-content-type-options'), 'nosniff');
     assert.deepEqual(await health.json(), { ok: true });
   }));
 
@@ -46,6 +51,7 @@ test('serves branding read from the environment, blank fields included', async (
     await withServer(async (base) => {
       const res = await fetch(base + '/api/branding');
       assert.equal(res.status, 200);
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
       const body = await res.json();
       assert.equal(body.branding.author, 'Env Author');
       assert.equal(body.branding.website, '');
@@ -80,6 +86,8 @@ test('exposes Prometheus metrics reflecting request activity', () =>
 
 test('answers unmatched routes with 404', () =>
   withServer(async (base) => {
-    assert.equal((await fetch(base + '/api/cards')).status, 404);
+    const missingApi = await fetch(base + '/api/cards');
+    assert.equal(missingApi.status, 404);
+    assert.equal(missingApi.headers.get('x-content-type-options'), 'nosniff');
     assert.equal((await fetch(base + '/does-not-exist')).status, 404);
   }));
