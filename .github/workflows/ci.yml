@@ -19,9 +19,9 @@ jobs:
     name: Version bump check
     timeout-minutes: 5
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Confirm package.json version was bumped
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-version-bump') }}
         run: |
@@ -40,9 +40,9 @@ jobs:
   actionlint:
     timeout-minutes: 10
     if: github.event_name != 'pull_request' || !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Check workflow files
         run: |
           bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
@@ -54,10 +54,10 @@ jobs:
     # A labeled/unlabeled PR event only exists to give version-check a
     # fresh look at the PR's labels — skip the expensive jobs for it.
     if: github.event_name != 'pull_request' || !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -73,7 +73,7 @@ jobs:
         run: npm run samples -- --built
       - name: Build the browser sandbox
         run: npm run sandbox && cp out/sandbox.html sample/sandbox.html
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: rendered-cards
           path: sample/
@@ -81,12 +81,12 @@ jobs:
   docker:
     timeout-minutes: 30
     if: github.event_name != 'pull_request' || !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7.0.1
+      - uses: docker/setup-buildx-action@v4.4.1
       - name: Build the server image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           push: false
@@ -117,13 +117,13 @@ jobs:
     # provenance. The package's trusted publisher on npmjs.com must name this
     # repository and this workflow file (ci.yml).
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
@@ -182,7 +182,7 @@ jobs:
     # fails and the branding fields start blank, as when the file is opened
     # locally.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pages: write
@@ -194,8 +194,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -229,12 +229,12 @@ jobs:
       always() && !cancelled() && !failure() &&
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: docker-publish
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Check for Docker Hub credentials
         id: creds
         env:
@@ -250,11 +250,11 @@ jobs:
         run: |
           echo "name=${{ vars.DOCKERHUB_IMAGE || 'manjunathhk/social-card-generator' }}" >> "$GITHUB_OUTPUT"
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4.4.0
         if: steps.creds.outputs.configured == 'true'
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4.4.1
         if: steps.creds.outputs.configured == 'true'
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4.7.0
         if: steps.creds.outputs.configured == 'true'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -286,7 +286,7 @@ jobs:
             fi
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7.4.0
         if: steps.creds.outputs.configured == 'true'
         with:
           context: .
