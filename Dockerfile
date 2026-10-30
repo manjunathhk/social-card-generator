@@ -17,6 +17,7 @@ WORKDIR /app
 ENV NODE_ENV=production PORT=8787 SANDBOX_HTML_PATH=/app/out/sandbox.html
 COPY --from=build /app/out/sandbox.html ./out/sandbox.html
 COPY --from=build /app/dist-server ./dist-server
+USER node
 EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
   CMD node -e "fetch('http://localhost:'+(process.env.PORT||8787)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

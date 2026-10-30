@@ -101,8 +101,23 @@ jobs:
           curl -sf http://localhost:8787/ | grep -q '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/sandbox.html)" = "404"
           curl -sf http://localhost:8787/api/branding | grep -q '"author":"CI Author"'
+          test "$(docker exec sandbox id -un)" = "node"
+          started=$(date +%s)
+          docker stop -t 8 sandbox
+          elapsed=$(( $(date +%s) - started ))
+          test "$elapsed" -lt 5
+          test "$(docker inspect -f '{{.State.ExitCode}}' sandbox)" = "0"
           docker logs sandbox
-          docker rm -f sandbox
+          docker rm sandbox
+
+          docker run -d --name sandbox-int social-card-sandbox:ci
+          for _ in $(seq 1 20); do
+            if docker exec sandbox-int node -e "fetch('http://localhost:8787/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker kill --signal=SIGINT sandbox-int
+          test "$(timeout 5 docker wait sandbox-int)" = "0"
+          docker rm sandbox-int
 
   npm:
     name: Publish package to npm
