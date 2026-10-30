@@ -12,14 +12,14 @@ export type Branding = {
 };
 
 /**
- * Loads `.env` (or the given file) into `process.env` without overriding
- * variables already set in the shell, then reads the branding fields.
+ * Loads the optional default `.env` or a required explicit file into
+ * `process.env` without overriding shell variables, then reads branding.
  */
-export function loadBranding(envPath = '.env'): Branding {
+export function loadBranding(envPath?: string): Branding {
   try {
-    loadEnvFile(envPath);
+    loadEnvFile(envPath ?? '.env');
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    if (envPath !== undefined || (error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
   return brandingFromEnv(process.env);
 }

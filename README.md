@@ -251,6 +251,8 @@ The same shape describes a Markdown card's front matter plus its panels. Lines p
 
 Copy `.env.sample` to `.env` and fill in your details. Every field is optional: leave a variable blank or unset and the card simply omits it, instead of falling back to placeholder text like `example.com`.
 
+The default `.env` file is optional. If you pass `--env <file>` explicitly, the file must exist; a missing file causes an error instead of silently dropping branding.
+
 | Variable            | Default            | Purpose                                                                       |
 | ------------------- | ------------------ | ----------------------------------------------------------------------------- |
 | `CARD_AUTHOR`       | blank              | Footer author                                                                 |
