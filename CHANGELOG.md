@@ -13,6 +13,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - Internally, a validated card is a union of `CodeCard` and `DiagramCard`, told apart by `kind` (default `code`). Existing code cards need no change and render exactly as before, pixel for pixel.
 
+## [3.3.9] - 2026-10-30
+
+### Security
+
+- Add baseline anti-framing, no-referrer and MIME-sniffing protection headers to the Docker-hosted sandbox page, and `nosniff` to JSON API responses. (#71)
+
 ## [3.3.8] - 2026-10-30
 
 ### Fixed
