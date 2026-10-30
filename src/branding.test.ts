@@ -40,12 +40,48 @@ test('env file loads and shell values take precedence', async () => {
     const branding = loadBranding(file);
     assert.equal(branding.author, 'Shell Author');
     assert.equal(branding.website, 'example.test');
-    assert.doesNotThrow(() => loadBranding(join(dir, 'missing.env')));
   } finally {
     for (const [key, value] of [
       ['CARD_AUTHOR', previous.author],
       ['CARD_WEBSITE', previous.website],
     ] as const) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('explicitly missing env file throws with its filename', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'card-branding-'));
+  try {
+    assert.throws(() => loadBranding(join(dir, 'missing.env')), /missing\.env/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('missing default .env is optional and leaves branding blank', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'card-branding-'));
+  const cwd = process.cwd();
+  const keys = [
+    'CARD_AUTHOR',
+    'CARD_WEBSITE',
+    'CARD_SERIES',
+    'CARD_FOOTER_MARK',
+    'CARD_ISSUE_LABEL',
+    'CARD_LINKEDIN',
+    'CARD_TWITTER',
+    'CARD_CREDIT',
+  ] as const;
+  const previous = keys.map((key) => [key, process.env[key]] as const);
+  try {
+    process.chdir(dir);
+    for (const key of keys) delete process.env[key];
+    assert.deepEqual(loadBranding(), brandingFromEnv({}));
+  } finally {
+    process.chdir(cwd);
+    for (const [key, value] of previous) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
