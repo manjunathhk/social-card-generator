@@ -201,3 +201,27 @@ test('every shipped example parses', async () => {
     assert.ok(card.panels.length >= 1, name);
   }
 });
+
+test('unknown fields warn with paths and suggestions while allowed extras remain silent', () => {
+  const warnings: string[] = [];
+  const card = validateCard(
+    {
+      ...minimal(),
+      $schema: 'url',
+      sandboxLabel: 'example',
+      insigt: 'x',
+      panels: [{ language: 'ts', code: 'x', langauge: 'ts' }],
+    },
+    warnings,
+  );
+  assert.equal(card.title, 'Title');
+  assert.match(warnings.join('\n'), /insigt.*insight/);
+  assert.match(warnings.join('\n'), /panels\[0\]\.langauge.*language/);
+  assert.equal(warnings.length, 2);
+});
+
+test('Markdown warns when front matter panels are replaced by the body', () => {
+  const warnings: string[] = [];
+  parseContent('---\ntitle: T\nsubtitle: S\npanels: []\n---\n```ts\nx\n```', 'markdown', warnings);
+  assert.match(warnings.join('\n'), /panels.*ignored.*body/);
+});

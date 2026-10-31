@@ -36,11 +36,13 @@ export function buildCardSchema(): JsonSchema {
       'A JSON card, or the YAML front matter plus panels of a Markdown card. Character and count limits are enforced here; per-panel line limits are listed as x-maxLines per layout. A card that passes this schema can still fail to fit at the minimum code font size, which only a real render detects.',
     type: 'object',
     required: ['title', 'subtitle', 'panels'],
+    additionalProperties: false,
     properties: {
       $schema: {
         type: 'string',
         description: 'Optional URL of this schema, for editor autocomplete. Ignored by the renderer.',
       },
+      sandboxLabel: { type: 'string', description: 'Optional example picker label; ignored by the renderer.' },
       title: text('title', 'First title line.', { required: true }),
       highlight: text('highlight', 'Second title line, in the accent colour.'),
       subtitle: text('subtitle', 'One or two sentences under the title.', { required: true }),
@@ -77,6 +79,7 @@ export function buildCardSchema(): JsonSchema {
       panel: {
         type: 'object',
         required: ['language', 'code'],
+        additionalProperties: false,
         properties: {
           label: text('label', 'Panel header text. Defaults to the language name.', { required: true }),
           language: {

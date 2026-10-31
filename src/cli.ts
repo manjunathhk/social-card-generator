@@ -179,7 +179,9 @@ async function loadCards(files: string[]): Promise<LoadedCard[]> {
   return Promise.all(
     files.map(async (file) => {
       try {
-        const card = parseContent(await readFile(file, 'utf8'), formatFromPath(file));
+        const warnings: string[] = [];
+        const card = parseContent(await readFile(file, 'utf8'), formatFromPath(file), warnings);
+        warnings.forEach((warning) => console.error(`${file}: warning: ${warning}`));
         return { file, card };
       } catch (error) {
         throw new Error(`${file}: ${(error as Error).message}`);
@@ -192,7 +194,9 @@ async function loadCards(files: string[]): Promise<LoadedCard[]> {
 async function checkCards(files: string[]): Promise<void> {
   for (const file of files) {
     try {
-      const card = parseContent(await readFile(file, 'utf8'), formatFromPath(file));
+      const warnings: string[] = [];
+      const card = parseContent(await readFile(file, 'utf8'), formatFromPath(file), warnings);
+      warnings.forEach((warning) => console.error(`${file}: warning: ${warning}`));
       console.log(`Valid ${file} (${card.layout}, ${card.panels.length} panel${card.panels.length === 1 ? '' : 's'})`);
     } catch (error) {
       console.error(`Invalid ${file}: ${(error as Error).message}`);

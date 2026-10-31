@@ -222,6 +222,8 @@ During development run it as `npm run card -- <args>`. A directory input renders
 npm run card -- posts/2026-09-caching --pdf out/caching-carousel.pdf --scale 2
 ```
 
+Unknown card and panel fields produce warnings, including suggestions for close names. The CLI writes warnings to stderr, and the sandbox shows them beside the preview. Warnings do not prevent rendering or make `--check` fail. Markdown panels come from the body, so a front-matter `panels` value is ignored with a warning. The JSON Schema flags unknown fields in editors.
+
 `--check` runs the parser and validator only: text limits, panel counts per layout and lines per panel. It reports every invalid input with the field that failed (`panels[1].notes[0] must be 1–70 characters.`) and exits non-zero if any failed, which makes it a fast pre-commit or CI step. It cannot tell whether the code fits at the layout's minimum font size; only a real render measures that.
 
 ```sh
