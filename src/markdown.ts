@@ -41,7 +41,7 @@ const MAX_HIGHLIGHT_LINE = Math.max(
   ),
 );
 
-export function parseMarkdown(text: string): Record<string, unknown> {
+export function parseMarkdown(text: string, warnings: string[] = []): Record<string, unknown> {
   const normalized = text.replace(/\r\n/g, '\n');
   const match = normalized.match(FRONT_MATTER);
   if (!match) {
@@ -51,6 +51,8 @@ export function parseMarkdown(text: string): Record<string, unknown> {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     throw new Error('Front matter must be a YAML mapping of card fields.');
   }
+  if (Object.prototype.hasOwnProperty.call(metadata, 'panels'))
+    warnings.push('Front-matter panels is ignored; panels come from the body.');
   const bodyStartLine = match[1].split('\n').length + 3;
   const panels = parsePanels(match[2].split('\n'), bodyStartLine);
   return { ...(metadata as Record<string, unknown>), panels };

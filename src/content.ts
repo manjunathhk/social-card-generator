@@ -13,8 +13,8 @@ export function formatFromPath(path: string): SourceFormat {
 }
 
 /** Parses Markdown or JSON card source text into a validated `Card`. */
-export function parseContent(text: string, format: SourceFormat): Card {
+export function parseContent(text: string, format: SourceFormat, warnings: string[] = []): Card {
   const source = text.replace(/^﻿/, '');
-  const raw: unknown = format === 'markdown' ? parseMarkdown(source) : JSON.parse(source);
-  return validateCard(raw);
+  const raw: unknown = format === 'markdown' ? parseMarkdown(source, warnings) : JSON.parse(source);
+  return validateCard(raw, warnings);
 }

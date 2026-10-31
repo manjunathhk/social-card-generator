@@ -253,6 +253,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
           <span>Panels <b id="s-panels">—</b></span>
           <span>Code <b id="s-font">—</b></span>
           <span id="s-fit">—</span>
+          <span id="s-warnings" role="status"></span>
         </div>
         <div class="banner warn" id="overflow" hidden></div>
         <div class="actions">
@@ -362,7 +363,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     } catch {}
   }
   function detectFormat(text) { return /^\uFEFF?\s*\{/.test(text) ? 'json' : 'markdown'; }
-  function loadRaw(text, format) { return format === 'json' ? JSON.parse(text.replace(/^﻿/, '')) : SC.parseMarkdown(text); }
+  function loadRaw(text, format, warnings) { return format === 'json' ? JSON.parse(text.replace(/^﻿/, '')) : SC.parseMarkdown(text, warnings); }
 
   // Layout and theme overrides, applied to the raw object before validation so
   // layout rules (panel counts, line limits) are checked against the override.
@@ -551,11 +552,12 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     const format = detectFormat(text);
     $('format-pill').textContent = format === 'json' ? 'JSON' : 'Markdown';
     let card;
+    const warnings = [];
     try {
-      const raw = loadRaw(text, format);
+      const raw = loadRaw(text, format, warnings);
       if (layoutSel.value) raw.layout = layoutSel.value;
       if (themeSel.value) raw.theme = themeSel.value;
-      card = SC.validateCard(raw);
+      card = SC.validateCard(raw, warnings);
     }
     catch (e) { errorBox.textContent = e.message; errorBox.hidden = false; return; }
     let html;
@@ -570,6 +572,7 @@ dialog .row { display: flex; justify-content: space-between; align-items: center
     try { fit = (0, eval)(SC.FIT_SCRIPT)[0]; } finally { fitScale(); }
     $('s-layout').textContent = card.layout; $('s-theme').textContent = card.theme; $('s-panels').textContent = card.panels.length;
     $('s-font').textContent = fit.fontSize + 'px';
+    $('s-warnings').textContent = warnings.join(' · ');
     const fitEl = $('s-fit');
     if (fit.ok) { fitEl.textContent = '✓ fits'; fitEl.className = 'fit-ok'; overflowBox.hidden = true; }
     else { fitEl.textContent = '✕ overflows'; fitEl.className = 'fit-bad'; overflowBox.textContent = 'The CLI would refuse this card: ' + fit.reason + '.'; overflowBox.hidden = false; }

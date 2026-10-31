@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [3.4.0] - 2026-10-31
+
+### Added
+
+- Warn about unknown card and panel fields, including ignored Markdown front-matter panels. Unknown fields will become errors in the next major version. (#72)
+
 ## [3.3.9] - 2026-10-30
 
 ### Security

@@ -24,6 +24,7 @@ test('--schema prints the generated schema', () => {
 test('--check accepts every shipped example', () => {
   const result = cli('--check', 'examples');
   assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stderr, '');
   assert.match(result.stdout, /Valid .*nginx-rate-limit\.md \(columns, 2 panels\)/);
 });
 
@@ -54,4 +55,16 @@ test('--out rejects a directory with multiple cards before rendering', async () 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /--out works with exactly one input/);
   assert.equal(existsSync(output), false);
+});
+
+test('--check reports warnings without failing', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'card-warning-'));
+  const file = join(dir, 'warning.json');
+  await writeFile(
+    file,
+    JSON.stringify({ title: 'T', subtitle: 'S', insigt: 'x', panels: [{ language: 'ts', code: 'x' }] }),
+  );
+  const result = cli('--check', file);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /insigt.*insight/);
 });

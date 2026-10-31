@@ -18,12 +18,42 @@ import { DEFAULT_THEME, THEME_NAMES } from './themes/index.js';
  * Turns an untrusted raw object (from JSON or Markdown) into a `Card`.
  * Every error names the offending field so authors can fix the source quickly.
  */
-export function validateCard(raw: unknown): Card {
+export function validateCard(raw: unknown, warnings: string[] = []): Card {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error('Card content must be an object.');
   }
   const value = raw as Record<string, unknown>;
   rejectLegacyFields(value);
+  warnUnknown(
+    value,
+    [
+      'title',
+      'highlight',
+      'subtitle',
+      'tags',
+      'insight',
+      'issue',
+      'layout',
+      'theme',
+      'panels',
+      '$schema',
+      'sandboxLabel',
+    ],
+    '',
+    warnings,
+  );
+  if (Array.isArray(value.panels)) {
+    value.panels.forEach((panel, index) => {
+      if (panel && typeof panel === 'object' && !Array.isArray(panel)) {
+        warnUnknown(
+          panel as Record<string, unknown>,
+          ['label', 'language', 'code', 'highlightLines', 'underline', 'verdict', 'notes'],
+          `panels[${index}].`,
+          warnings,
+        );
+      }
+    });
+  }
 
   const layout = readLayout(value.layout);
   const theme = readTheme(value.theme);
@@ -40,6 +70,29 @@ export function validateCard(raw: unknown): Card {
     theme,
     panels,
   };
+}
+
+function warnUnknown(value: Record<string, unknown>, known: string[], prefix: string, warnings: string[]) {
+  for (const key of Object.keys(value)) {
+    if (known.includes(key)) continue;
+    const candidates = known
+      .map((name) => ({ name, distance: editDistance(key, name) }))
+      .sort((a, b) => a.distance - b.distance);
+    const suggestion = candidates[0].distance <= 2 ? `; did you mean "${candidates[0].name}"?` : '';
+    warnings.push(`Unknown field ${prefix}${key}${suggestion}`);
+  }
+}
+
+function editDistance(a: string, b: string): number {
+  let row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i += 1) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      next[j] = Math.min(next[j - 1] + 1, row[j] + 1, row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    row = next;
+  }
+  return row[b.length];
 }
 
 function rejectLegacyFields(value: Record<string, unknown>) {
